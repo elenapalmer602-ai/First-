@@ -5,54 +5,41 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chainex</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Chainex brokers suppliers, packaging, manufacturing and 3PL partners for ecommerce beauty brands, so launches ship on time and fulfilment costs less.">
+<meta name="description" content="Chainex is a UK sourcing partner for ecommerce beauty brands. We find, verify, test and manage the suppliers behind your products.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Instrument+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: "the manifest" — the page reads like one order moving through the chain; asymmetric hero, ticket-style data, quiet bands between. */
+/* Layout: "molten amber" — a dark, lit-from-within stage; product renders float in the hero, then the page settles into quiet espresso bands with one champagne band for the differentiator. Single deliberate dark theme. */
 :root {
-  --bg: #F6F3F7;        /* porcelain, lilac bias */
-  --surface: #FFFFFF;
-  --sunk: #EEE8EE;
-  --ink: #24131F;       /* aubergine */
-  --muted: #6B5866;
-  --line: #E2D8E0;
-  --accent: #B02A63;    /* lacquer */
-  --accent-soft: #F6DCE7;
-  --on-accent: #FFFFFF;
-  --ok: #2C7A69;
-  --ok-soft: #DCEFEA;
-  --band: #24131F;
-  --on-band: #F6EEF3;
-  --band-muted: #BCA9B6;
+  --bg: #0D0907;          /* espresso black */
+  --bg-2: #15100C;
+  --surface: #1C1510;
+  --line: rgba(236, 204, 160, 0.14);
+  --line-strong: rgba(236, 204, 160, 0.28);
+  --ink: #F4EADF;         /* champagne white */
+  --muted: #A99686;
+  --gold: #D8A665;
+  --gold-hi: #F3D4A2;
+  --bronze: #8C5B35;
+  --cream: #EFE4D5;
+  --cream-2: #E4D5C2;
+  --cream-ink: #2A1C14;
+  --cream-muted: #6E5847;
 
-  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --f-body: "Figtree", "Helvetica Neue", Arial, system-ui, sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --f-display: "Bodoni Moda", "Didot", "Bodoni 72", "Times New Roman", serif;
+  --f-body: "Instrument Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --f-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --step--1: 0.8125rem;
   --step-0: 1rem;
   --step-1: 1.1875rem;
-  --step-2: 1.5rem;
-  --step-3: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
-  --step-4: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
+  --step-2: clamp(1.4rem, 1.2rem + 0.8vw, 1.85rem);
+  --step-3: clamp(2rem, 1.4rem + 2.2vw, 3.25rem);
+  --step-4: clamp(2.75rem, 1.6rem + 4.6vw, 5.75rem);
 
-  --radius: 14px;
-  --wrap: 1180px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #140B12; --surface: #1E131B; --sunk: #191017; --ink: #F4ECF1; --muted: #B4A1AE;
-    --line: #382833; --accent: #F0699F; --accent-soft: #3D1A2B; --on-accent: #1A0A13;
-    --ok: #6FCBB5; --ok-soft: #173029; --band: #2A1824; --on-band: #F6EEF3; --band-muted: #BCA9B6;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #140B12; --surface: #1E131B; --sunk: #191017; --ink: #F4ECF1; --muted: #B4A1AE;
-  --line: #382833; --accent: #F0699F; --accent-soft: #3D1A2B; --on-accent: #1A0A13;
-  --ok: #6FCBB5; --ok-soft: #173029; --band: #2A1824; --on-band: #F6EEF3; --band-muted: #BCA9B6;
+  --wrap: 1240px;
+  --ease: cubic-bezier(.2,.7,.2,1);
   color-scheme: dark;
 }
 
@@ -65,11 +52,14 @@ body {
   font-size: var(--step-0);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
-h1, h2, h3 { font-family: var(--f-display); line-height: 1.08; margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -0.01em; }
-p { margin: 0; }
+h1, h2, h3 { margin: 0; font-weight: 400; text-wrap: balance; }
+h1, h2 { font-family: var(--f-display); line-height: 1.02; letter-spacing: -0.015em; }
+h3 { font-family: var(--f-body); font-weight: 500; line-height: 1.25; }
+p, ul, ol { margin: 0; }
 a { color: inherit; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 4px; border-radius: 4px; }
 
 .wrap {
   max-width: var(--wrap);
@@ -77,368 +67,521 @@ a { color: inherit; }
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-@media (min-width: 720px) {
-  .wrap { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 760px) {
+  .wrap { padding-left: max(40px, env(safe-area-inset-left, 0px)); padding-right: max(40px, env(safe-area-inset-right, 0px)); }
 }
-section { padding-block: clamp(64px, 9vw, 120px); }
+section { padding-block: clamp(80px, 11vw, 150px); }
 .eyebrow {
-  font-family: var(--f-mono);
-  font-size: var(--step--1);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
+  font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold);
+  display: inline-flex; align-items: center; gap: 12px;
 }
-.lede { font-size: var(--step-1); color: var(--muted); max-width: 58ch; }
-.section-head { display: grid; gap: 16px; max-width: 760px; margin-bottom: clamp(36px, 5vw, 56px); }
+.eyebrow::before { content: ""; width: 28px; height: 1px; background: currentColor; opacity: .7; }
+.lede { font-size: var(--step-1); color: var(--muted); max-width: 56ch; line-height: 1.55; }
+.section-head { display: grid; gap: 22px; max-width: 780px; margin-bottom: clamp(44px, 6vw, 72px); }
 .section-head h2 { font-size: var(--step-3); }
+em.gilt { font-style: italic; color: var(--gold-hi); }
 
-/* Buttons */
 .btn {
-  display: inline-flex; align-items: center; gap: 10px;
-  font: 600 var(--step-0)/1 var(--f-body);
-  padding: 15px 22px; border-radius: 999px; border: 1px solid transparent;
+  display: inline-flex; align-items: center; gap: 12px;
+  font: 500 0.9375rem/1 var(--f-body); letter-spacing: 0.01em;
+  padding: 17px 26px; border-radius: 999px; border: 1px solid transparent;
   text-decoration: none; cursor: pointer;
-  transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+  transition: background-color .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease);
 }
-.btn svg { width: 18px; height: 18px; transition: transform .2s ease; }
-.btn-primary { background: var(--accent); color: var(--on-accent); }
-.btn-primary:hover { transform: translateY(-1px); }
-.btn-primary:hover svg { transform: translateX(3px); }
-.btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
-.btn-ghost:hover { border-color: var(--ink); }
+.btn svg { width: 16px; height: 16px; transition: transform .3s var(--ease); }
+.btn:hover svg { transform: translateX(4px); }
+.btn-gold { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: #1B120C; box-shadow: 0 10px 30px -12px rgba(216,166,101,.6); }
+.btn-gold:hover { box-shadow: 0 14px 40px -10px rgba(216,166,101,.85); }
+.btn-line { border-color: var(--line-strong); color: var(--ink); }
+.btn-line:hover { border-color: var(--gold); color: var(--gold-hi); }
 
 /* Nav */
 .nav {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
-  background: color-mix(in srgb, var(--bg) 86%, transparent);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
+  position: fixed; inset: 0 0 auto 0; z-index: 20;
+  padding-top: env(safe-area-inset-top, 0px);
+  transition: background-color .4s var(--ease), border-color .4s var(--ease);
+  border-bottom: 1px solid transparent;
 }
-.nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 14px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 800 1.375rem/1 var(--f-display); letter-spacing: -0.03em; }
-.brand-mark { width: 30px; height: 30px; }
-.nav-links { display: none; gap: 28px; font-weight: 500; font-size: 0.9375rem; }
-.nav-links a { text-decoration: none; color: var(--muted); transition: color .2s; }
+.nav.scrolled { background: rgba(13, 9, 7, 0.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-color: var(--line); }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 18px; }
+.brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font: 500 1.5rem/1 var(--f-display); letter-spacing: 0.01em; }
+.brand svg { width: 34px; height: 22px; }
+.nav-links { display: none; gap: 34px; font-size: 0.875rem; letter-spacing: 0.02em; }
+.nav-links a { text-decoration: none; color: var(--muted); transition: color .25s; }
 .nav-links a:hover { color: var(--ink); }
-.nav .btn { padding: 11px 18px; font-size: 0.9375rem; }
-@media (min-width: 900px) { .nav-links { display: flex; } }
+.nav .btn { padding: 12px 20px; font-size: 0.875rem; }
+@media (min-width: 960px) { .nav-links { display: flex; } }
 
 /* Hero */
-.hero { padding-block: clamp(48px, 7vw, 96px) clamp(56px, 8vw, 104px); }
-.hero .wrap { display: grid; gap: clamp(40px, 6vw, 72px); align-items: center; }
-@media (min-width: 980px) { .hero .wrap { grid-template-columns: 1.05fr 0.95fr; } }
-.hero-copy { display: grid; gap: 24px; min-width: 0; }
-.hero h1 { font-size: var(--step-4); font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; }
-.hero h1 em { font-style: normal; color: var(--accent); }
-.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 8px; }
-.hero-proof { display: flex; flex-wrap: wrap; gap: 8px 22px; padding-top: 12px; color: var(--muted); font-size: 0.9375rem; }
-.hero-proof span { display: inline-flex; align-items: center; gap: 8px; }
-.hero-proof svg { width: 16px; height: 16px; color: var(--ok); flex: none; }
+.hero {
+  position: relative; overflow: hidden; isolation: isolate;
+  padding-block: calc(120px + env(safe-area-inset-top, 0px)) clamp(64px, 8vw, 110px);
+  background:
+    radial-gradient(60% 70% at 72% 48%, rgba(170, 108, 52, .55), transparent 70%),
+    radial-gradient(40% 40% at 85% 20%, rgba(243, 212, 162, .18), transparent 70%),
+    var(--bg);
+}
+.hero-bg { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.4s var(--ease); }
+.hero-bg.on { opacity: 1; }
+.hero::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(13,9,7,.92) 0%, rgba(13,9,7,.55) 38%, rgba(13,9,7,0) 62%),
+    linear-gradient(0deg, var(--bg) 0%, rgba(13,9,7,0) 22%);
+}
+@media (max-width: 979px) {
+  .hero::after { background: linear-gradient(180deg, rgba(13,9,7,.75) 0%, rgba(13,9,7,.35) 45%, rgba(13,9,7,.2) 70%, var(--bg) 100%); }
+}
+.hero .wrap { display: grid; gap: clamp(28px, 4vw, 48px); align-items: center; }
+@media (min-width: 980px) { .hero .wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); min-height: min(76vh, 760px); } }
+.hero-copy { display: grid; gap: 28px; min-width: 0; max-width: 620px; }
+.hero h1 { font-size: var(--step-4); }
+.hero .lede { color: #C9B8A8; }
+.hero-ctas { display: flex; flex-wrap: wrap; gap: 14px; padding-top: 6px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 10px 28px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.hero-meta span { display: inline-flex; align-items: center; gap: 10px; }
+.hero-meta span::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
 
-/* Manifest ticket */
-.manifest {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
-  box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--ink) 35%, transparent);
-  min-width: 0; position: relative; overflow: hidden;
+/* Product stage */
+.stage { position: relative; width: 100%; max-width: 620px; aspect-ratio: 1 / 0.92; margin-inline: auto; min-width: 0; }
+@media (max-width: 979px) { .stage { max-width: 480px; } }
+.halo {
+  position: absolute; left: 50%; top: 46%; width: 78%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, rgba(243,212,162,.30), rgba(216,166,101,.10) 40%, transparent 68%);
+  animation: breathe 9s ease-in-out infinite;
 }
-.manifest-head {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;
-  padding: 22px 24px 18px; border-bottom: 1px dashed var(--line);
+.plinth {
+  position: absolute; left: 50%; bottom: 7%; width: 86%; height: 12%; transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(243,212,162,.42), rgba(216,166,101,.12) 45%, transparent 72%);
+  filter: blur(2px);
 }
-.manifest-head .po { font-family: var(--f-mono); font-size: var(--step--1); color: var(--muted); letter-spacing: 0.04em; }
-.manifest-head h3 { font-size: var(--step-2); margin-top: 6px; }
-.manifest-head .sku { font-family: var(--f-mono); font-size: var(--step--1); color: var(--muted); margin-top: 4px; }
-.pill {
-  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-  font: 500 0.75rem/1 var(--f-mono); letter-spacing: 0.04em; text-transform: uppercase;
-  padding: 7px 10px; border-radius: 999px;
+.plinth::after {
+  content: ""; position: absolute; left: 18%; right: 18%; top: 46%; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,236,205,.9), transparent);
+  filter: blur(1px);
 }
-.pill-ok { background: var(--ok-soft); color: var(--ok); }
-.pill-live { background: var(--accent-soft); color: var(--accent); }
-.pill-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.8s ease-in-out infinite; }
-.steps { list-style: none; margin: 0; padding: 8px 24px 4px; position: relative; }
-.step { display: grid; grid-template-columns: 28px 1fr auto; gap: 14px; align-items: start; padding-block: 14px; position: relative; }
-.step + .step { border-top: 1px solid var(--line); }
-.dot {
-  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--sunk); color: var(--muted); border: 1px solid var(--line);
+.layer { position: absolute; will-change: transform; transition: transform .9s var(--ease); }
+.product { position: absolute; display: block; filter: drop-shadow(0 30px 40px rgba(0,0,0,.55)); }
+.p-perfume { left: 31%; bottom: 13%; width: 38%; animation: float 8s ease-in-out infinite; }
+.p-serum { left: 10%; bottom: 17%; width: 22%; animation: float 7s ease-in-out -2.5s infinite; }
+.p-tube { right: 9%; bottom: 15%; width: 18%; animation: float 9s ease-in-out -5s infinite; transform-origin: 50% 100%; }
+.sweep { animation: sweep 7s ease-in-out infinite; }
+.p-serum .sweep { animation-delay: 1.8s; }
+.p-tube .sweep { animation-delay: 3.6s; }
+.bubble {
+  position: absolute; border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,246,228,.95) 0 6%, rgba(255,240,210,.0) 14%),
+    radial-gradient(circle at 50% 50%, rgba(243,200,130,.05) 0 55%, rgba(243,200,130,.55) 70%, rgba(170,108,52,.15) 76%, transparent 78%);
+  animation: drift 14s ease-in-out infinite;
 }
-.dot svg { width: 14px; height: 14px; }
-.step.done .dot { background: var(--ok); color: var(--surface); border-color: var(--ok); }
-.step.now .dot { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-.step-body { min-width: 0; }
-.step-title { font-weight: 600; }
-.step-meta { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
-.step-time { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-.step.now .step-time { color: var(--accent); }
-.bar { height: 4px; background: var(--sunk); border-radius: 4px; margin-top: 10px; overflow: hidden; }
-.bar i { display: block; height: 100%; width: 64%; background: var(--accent); border-radius: inherit; transform-origin: left; animation: fill 1.6s cubic-bezier(.2,.7,.2,1) both .3s; }
-.manifest-foot {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px dashed var(--line); background: var(--sunk);
+.b1 { width: 9%; aspect-ratio: 1; left: 4%; top: 12%; }
+.b2 { width: 5%; aspect-ratio: 1; left: 22%; top: 4%; animation-delay: -4s; animation-duration: 11s; }
+.b3 { width: 12%; aspect-ratio: 1; right: 4%; top: 6%; animation-delay: -7s; animation-duration: 16s; }
+.b4 { width: 4%; aspect-ratio: 1; right: 26%; top: 22%; animation-delay: -2s; animation-duration: 10s; }
+.b5 { width: 6%; aspect-ratio: 1; left: 66%; top: 2%; animation-delay: -9s; }
+.b6 { width: 3.5%; aspect-ratio: 1; left: 40%; top: 14%; animation-delay: -5s; animation-duration: 12s; }
+.drop {
+  position: absolute; left: 20.4%; top: 36%; width: 1.8%; aspect-ratio: 0.72; border-radius: 50% 50% 50% 50% / 62% 62% 40% 40%;
+  background: radial-gradient(circle at 35% 35%, #FFF1D6, #E2A75C 55%, #8C5B35);
+  opacity: 0; animation: fall 7s ease-in 1.5s infinite;
 }
-.manifest-foot div { padding: 16px 20px; }
-.manifest-foot div + div { border-left: 1px solid var(--line); }
-.mf-label { font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.mf-value { font: 600 var(--step-1)/1.2 var(--f-display); margin-top: 4px; font-variant-numeric: tabular-nums; }
-.mf-value small { font: 500 0.75rem var(--f-mono); color: var(--ok); margin-left: 4px; }
-.example-tag { position: absolute; top: 12px; right: -34px; transform: rotate(35deg); background: var(--ink); color: var(--bg); font: 500 0.625rem/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 40px; display: none; }
 
-/* Problem band */
-.band { background: var(--band); color: var(--on-band); }
-.band .eyebrow { color: var(--accent); }
-.band .lede { color: var(--band-muted); }
-.pain-grid { display: grid; gap: 1px; background: color-mix(in srgb, var(--on-band) 14%, transparent); border-radius: var(--radius); overflow: hidden; }
-@media (min-width: 720px) { .pain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1040px) { .pain-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.pain { background: var(--band); padding: 28px 24px; display: grid; gap: 10px; align-content: start; }
-.pain .figure { font: 800 var(--step-3)/1 var(--f-display); letter-spacing: -0.03em; color: var(--on-band); }
-.pain .figure span { font: 500 0.8125rem var(--f-mono); color: var(--band-muted); letter-spacing: 0.04em; margin-left: 6px; }
-.pain h3 { font-size: var(--step-1); font-family: var(--f-body); font-weight: 600; letter-spacing: 0; }
-.pain p { color: var(--band-muted); font-size: 0.9375rem; }
+/* Marquee */
+.marquee { border-block: 1px solid var(--line); overflow: hidden; padding-block: 22px; }
+.marquee-track { display: flex; width: max-content; gap: 56px; animation: scroll 50s linear infinite; }
+.marquee-track span { font: italic 400 clamp(1.25rem, 1rem + 1vw, 1.75rem)/1 var(--f-display); color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 56px; }
+.marquee-track span::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: .7; }
 
-/* Services */
-.services { display: grid; gap: 20px; }
-@media (min-width: 720px) { .services { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1040px) { .services { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.service {
-  display: grid; gap: 14px; align-content: start; padding: 28px 26px;
-  border-top: 1px solid var(--ink); transition: background-color .25s ease;
+/* Approach */
+.approach { display: grid; gap: clamp(40px, 6vw, 80px); }
+@media (min-width: 980px) { .approach { grid-template-columns: 1fr 1fr; align-items: end; } }
+.approach .section-head { margin-bottom: 0; }
+.principles { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.principle { display: grid; grid-template-columns: 48px 1fr; gap: 20px; padding-block: 26px; border-bottom: 1px solid var(--line); }
+.principle .k { font: 400 0.75rem var(--f-mono); color: var(--gold); letter-spacing: .1em; padding-top: 4px; }
+.principle h3 { font-size: var(--step-1); margin-bottom: 6px; }
+.principle p { color: var(--muted); }
+
+/* Differentiator (cream band) */
+.feature { background: var(--cream); color: var(--cream-ink); position: relative; overflow: hidden; }
+.feature .eyebrow { color: var(--bronze); }
+.feature .wrap { display: grid; gap: clamp(40px, 6vw, 88px); align-items: center; }
+@media (min-width: 980px) { .feature .wrap { grid-template-columns: 0.95fr 1.05fr; } }
+.feature-art { position: relative; aspect-ratio: 1; max-width: 520px; width: 100%; margin-inline: auto; border-radius: 28px; overflow: hidden;
+  background: radial-gradient(120% 90% at 30% 20%, #FBF4EA, #E9D9C4 55%, #D7BF9F); }
+.feature-art canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.feature-art .tag {
+  position: absolute; left: 20px; bottom: 20px; right: 20px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font: 500 0.6875rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--cream-muted);
 }
-.service:hover { background: var(--surface); }
-.service-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
-.service-icon svg { width: 22px; height: 22px; }
-.service h3 { font-size: var(--step-2); }
-.service p { color: var(--muted); }
-.service .terms { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
-.service .terms span { font: 500 0.75rem/1 var(--f-mono); padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+.feature-copy { display: grid; gap: 26px; min-width: 0; }
+.feature h2 { font-size: var(--step-3); }
+.feature h2 em { font-style: italic; color: var(--bronze); }
+.feature .lede { color: var(--cream-muted); }
+.ticks { list-style: none; padding: 0; display: grid; gap: 0; border-top: 1px solid rgba(42,28,20,.14); }
+.ticks li { display: grid; grid-template-columns: 22px 1fr; gap: 14px; padding-block: 14px; border-bottom: 1px solid rgba(42,28,20,.14); }
+.ticks svg { width: 16px; height: 16px; color: var(--bronze); margin-top: 4px; }
 
-/* Process */
-.process { background: var(--sunk); }
-.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; counter-reset: step; }
-@media (min-width: 900px) { .timeline { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; } }
-.timeline li { position: relative; display: grid; gap: 12px; align-content: start; padding: 26px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-@media (min-width: 900px) {
-  .timeline li { border-radius: 0; border-left-width: 0; }
-  .timeline li:first-child { border-left-width: 1px; border-radius: var(--radius) 0 0 var(--radius); }
-  .timeline li:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+/* Services explorer */
+.explorer { display: grid; gap: 28px; }
+@media (min-width: 980px) { .explorer { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 56px; align-items: start; } }
+.svc-list { display: grid; border-top: 1px solid var(--line); }
+@media (max-width: 979px) { .svc-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); border-top: 0; gap: 8px; } }
+.svc-tab {
+  display: grid; grid-template-columns: 44px 1fr 16px; gap: 14px; align-items: center; text-align: left;
+  background: transparent; color: var(--muted); border: 0; border-bottom: 1px solid var(--line);
+  padding: 17px 6px; font: 500 1rem/1.3 var(--f-body); cursor: pointer;
+  transition: color .25s var(--ease), padding .35s var(--ease), background-color .25s;
 }
-.timeline .num { font: 500 var(--step--1) var(--f-mono); color: var(--accent); letter-spacing: 0.06em; }
-.timeline .wk { font: 500 0.75rem var(--f-mono); color: var(--muted); }
-.timeline h3 { font-size: var(--step-2); }
-.timeline p { color: var(--muted); font-size: 0.9375rem; }
-.timeline .out { font-size: 0.875rem; padding-top: 12px; border-top: 1px dashed var(--line); }
-.timeline .out b { font-weight: 600; color: var(--ink); }
-
-/* Network */
-.network { display: grid; gap: clamp(32px, 5vw, 64px); align-items: start; }
-@media (min-width: 980px) { .network { grid-template-columns: 0.85fr 1.15fr; } }
-.network .section-head { margin-bottom: 0; }
-.chain { display: grid; gap: 10px; min-width: 0; }
-.link {
-  display: grid; grid-template-columns: 120px 1fr; gap: 18px; align-items: center;
-  padding: 18px 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+@media (max-width: 979px) { .svc-tab { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; } }
+.svc-tab .n { font: 400 0.75rem var(--f-mono); letter-spacing: .08em; color: var(--muted); }
+.svc-tab svg { width: 14px; height: 14px; opacity: 0; transform: translateX(-6px); transition: opacity .3s, transform .3s var(--ease); color: var(--gold); }
+.svc-tab:hover { color: var(--ink); }
+.svc-tab[aria-selected="true"] { color: var(--ink); }
+@media (min-width: 980px) { .svc-tab[aria-selected="true"] { padding-left: 16px; } }
+@media (max-width: 979px) { .svc-tab[aria-selected="true"] { border-color: var(--gold); background: rgba(216,166,101,.06); } }
+.svc-tab[aria-selected="true"] .n { color: var(--gold); }
+.svc-tab[aria-selected="true"] svg { opacity: 1; transform: none; }
+.svc-tab .star { font: 400 0.625rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-left: 8px; white-space: nowrap; }
+.svc-panel {
+  position: relative; border: 1px solid var(--line); border-radius: 24px; padding: clamp(28px, 4vw, 48px);
+  background: radial-gradient(90% 70% at 100% 0%, rgba(216,166,101,.12), transparent 60%), var(--surface);
+  min-width: 0; overflow: hidden;
 }
-.link .tier { font: 500 0.75rem var(--f-mono); color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; }
-.link h3 { font-size: var(--step-1); font-family: var(--f-body); font-weight: 600; letter-spacing: 0; }
-.link p { color: var(--muted); font-size: 0.875rem; }
-.link > div { min-width: 0; }
-@media (max-width: 520px) { .link { grid-template-columns: 1fr; gap: 6px; } }
+@media (min-width: 980px) { .svc-panel { position: sticky; top: 110px; } }
+.svc-panel .big { font: italic 400 clamp(4.5rem, 3rem + 5vw, 7.5rem)/0.8 var(--f-display); color: transparent; -webkit-text-stroke: 1px rgba(216,166,101,.55); position: absolute; right: clamp(20px, 3vw, 40px); top: clamp(20px, 3vw, 36px); pointer-events: none; }
+.svc-panel h3 { font: 400 var(--step-2)/1.15 var(--f-display); padding-right: 110px; }
+.svc-panel .intro { color: var(--muted); margin-top: 14px; max-width: 52ch; padding-right: 40px; }
+.svc-panel ul { list-style: none; padding: 0; margin-top: 28px; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.svc-panel li { display: grid; grid-template-columns: 20px 1fr; gap: 14px; padding-block: 14px; border-bottom: 1px solid var(--line); }
+.svc-panel li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--gold); margin-top: 9px; }
+.svc-panel .flag { display: inline-block; margin-top: 18px; font: 500 0.6875rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(216,166,101,.4); border-radius: 999px; padding: 7px 12px; }
+.svc-body { animation: panelIn .5s var(--ease); }
 
-/* Case */
-.case { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--surface); }
-@media (min-width: 900px) { .case { grid-template-columns: 1.1fr 0.9fr; } }
-.case-copy { padding: clamp(28px, 4vw, 48px); display: grid; gap: 18px; align-content: start; min-width: 0; }
-.case-copy h2 { font-size: var(--step-3); }
-.case-copy p { color: var(--muted); }
-.case-copy ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-.case-copy li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; }
-.case-copy li svg { width: 18px; height: 18px; color: var(--accent); margin-top: 3px; }
-.case-stats { background: var(--accent-soft); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.case-stat { padding: clamp(22px, 3vw, 36px); display: grid; gap: 6px; align-content: end; border-top: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); }
-.case-stat:nth-child(odd) { border-right: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); }
-.case-stat:nth-child(-n+2) { border-top: 0; }
-.case-stat .v { font: 800 var(--step-3)/1 var(--f-display); letter-spacing: -0.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
-.case-stat .k { font-size: 0.875rem; color: var(--ink); }
-.disclaimer { font: 400 0.75rem var(--f-mono); color: var(--muted); }
+/* Verification chain */
+.verify { background: var(--bg-2); border-block: 1px solid var(--line); }
+.chain { list-style: none; padding: 0; display: grid; gap: 0; position: relative; counter-reset: v; }
+@media (min-width: 1040px) { .chain { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+.chain::before { content: ""; position: absolute; background: var(--line-strong); }
+.chain::after { content: ""; position: absolute; background: linear-gradient(90deg, transparent, var(--gold-hi), transparent); animation: travel 6s linear infinite; }
+@media (min-width: 1040px) {
+  .chain::before { left: 0; right: 0; top: 19px; height: 1px; }
+  .chain::after { top: 18px; height: 3px; width: 18%; left: 0; }
+}
+@media (max-width: 1039px) {
+  .chain::before { left: 19px; top: 0; bottom: 0; width: 1px; }
+  .chain::after { left: 18px; width: 3px; height: 18%; top: 0; background: linear-gradient(180deg, transparent, var(--gold-hi), transparent); animation-name: travelY; }
+}
+.check { position: relative; display: grid; gap: 12px; align-content: start; padding: 0 18px 32px 0; counter-increment: v; }
+@media (max-width: 1039px) { .check { grid-template-columns: 40px 1fr; gap: 6px 20px; padding: 0 0 28px 0; } .check .node { grid-row: span 2; } }
+.node {
+  width: 39px; height: 39px; border-radius: 50%; display: grid; place-items: center; position: relative; z-index: 1;
+  background: var(--bg-2); border: 1px solid var(--line-strong); color: var(--gold);
+  font: 400 0.75rem var(--f-mono);
+  animation: lit 7s ease-in-out infinite;
+}
+.node::before { content: counter(v, decimal-leading-zero); }
+.check:nth-child(2) .node { animation-delay: .7s; } .check:nth-child(3) .node { animation-delay: 1.4s; }
+.check:nth-child(4) .node { animation-delay: 2.1s; } .check:nth-child(5) .node { animation-delay: 2.8s; }
+.check:nth-child(6) .node { animation-delay: 3.5s; } .check:nth-child(7) .node { animation-delay: 4.2s; }
+.check h3 { font-size: 1rem; }
+.check p { color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+
+/* Engagement steps */
+.steps { list-style: none; padding: 0; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; }
+@media (min-width: 760px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .steps { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.steps li { background: var(--bg); padding: 30px 26px 34px; display: grid; gap: 14px; align-content: start; transition: background-color .35s var(--ease); }
+.steps li:hover { background: var(--surface); }
+.steps .k { font: 400 0.75rem var(--f-mono); letter-spacing: .1em; color: var(--gold); }
+.steps h3 { font: 400 var(--step-2)/1.1 var(--f-display); }
+.steps p { color: var(--muted); font-size: 0.9375rem; }
+.steps .svcs { font: 400 0.6875rem/1.6 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-top: 14px; border-top: 1px solid var(--line); }
+
+/* Landed cost */
+.money { display: grid; gap: clamp(40px, 6vw, 72px); align-items: start; }
+@media (min-width: 1040px) { .money { grid-template-columns: 0.8fr 1.2fr; } }
+.money .section-head { margin-bottom: 0; }
+.table-card { border: 1px solid var(--line); border-radius: 24px; background: var(--surface); overflow: hidden; min-width: 0; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; font-variant-numeric: tabular-nums; }
+th, td { padding: 15px 20px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.9375rem; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; color: var(--muted); }
+thead th { font: 500 0.6875rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding-block: 18px; }
+thead th.pick { color: var(--gold); }
+td.pick { color: var(--gold-hi); background: rgba(216,166,101,.06); }
+thead th.pick { background: rgba(216,166,101,.06); }
+.inc { font: 400 0.75rem var(--f-mono); color: var(--muted); }
+tr.total td { font-weight: 600; color: var(--ink); border-bottom: 0; padding-block: 20px; }
+tr.total td:first-child { color: var(--ink); }
+tr.total td.pick { color: var(--gold-hi); }
+.table-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding: 20px; border-top: 1px solid var(--line); background: rgba(216,166,101,.05); }
+.saving { font: 400 var(--step-2)/1 var(--f-display); color: var(--gold-hi); }
+.saving small { display: block; font: 400 0.6875rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.note { font: 400 0.75rem var(--f-mono); color: var(--muted); }
 
 /* FAQ */
-.faq { display: grid; gap: clamp(32px, 5vw, 64px); }
+.faq { display: grid; gap: clamp(36px, 5vw, 72px); }
 @media (min-width: 980px) { .faq { grid-template-columns: 0.8fr 1.2fr; } }
 .faq .section-head { margin-bottom: 0; }
 .qa { border-top: 1px solid var(--line); }
 .qa:last-child { border-bottom: 1px solid var(--line); }
-.qa summary {
-  list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 20px; align-items: center;
-  padding: 22px 4px; font: 600 var(--step-1)/1.3 var(--f-body);
-}
+.qa summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 24px 2px; font: 400 var(--step-1)/1.35 var(--f-body); transition: color .25s; }
+.qa summary:hover { color: var(--gold-hi); }
 .qa summary::-webkit-details-marker { display: none; }
-.qa summary svg { width: 20px; height: 20px; flex: none; color: var(--accent); transition: transform .25s ease; }
+.qa summary svg { width: 18px; height: 18px; flex: none; color: var(--gold); transition: transform .35s var(--ease); }
 .qa[open] summary svg { transform: rotate(45deg); }
-.qa p { padding: 0 4px 24px; color: var(--muted); max-width: 64ch; }
+.qa p { padding: 0 2px 26px; color: var(--muted); max-width: 62ch; }
 
 /* CTA */
-.cta { padding-block: 0 clamp(64px, 9vw, 120px); }
+.cta { padding-top: 0; }
 .cta-card {
-  background: var(--band); color: var(--on-band); border-radius: 24px;
-  padding: clamp(32px, 6vw, 72px); display: grid; gap: 32px; position: relative; overflow: hidden;
+  position: relative; overflow: hidden; border-radius: 32px; border: 1px solid var(--line);
+  padding: clamp(40px, 7vw, 96px) clamp(24px, 6vw, 80px);
+  background:
+    radial-gradient(70% 90% at 85% 10%, rgba(216,166,101,.32), transparent 60%),
+    radial-gradient(50% 60% at 10% 100%, rgba(140,91,53,.35), transparent 70%),
+    var(--surface);
+  display: grid; gap: 36px;
 }
-@media (min-width: 900px) { .cta-card { grid-template-columns: 1.2fr 0.8fr; align-items: end; } }
-.cta-card h2 { font-size: var(--step-4); font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
-.cta-card p { color: var(--band-muted); max-width: 50ch; margin-top: 18px; }
-.cta-side { display: grid; gap: 14px; min-width: 0; }
-.cta-side .btn-primary { justify-content: center; }
-.email-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--f-mono); font-size: 0.9375rem; color: var(--on-band); }
-.email-row code { user-select: all; font-family: inherit; }
-.copy { font: 500 0.75rem var(--f-mono); color: var(--band-muted); background: transparent; border: 1px solid color-mix(in srgb, var(--on-band) 25%, transparent); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: color .2s, border-color .2s; }
-.copy:hover { color: var(--on-band); border-color: var(--on-band); }
-.cta-rings { position: absolute; right: -120px; top: -120px; width: 380px; height: 380px; pointer-events: none; opacity: .18; color: var(--accent); }
+@media (min-width: 980px) { .cta-card { grid-template-columns: 1.3fr 0.7fr; align-items: end; } }
+.cta-card h2 { font-size: var(--step-4); }
+.cta-card p { color: var(--muted); max-width: 48ch; margin-top: 22px; font-size: var(--step-1); }
+.cta-side { display: grid; gap: 16px; min-width: 0; }
+.cta-side .btn { justify-content: center; }
+.email-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; font: 400 0.9375rem var(--f-mono); color: var(--ink); }
+.email-row code { font-family: inherit; user-select: all; }
+.copy { font: 500 0.6875rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: transparent; border: 1px solid var(--line-strong); border-radius: 999px; padding: 7px 13px; cursor: pointer; transition: color .25s, border-color .25s; }
+.copy:hover { color: var(--gold-hi); border-color: var(--gold); }
 
 footer { border-top: 1px solid var(--line); }
-footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-block: 28px; color: var(--muted); font-size: 0.875rem; }
-footer nav { display: flex; gap: 22px; flex-wrap: wrap; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 18px; padding-block: 32px; color: var(--muted); font-size: 0.875rem; }
+footer nav { display: flex; gap: 26px; flex-wrap: wrap; }
 footer a { text-decoration: none; }
 footer a:hover { color: var(--ink); }
 
-@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
-@keyframes rise { from { transform: translateY(14px); } to { transform: none; } }
-.manifest .step { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
-.manifest .step:nth-child(2) { animation-delay: .08s; }
-.manifest .step:nth-child(3) { animation-delay: .16s; }
-.manifest .step:nth-child(4) { animation-delay: .24s; }
+@keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-3.5%) rotate(.6deg); } }
+@keyframes sweep { 0%, 15% { transform: translateX(-160%) skewX(-14deg); } 55%, 100% { transform: translateX(260%) skewX(-14deg); } }
+@keyframes drift { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(8px, -14px); } 66% { transform: translate(-6px, -6px); } }
+@keyframes breathe { 0%, 100% { opacity: .85; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } }
+@keyframes fall { 0% { opacity: 0; transform: translateY(0) scale(.6); } 10% { opacity: 1; transform: translateY(0) scale(1); } 40% { opacity: 1; transform: translateY(260%) scale(1); } 48%, 100% { opacity: 0; transform: translateY(330%) scale(.8); } }
+@keyframes scroll { to { transform: translateX(-50%); } }
+@keyframes travel { from { left: -18%; } to { left: 100%; } }
+@keyframes travelY { from { top: -18%; } to { top: 100%; } }
+@keyframes lit { 0%, 18%, 100% { border-color: var(--line-strong); box-shadow: none; color: var(--gold); } 6%, 12% { border-color: var(--gold); box-shadow: 0 0 0 6px rgba(216,166,101,.12), 0 0 24px rgba(243,212,162,.45); color: var(--gold-hi); } }
+@keyframes panelIn { from { opacity: .3; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
+  .drop { display: none; }
 }
 </style>
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-truck" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 100-4 2 2 0 000 4zM17.5 19a2 2 0 100-4 2 2 0 000 4z"/></symbol>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6C27A"/><stop offset=".45" stop-color="#C7772F"/><stop offset="1" stop-color="#4A220C"/>
+    </linearGradient>
+    <linearGradient id="g-amber-side" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/>
+    </linearGradient>
+    <linearGradient id="g-glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFE9C8" stop-opacity=".35"/><stop offset=".12" stop-color="#FFE9C8" stop-opacity=".08"/><stop offset=".88" stop-color="#FFE9C8" stop-opacity=".06"/><stop offset="1" stop-color="#FFE9C8" stop-opacity=".3"/>
+    </linearGradient>
+    <linearGradient id="g-cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1E120C"/><stop offset=".3" stop-color="#5A3A27"/><stop offset=".45" stop-color="#8A6248"/><stop offset=".6" stop-color="#4B2F1F"/><stop offset="1" stop-color="#160C07"/>
+    </linearGradient>
+    <linearGradient id="g-goldmetal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6E4A22"/><stop offset=".35" stop-color="#F3D4A2"/><stop offset=".55" stop-color="#C8954F"/><stop offset="1" stop-color="#5A3A18"/>
+    </linearGradient>
+    <linearGradient id="g-silver" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5F5750"/><stop offset=".35" stop-color="#F2ECE4"/><stop offset=".6" stop-color="#A69C92"/><stop offset="1" stop-color="#4A433D"/>
+    </linearGradient>
+    <linearGradient id="g-bulb" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#BDB2A6"/><stop offset=".4" stop-color="#FBF6EF"/><stop offset="1" stop-color="#9C9084"/>
+    </linearGradient>
+    <linearGradient id="g-serum" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E9B472"/><stop offset=".55" stop-color="#B66A2A"/><stop offset="1" stop-color="#5A2B10"/>
+    </linearGradient>
+    <linearGradient id="g-tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8E7360"/><stop offset=".22" stop-color="#D9C3AC"/><stop offset=".45" stop-color="#F6EADB"/><stop offset=".7" stop-color="#CDB59C"/><stop offset="1" stop-color="#7A6150"/>
+    </linearGradient>
+    <linearGradient id="g-tubecap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4A3426"/><stop offset=".4" stop-color="#B08A6A"/><stop offset=".6" stop-color="#7E5D45"/><stop offset="1" stop-color="#2E1F16"/>
+    </linearGradient>
+    <linearGradient id="g-sweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFF4E2" stop-opacity="0"/><stop offset=".5" stop-color="#FFF4E2" stop-opacity=".55"/><stop offset="1" stop-color="#FFF4E2" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="c-perfume"><rect x="14" y="66" width="172" height="204" rx="18"/></clipPath>
+    <clipPath id="c-serum"><path d="M20 150 Q20 112 56 112 H84 Q120 112 120 150 V282 Q120 296 106 296 H34 Q20 296 20 282 Z"/></clipPath>
+    <clipPath id="c-tube"><path d="M10 16 H100 L91 232 H19 Z"/></clipPath>
+  </defs>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 12h16M14 6l6 6-6 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M12 4v16M4 12h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
 </svg>
 
-<header class="nav">
+<header class="nav" id="nav">
   <div class="wrap">
     <a class="brand" href="#top" aria-label="Chainex home">
-      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-        <rect x="2" y="9" width="17" height="14" rx="7" fill="none" stroke="var(--ink)" stroke-width="3"/>
-        <rect x="13" y="9" width="17" height="14" rx="7" fill="none" stroke="var(--accent)" stroke-width="3"/>
-      </svg>
-      chainex
+      <svg viewBox="0 0 34 22" aria-hidden="true"><rect x="1" y="3" width="19" height="16" rx="8" fill="none" stroke="#F4EADF" stroke-width="1.6"/><rect x="14" y="3" width="19" height="16" rx="8" fill="none" stroke="#D8A665" stroke-width="1.6"/></svg>
+      Chainex
     </a>
     <nav class="nav-links" aria-label="Main">
+      <a href="#approach">Approach</a>
       <a href="#services">Services</a>
-      <a href="#process">How it works</a>
-      <a href="#network">Network</a>
+      <a href="#verification">Verification</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <a class="btn btn-primary" href="#contact">Book an audit</a>
+    <a class="btn btn-line" href="#contact">Start a brief</a>
   </div>
 </header>
 
 <main id="top">
-  <section class="hero">
+  <section class="hero" aria-labelledby="hero-title">
+    <canvas class="hero-bg" id="hero-bg" aria-hidden="true"></canvas>
     <div class="wrap">
       <div class="hero-copy">
-        <p class="eyebrow">Supplier brokerage for beauty brands</p>
-        <h1>From formula to doorstep, <em>without the bottlenecks.</em></h1>
-        <p class="lede">Chainex finds, vets and negotiates with the labs, packaging suppliers, fillers and 3PLs behind your products. You get lower MOQs, shorter lead times and one team accountable for every order.</p>
+        <p class="eyebrow">Sourcing partner for beauty brands · UK</p>
+        <h1 id="hero-title">The suppliers behind <em class="gilt">beautiful</em> products.</h1>
+        <p class="lede">Chainex finds, verifies and manages the manufacturers behind ecommerce beauty brands. We test every option side by side, and we'll tell you when the product itself could be better.</p>
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="#contact">Book a fulfilment audit <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
-          <a class="btn btn-ghost" href="#process">See how it works</a>
+          <a class="btn btn-gold" href="#contact">Book a discovery call <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-line" href="#services">Explore our services</a>
         </div>
-        <div class="hero-proof">
-          <span><svg aria-hidden="true"><use href="#i-check"/></svg>Vetted, audited suppliers</span>
-          <span><svg aria-hidden="true"><use href="#i-check"/></svg>COA &amp; SDS on every batch</span>
-          <span><svg aria-hidden="true"><use href="#i-check"/></svg>No long-term contract</span>
+        <div class="hero-meta">
+          <span>Tested side by side</span>
+          <span>Verified before payment</span>
+          <span>Savings shown monthly</span>
         </div>
       </div>
 
-      <figure class="manifest" aria-label="Example order tracked by Chainex">
-        <div class="manifest-head">
-          <div>
-            <div class="po">PO-2417 · LOT 24-0918-B</div>
-            <h3>Hydrating Peptide Serum</h3>
-            <div class="sku">30 ml · glass dropper · 5,000 units</div>
-          </div>
-          <span class="pill pill-live">In transit</span>
+      <div class="stage" id="stage" aria-hidden="true">
+        <div class="halo"></div>
+        <div class="plinth"></div>
+        <div class="layer" data-depth="10" style="inset:0">
+          <span class="bubble b1"></span><span class="bubble b3"></span><span class="bubble b5"></span>
         </div>
-        <ol class="steps">
-          <li class="step done">
-            <span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
-            <div class="step-body">
-              <div class="step-title">Formulation lab</div>
-              <div class="step-meta">Bulk released · COA verified · pH 5.4</div>
-            </div>
-            <span class="step-time">Day 0</span>
-          </li>
-          <li class="step done">
-            <span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
-            <div class="step-body">
-              <div class="step-title">Primary packaging</div>
-              <div class="step-meta">Bottles + droppers · MOQ cut 10k → 5k</div>
-            </div>
-            <span class="step-time">Day 9</span>
-          </li>
-          <li class="step done">
-            <span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
-            <div class="step-body">
-              <div class="step-title">Filling &amp; QC</div>
-              <div class="step-meta">AQL 1.0 passed · PAO 12M labelled</div>
-            </div>
-            <span class="step-time">Day 16</span>
-          </li>
-          <li class="step now">
-            <span class="dot"><svg aria-hidden="true"><use href="#i-truck"/></svg></span>
-            <div class="step-body">
-              <div class="step-title">3PL inbound</div>
-              <div class="step-meta">ETA 2 days · slotting booked</div>
-              <div class="bar" aria-hidden="true"><i></i></div>
-            </div>
-            <span class="step-time">Day 19</span>
-          </li>
-        </ol>
-        <div class="manifest-foot">
-          <div><div class="mf-label">Lead time</div><div class="mf-value">21 days</div></div>
-          <div><div class="mf-label">Unit cost</div><div class="mf-value">£2.84</div></div>
-          <div><div class="mf-label">On schedule</div><div class="mf-value">Yes <small>+3d buffer</small></div></div>
+        <div class="layer" data-depth="18" style="inset:0">
+          <svg class="product p-serum" viewBox="0 0 140 300">
+            <rect x="52" y="0" width="36" height="72" rx="18" fill="url(#g-bulb)"/>
+            <rect x="58" y="10" width="5" height="50" rx="2.5" fill="#fff" opacity=".6"/>
+            <rect x="40" y="66" width="60" height="48" rx="5" fill="url(#g-silver)"/>
+            <rect x="40" y="76" width="60" height="1.5" fill="#000" opacity=".25"/>
+            <rect x="40" y="100" width="60" height="1.5" fill="#000" opacity=".25"/>
+            <path d="M20 150 Q20 112 56 112 H84 Q120 112 120 150 V282 Q120 296 106 296 H34 Q20 296 20 282 Z" fill="url(#g-serum)"/>
+            <g clip-path="url(#c-serum)">
+              <rect x="0" y="100" width="140" height="200" fill="url(#g-amber-side)"/>
+              <rect x="66" y="112" width="8" height="150" fill="#fff" opacity=".12"/>
+              <rect x="34" y="196" width="72" height="56" rx="3" fill="#F4EADF" opacity=".92"/>
+              <text x="70" y="219" text-anchor="middle" font-family="Bodoni Moda, Didot, serif" font-size="14" fill="#2A1C14">Sérum</text>
+              <text x="70" y="238" text-anchor="middle" font-family="DM Mono, monospace" font-size="6.5" letter-spacing="1.5" fill="#6E5847">30 ML · 1 FL OZ</text>
+              <rect x="28" y="124" width="6" height="160" rx="3" fill="#fff" opacity=".38"/>
+              <rect x="108" y="130" width="3" height="140" rx="1.5" fill="#fff" opacity=".2"/>
+              <rect class="sweep" x="0" y="90" width="40" height="220" fill="url(#g-sweep)" style="transform-box: fill-box"/>
+            </g>
+          </svg>
+          <span class="drop"></span>
         </div>
-      </figure>
+        <div class="layer" data-depth="28" style="inset:0">
+          <svg class="product p-perfume" viewBox="0 0 200 280">
+            <rect x="70" y="0" width="60" height="56" rx="5" fill="url(#g-cap)"/>
+            <rect x="76" y="4" width="6" height="48" rx="3" fill="#fff" opacity=".18"/>
+            <rect x="80" y="54" width="40" height="14" fill="url(#g-goldmetal)"/>
+            <rect x="14" y="66" width="172" height="204" rx="18" fill="#2A1309"/>
+            <g clip-path="url(#c-perfume)">
+              <rect x="14" y="66" width="172" height="204" fill="url(#g-amber)"/>
+              <rect x="14" y="66" width="172" height="204" fill="url(#g-amber-side)"/>
+              <rect x="14" y="66" width="172" height="204" fill="url(#g-glass)"/>
+              <rect x="14" y="66" width="172" height="22" fill="#FFE6C2" opacity=".18"/>
+              <rect x="46" y="128" width="108" height="86" fill="none" stroke="#F3D4A2" stroke-width="1" opacity=".9"/>
+              <rect x="50" y="132" width="100" height="78" fill="#1A0D06" opacity=".22"/>
+              <text x="100" y="168" text-anchor="middle" font-family="Bodoni Moda, Didot, serif" font-size="22" font-style="italic" fill="#FBE7C6">Nº 07</text>
+              <text x="100" y="192" text-anchor="middle" font-family="DM Mono, monospace" font-size="6.5" letter-spacing="2.2" fill="#F3D4A2">EAU DE PARFUM</text>
+              <rect x="24" y="74" width="7" height="186" rx="3.5" fill="#fff" opacity=".42"/>
+              <rect x="36" y="80" width="2" height="170" rx="1" fill="#fff" opacity=".2"/>
+              <rect x="170" y="80" width="4" height="176" rx="2" fill="#fff" opacity=".22"/>
+              <rect class="sweep" x="0" y="50" width="54" height="240" fill="url(#g-sweep)" style="transform-box: fill-box"/>
+            </g>
+            <rect x="14" y="66" width="172" height="204" rx="18" fill="none" stroke="#FFE3BC" stroke-opacity=".45" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div class="layer" data-depth="22" style="inset:0">
+          <svg class="product p-tube" viewBox="0 0 110 300">
+            <rect x="8" y="2" width="94" height="16" rx="2" fill="url(#g-tube)"/>
+            <g opacity=".25" stroke="#3A2A1E" stroke-width="1"><path d="M14 6v8M22 6v8M30 6v8M38 6v8M46 6v8M54 6v8M62 6v8M70 6v8M78 6v8M86 6v8M94 6v8"/></g>
+            <path d="M10 16 H100 L91 232 H19 Z" fill="url(#g-tube)"/>
+            <g clip-path="url(#c-tube)">
+              <text x="55" y="120" text-anchor="middle" font-family="Bodoni Moda, Didot, serif" font-size="15" font-style="italic" fill="#4A3426">Crème</text>
+              <text x="55" y="138" text-anchor="middle" font-family="DM Mono, monospace" font-size="5.5" letter-spacing="1.6" fill="#7A6150">HAND · 75 ML</text>
+              <rect x="22" y="20" width="5" height="208" rx="2.5" fill="#fff" opacity=".35"/>
+              <rect class="sweep" x="0" y="0" width="32" height="240" fill="url(#g-sweep)" style="transform-box: fill-box"/>
+            </g>
+            <rect x="19" y="230" width="72" height="68" rx="7" fill="url(#g-tubecap)"/>
+            <rect x="19" y="230" width="72" height="5" fill="#000" opacity=".25"/>
+            <rect x="27" y="238" width="4" height="54" rx="2" fill="#fff" opacity=".2"/>
+          </svg>
+        </div>
+        <div class="layer" data-depth="40" style="inset:0">
+          <span class="bubble b2"></span><span class="bubble b4"></span><span class="bubble b6"></span>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="band" aria-labelledby="pain-title">
-    <div class="wrap">
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>Skincare</span><span>Serums &amp; oils</span><span>Fragrance</span><span>Haircare</span><span>Body care</span><span>Colour cosmetics</span><span>Packaging</span><span>Own brand</span>
+      <span>Skincare</span><span>Serums &amp; oils</span><span>Fragrance</span><span>Haircare</span><span>Body care</span><span>Colour cosmetics</span><span>Packaging</span><span>Own brand</span>
+    </div>
+  </div>
+
+  <section id="approach" aria-labelledby="approach-title">
+    <div class="wrap approach">
       <div class="section-head">
-        <p class="eyebrow">Where beauty fulfilment breaks</p>
-        <h2 id="pain-title">Most launch delays start three suppliers upstream.</h2>
-        <p class="lede">A single serum can depend on a lab, a glass supplier, a dropper supplier, a filler, a label printer and a warehouse. When one slips, the whole launch slips.</p>
+        <p class="eyebrow">Our approach</p>
+        <h2 id="approach-title">A supplier list is easy to find. The <em class="gilt">right</em> supplier takes evidence.</h2>
+        <p class="lede">We started as a supplier brokerage: a brand wants to switch, we find the right manufacturer and make the introduction. Today we run the whole process, from the first brief to the quality of every batch that follows.</p>
       </div>
-      <div class="pain-grid">
-        <div class="pain">
-          <div class="figure">10k<span>units</span></div>
-          <h3>MOQs built for big brands</h3>
-          <p>Component suppliers set minimums you can't sell through, tying up cash in stock that expires.</p>
+      <div class="principles">
+        <div class="principle">
+          <span class="k">I</span>
+          <div><h3>Priorities ranked up front</h3><p>Quality, cost, speed, packaging and compliance are weighted with you and written down, so every supplier is judged against the same standard.</p></div>
         </div>
-        <div class="pain">
-          <div class="figure">12<span>weeks</span></div>
-          <h3>Packaging lead times</h3>
-          <p>Custom bottles, pumps and cartons hold up finished goods long after the formula is ready.</p>
+        <div class="principle">
+          <span class="k">II</span>
+          <div><h3>Evidence you can see</h3><p>Samples tested side by side against a defined protocol, photographed, and benchmarked against the leading competitor.</p></div>
         </div>
-        <div class="pain">
-          <div class="figure">6+<span>contacts</span></div>
-          <h3>Too many hand-offs</h3>
-          <p>You chase each supplier yourself, by email, in different time zones, with no single view of the order.</p>
+        <div class="principle">
+          <span class="k">III</span>
+          <div><h3>One person, start to finish</h3><p>Direct personal contact. No ticket systems, no account handovers, and one first call for any supplier issue.</p></div>
         </div>
-        <div class="pain">
-          <div class="figure">0<span>margin for error</span></div>
-          <h3>Compliance paperwork</h3>
-          <p>Missing COAs, SDS sheets or product notifications can stop stock at the warehouse door.</p>
-        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature" aria-labelledby="feature-title">
+    <div class="wrap">
+      <div class="feature-art">
+        <canvas id="serum-canvas" aria-hidden="true"></canvas>
+        <div class="tag"><span>Product investigation</span><span>Reviews · Competitors · Sales data</span></div>
+      </div>
+      <div class="feature-copy">
+        <p class="eyebrow">What most brokers don't offer</p>
+        <h2 id="feature-title">Sometimes the supplier isn't the problem. <em>The product is.</em></h2>
+        <p class="lede">Before we source a cheaper version of what you sell, we check whether it should be made differently. If a better-performing format exists in your category, you'll hear about it first.</p>
+        <ul class="ticks">
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Investigation into whether the product can be improved, not just sourced cheaper</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Better-performing formats identified in the same category</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Evidence assembled from customer reviews, competitor products and your sales data</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>A straight answer when your product, not your supplier, is holding you back</span></li>
+        </ul>
       </div>
     </div>
   </section>
@@ -446,129 +589,240 @@ footer a:hover { color: var(--ink); }
   <section id="services" aria-labelledby="services-title">
     <div class="wrap">
       <div class="section-head">
-        <p class="eyebrow">What we broker</p>
-        <h2 id="services-title">One partner for every link in your supply chain.</h2>
-        <p class="lede">Pick a single service or hand us the whole chain. Either way, we manage the suppliers and you get one point of contact.</p>
+        <p class="eyebrow">Services</p>
+        <h2 id="services-title">Twelve services. One accountable partner.</h2>
+        <p class="lede">Start with a supplier switch, or hand us the full chain. Select a service to see exactly what's included.</p>
       </div>
-      <div class="services">
-        <article class="service">
-          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 4a7 7 0 105.2 11.7L20 19.5M11 8v6M8 11h6"/></svg></div>
-          <h3>Supplier sourcing</h3>
-          <p>We shortlist labs and component makers that fit your formula, volumes and price point, then audit them before you commit.</p>
-          <div class="terms"><span>GMP</span><span>ISO 22716</span><span>Site audits</span></div>
-        </article>
-        <article class="service">
-          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h10M4 17h6M17 14l3 3-3 3"/></svg></div>
-          <h3>MOQ &amp; price negotiation</h3>
-          <p>We pool demand across our brand network to unlock lower minimums and better unit pricing than you'd get alone.</p>
-          <div class="terms"><span>MOQ</span><span>Volume tiers</span><span>Payment terms</span></div>
-        </article>
-        <article class="service">
-          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 3h6v3l1.5 2v12a1 1 0 01-1 1h-7a1 1 0 01-1-1V8L9 6zM7.5 12h9"/></svg></div>
-          <h3>Packaging coordination</h3>
-          <p>Bottles, pumps, droppers, jars, cartons and labels, all timed to arrive at the filler on the same week.</p>
-          <div class="terms"><span>Primary</span><span>Secondary</span><span>PCR options</span></div>
-        </article>
-        <article class="service">
-          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 21V10l6 4V10l6 4V6l6 4v11zM7 17h2M12 17h2M17 17h2"/></svg></div>
-          <h3>Contract manufacturing</h3>
-          <p>We match you with fillers who handle your viscosity, fill size and run length, and we sit in on every QC release.</p>
-          <div class="terms"><span>Fill &amp; pack</span><span>AQL checks</span><span>Batch records</span></div>
-        </article>
-        <article class="service">
-          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-truck"/></svg></div>
-          <h3>3PL &amp; fulfilment</h3>
-          <p>We place you with warehouses that know beauty: batch and expiry tracking, gift sets, sampling and same-day dispatch.</p>
-          <div class="terms"><span>FEFO picking</span><span>Shopify</span><span>Returns</span></div>
-        </article>
-        <article class="service">
-          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13H7zM14 3v5h5M10 13l2 2 4-4"/></svg></div>
-          <h3>Compliance documents</h3>
-          <p>We collect and check the paperwork for every batch so your stock clears customs and the warehouse without delays.</p>
-          <div class="terms"><span>COA</span><span>SDS</span><span>CPNP</span><span>MoCRA</span></div>
-        </article>
+
+      <div class="explorer">
+        <div class="svc-list" role="tablist" aria-label="Chainex services">
+          <button class="svc-tab" role="tab" id="t1" aria-controls="p1" aria-selected="true"><span class="n">01</span><span>Understanding the brief</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1"><span class="n">02</span><span>Sourcing</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1"><span class="n">03</span><span>Product investigation<span class="star">Signature</span></span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t4" aria-controls="p4" aria-selected="false" tabindex="-1"><span class="n">04</span><span>Verification</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t5" aria-controls="p5" aria-selected="false" tabindex="-1"><span class="n">05</span><span>Quality testing</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t6" aria-controls="p6" aria-selected="false" tabindex="-1"><span class="n">06</span><span>Compliance &amp; documentation</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t7" aria-controls="p7" aria-selected="false" tabindex="-1"><span class="n">07</span><span>Commercial analysis</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t8" aria-controls="p8" aria-selected="false" tabindex="-1"><span class="n">08</span><span>Communication</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t9" aria-controls="p9" aria-selected="false" tabindex="-1"><span class="n">09</span><span>Ongoing quality management</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t10" aria-controls="p10" aria-selected="false" tabindex="-1"><span class="n">10</span><span>Fulfilment strategy</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t11" aria-controls="p11" aria-selected="false" tabindex="-1"><span class="n">11</span><span>Market intelligence</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button class="svc-tab" role="tab" id="t12" aria-controls="p12" aria-selected="false" tabindex="-1"><span class="n">12</span><span>Own brand development</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        </div>
+
+        <div class="svc-panel" aria-live="polite">
+          <div class="svc-body" role="tabpanel" id="p1" aria-labelledby="t1">
+            <span class="big" aria-hidden="true">01</span>
+            <h3>Understanding the brief</h3>
+            <p class="intro">We establish what you're actually optimising for before a single supplier is contacted.</p>
+            <ul>
+              <li>Structured discovery to establish your real objectives</li>
+              <li>Priority weighting agreed explicitly: quality, cost, speed, packaging and compliance, ranked rather than assumed</li>
+              <li>Analysis of your own sales and cost data to establish the real baseline</li>
+              <li>A written requirement brief that becomes the standard every supplier is measured against</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p2" aria-labelledby="t2" hidden>
+            <span class="big" aria-hidden="true">02</span>
+            <h3>Sourcing</h3>
+            <p class="intro">A search built around your brief, run across several suppliers at once.</p>
+            <ul>
+              <li>Tailored supplier search against your criteria, not a fixed contact list</li>
+              <li>Multiple suppliers approached and screened in parallel</li>
+              <li>Factory-ready supplier briefs: your requirements translated into a specification a manufacturer can quote against</li>
+              <li>Direct negotiation on price, minimums, lead times and terms</li>
+              <li>Backup supplier options kept warm, so a single supplier failing isn't a crisis</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p3" aria-labelledby="t3" hidden>
+            <span class="big" aria-hidden="true">03</span>
+            <h3>Product investigation</h3>
+            <p class="intro">We look at whether the product itself should change, not only who makes it.</p>
+            <ul>
+              <li>Investigating whether the product can be improved, not just sourced cheaper</li>
+              <li>Identifying better-performing formats in the same category</li>
+              <li>Evidence assembled from customer reviews, competitor products and sales data</li>
+              <li>Telling you when the answer is that your product is the problem, not your supplier</li>
+            </ul>
+            <span class="flag">Our signature service</span>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p4" aria-labelledby="t4" hidden>
+            <span class="big" aria-hidden="true">04</span>
+            <h3>Verification</h3>
+            <p class="intro">Seven checks completed before you commit money to a new supplier.</p>
+            <ul>
+              <li>Legal entity</li>
+              <li>Payee matching</li>
+              <li>Physical product identity</li>
+              <li>Measured specification</li>
+              <li>Regulatory compliance</li>
+              <li>Commercial terms</li>
+              <li>Fulfilment</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p5" aria-labelledby="t5" hidden>
+            <span class="big" aria-hidden="true">05</span>
+            <h3>Quality testing</h3>
+            <p class="intro">Objective, documented testing you can compare line by line.</p>
+            <ul>
+              <li>Samples obtained from multiple suppliers and tested side by side</li>
+              <li>Structured physical testing against a defined protocol, documented with photographs</li>
+              <li>Multiple units tested from the same shipment to expose batch inconsistency</li>
+              <li>Benchmarking against the leading competitor product</li>
+              <li>An objective written comparison and recommendation</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p6" aria-labelledby="t6" hidden>
+            <span class="big" aria-hidden="true">06</span>
+            <h3>Compliance &amp; documentation</h3>
+            <p class="intro">Every document your destination market requires, collected and checked.</p>
+            <ul>
+              <li>Full ingredient declarations collected and assessed</li>
+              <li>Ingredients checked clause by clause against your destination market's regulations</li>
+              <li>Facility registration and product listing verified by number</li>
+              <li>Safety, heavy metal and microbiological documentation collected</li>
+              <li>Label review for the destination market</li>
+              <li>A written gap list of what could not be obtained and what it means</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p7" aria-labelledby="t7" hidden>
+            <span class="big" aria-hidden="true">07</span>
+            <h3>Commercial analysis</h3>
+            <p class="intro">Quotes made genuinely comparable, and savings you can audit.</p>
+            <ul>
+              <li>Verified baseline built from your actual invoices</li>
+              <li>Itemised quote comparison in a common format</li>
+              <li>Duty and incoterm position confirmed in writing</li>
+              <li>True landed cost modelling, so quotes are genuinely comparable</li>
+              <li>Savings calculated transparently and shown monthly</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p8" aria-labelledby="t8" hidden>
+            <span class="big" aria-hidden="true">08</span>
+            <h3>Communication</h3>
+            <p class="intro">You talk to one person. We talk to the factory.</p>
+            <ul>
+              <li>Direct personal contact, with no ticket systems or account handovers</li>
+              <li>You talk, we translate: plain-language requirements converted into factory-ready specification</li>
+              <li>Video calls with suppliers arranged, and factory walkthroughs where a supplier offers them</li>
+              <li>First point of contact for any supplier issue, with root-cause investigation</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p9" aria-labelledby="t9" hidden>
+            <span class="big" aria-hidden="true">09</span>
+            <h3>Ongoing quality management</h3>
+            <p class="intro">Problems surfaced in a report, before they reach your reviews.</p>
+            <ul>
+              <li>Test purchases from your own store at agreed intervals, tested against the benchmark</li>
+              <li>Review and return monitoring, coded for patterns</li>
+              <li>Repeat complaints flagged and traced to a cause</li>
+              <li>Batch consistency tracked against the approved sample</li>
+              <li>Problems surfaced in a report rather than in your reviews</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p10" aria-labelledby="t10" hidden>
+            <span class="big" aria-hidden="true">10</span>
+            <h3>Fulfilment strategy</h3>
+            <p class="intro">Orders that flow correctly from day one, and capital committed only when it makes sense.</p>
+            <ul>
+              <li>Order integration set up and tested before go-live</li>
+              <li>A live test order run end to end</li>
+              <li>Multi-supplier order routing where products come from different sources</li>
+              <li>Dropship versus bulk plus warehousing modelled and costed honestly, including when not to commit capital</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p11" aria-labelledby="t11" hidden>
+            <span class="big" aria-hidden="true">11</span>
+            <h3>Market intelligence</h3>
+            <p class="intro">Research into your category, and ideas brought to you before you ask.</p>
+            <ul>
+              <li>Category and format research</li>
+              <li>Competitor and review analysis</li>
+              <li>Sales data analysis across relevant channels</li>
+              <li>Trend and decline tracking</li>
+              <li>Improvement recommendations brought to you unprompted</li>
+            </ul>
+          </div>
+          <div class="svc-body" role="tabpanel" id="p12" aria-labelledby="t12" hidden>
+            <span class="big" aria-hidden="true">12</span>
+            <h3>Own brand development</h3>
+            <p class="intro">From a stock product to one that's genuinely yours.</p>
+            <ul>
+              <li>A running customisation readiness file</li>
+              <li>Manufacturer identification behind generic products</li>
+              <li>Specification development: fill, applicator, formulation and packaging</li>
+              <li>Managing the transition from a stock product to one that's genuinely yours</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section id="process" class="process" aria-labelledby="process-title">
+  <section id="verification" class="verify" aria-labelledby="verify-title">
     <div class="wrap">
       <div class="section-head">
-        <p class="eyebrow">How it works</p>
-        <h2 id="process-title">From first call to first shipment in four steps.</h2>
+        <p class="eyebrow">Verification</p>
+        <h2 id="verify-title">Seven checks before any money moves.</h2>
+        <p class="lede">Every new supplier passes the same chain of checks, in order. If one link fails, we stop and tell you why.</p>
       </div>
-      <ol class="timeline">
-        <li>
-          <span class="num">Step 1</span>
-          <h3>Audit</h3>
-          <p>We map your current suppliers, costs and lead times for every SKU and show you where time and money leak out.</p>
-          <p class="out"><b>You get:</b> a fulfilment audit with ranked fixes.</p>
-          <span class="wk">Week 1</span>
-        </li>
-        <li>
-          <span class="num">Step 2</span>
-          <h3>Shortlist</h3>
-          <p>We put forward two or three vetted options for each link in the chain, with samples and quotes side by side.</p>
-          <p class="out"><b>You get:</b> comparable quotes and samples.</p>
-          <span class="wk">Weeks 2–3</span>
-        </li>
-        <li>
-          <span class="num">Step 3</span>
-          <h3>Negotiate</h3>
-          <p>We agree MOQs, pricing, payment terms and delivery windows, then line up every supplier against your launch date.</p>
-          <p class="out"><b>You get:</b> signed terms and a production calendar.</p>
-          <span class="wk">Weeks 3–4</span>
-        </li>
-        <li>
-          <span class="num">Step 4</span>
-          <h3>Run &amp; monitor</h3>
-          <p>We manage each purchase order through production, QC and inbound, and flag any risk before it reaches your customers.</p>
-          <p class="out"><b>You get:</b> live order tracking and one contact.</p>
-          <span class="wk">Ongoing</span>
-        </li>
+      <ol class="chain">
+        <li class="check"><span class="node" aria-hidden="true"></span><h3>Legal entity</h3><p>The company is real, registered and matches who you're dealing with.</p></li>
+        <li class="check"><span class="node" aria-hidden="true"></span><h3>Payee matching</h3><p>Bank details match the verified entity before any payment is made.</p></li>
+        <li class="check"><span class="node" aria-hidden="true"></span><h3>Product identity</h3><p>The physical product is the one you approved, unit for unit.</p></li>
+        <li class="check"><span class="node" aria-hidden="true"></span><h3>Measured specification</h3><p>Fill, dimensions and materials measured, not taken on trust.</p></li>
+        <li class="check"><span class="node" aria-hidden="true"></span><h3>Regulatory compliance</h3><p>Documents checked against your destination market's rules.</p></li>
+        <li class="check"><span class="node" aria-hidden="true"></span><h3>Commercial terms</h3><p>Price, minimums, incoterm and lead time confirmed in writing.</p></li>
+        <li class="check"><span class="node" aria-hidden="true"></span><h3>Fulfilment</h3><p>Order flow tested end to end before go-live.</p></li>
       </ol>
     </div>
   </section>
 
-  <section id="network" aria-labelledby="network-title">
-    <div class="wrap network">
+  <section aria-labelledby="steps-title">
+    <div class="wrap">
       <div class="section-head">
-        <p class="eyebrow">Our network</p>
-        <h2 id="network-title">Specialists for every stage, checked before you meet them.</h2>
-        <p class="lede">Every partner is assessed on quality systems, capacity, lead-time reliability and how they handle small and mid-sized beauty brands.</p>
-        <div><a class="btn btn-ghost" href="#contact">Ask about a category</a></div>
+        <p class="eyebrow">How an engagement runs</p>
+        <h2 id="steps-title">From brief to a better supply chain.</h2>
       </div>
-      <div class="chain">
-        <div class="link"><span class="tier">Formulate</span><div><h3>Labs &amp; private label</h3><p>Skincare, haircare, body and colour cosmetics, including clean and vegan formulas.</p></div></div>
-        <div class="link"><span class="tier">Package</span><div><h3>Primary &amp; secondary packaging</h3><p>Glass, airless, PCR plastics, aluminium, rigid boxes and folding cartons.</p></div></div>
-        <div class="link"><span class="tier">Fill</span><div><h3>Filling &amp; assembly</h3><p>Liquids, creams, powders and kits, from 1,000-unit pilot runs up.</p></div></div>
-        <div class="link"><span class="tier">Store</span><div><h3>3PL warehouses</h3><p>Beauty-specialist fulfilment centres with batch, expiry and temperature control.</p></div></div>
-        <div class="link"><span class="tier">Deliver</span><div><h3>Carriers &amp; returns</h3><p>Domestic and cross-border shipping with rates negotiated across our brands.</p></div></div>
-      </div>
+      <ol class="steps">
+        <li><span class="k">Stage 1</span><h3>Brief</h3><p>We agree what matters most and set the baseline from your own data.</p><span class="svcs">Service 01</span></li>
+        <li><span class="k">Stage 2</span><h3>Search</h3><p>Suppliers screened in parallel, and the product itself questioned.</p><span class="svcs">Services 02 · 03 · 11</span></li>
+        <li><span class="k">Stage 3</span><h3>Prove</h3><p>Verification, side-by-side testing and compliance checks.</p><span class="svcs">Services 04 · 05 · 06</span></li>
+        <li><span class="k">Stage 4</span><h3>Decide</h3><p>True landed costs compared and a written recommendation made.</p><span class="svcs">Service 07</span></li>
+        <li><span class="k">Stage 5</span><h3>Run</h3><p>Go-live, fulfilment set-up and quality managed batch after batch.</p><span class="svcs">Services 08 · 09 · 10 · 12</span></li>
+      </ol>
     </div>
   </section>
 
-  <section aria-labelledby="case-title" style="padding-top:0">
-    <div class="wrap">
-      <div class="case">
-        <div class="case-copy">
-          <p class="eyebrow">Example engagement</p>
-          <h2 id="case-title">A skincare brand launching four SKUs in one season.</h2>
-          <p>The brand was ordering components from five suppliers and waiting on its slowest one for every launch. Here is what consolidating through Chainex looks like for an order like theirs.</p>
-          <ul>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Moved glass and droppers to one supplier with a shared MOQ across SKUs</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Booked filler capacity before packaging landed, removing a two-week gap</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Switched to a 3PL with FEFO picking to stop expired-stock write-offs</span></li>
-          </ul>
-          <p class="disclaimer">Illustrative figures. Replace with results from a real client.</p>
-        </div>
-        <div class="case-stats">
-          <div class="case-stat"><span class="v">−38%</span><span class="k">lead time, PO to warehouse</span></div>
-          <div class="case-stat"><span class="v">−50%</span><span class="k">minimum order quantity</span></div>
-          <div class="case-stat"><span class="v">−17%</span><span class="k">landed cost per unit</span></div>
-          <div class="case-stat"><span class="v">1</span><span class="k">contact instead of five</span></div>
-        </div>
+  <section aria-labelledby="money-title" style="padding-top:0">
+    <div class="wrap money">
+      <div class="section-head">
+        <p class="eyebrow">Commercial analysis</p>
+        <h2 id="money-title">The cheapest quote is rarely the cheapest product.</h2>
+        <p class="lede">We rebuild every quote into the same format, add freight, duty and inbound checks, and compare true landed cost per unit. Then we show the saving every month.</p>
       </div>
+      <figure class="table-card" style="margin:0">
+        <div class="table-scroll">
+          <table>
+            <caption class="note" style="caption-side:bottom; text-align:left; padding:0 20px 16px">Illustrative example for a 30 ml serum. Figures are not from a real client.</caption>
+            <thead>
+              <tr><th scope="col">Per unit</th><th scope="col">Current</th><th scope="col" class="pick">Supplier A</th><th scope="col">Supplier B</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Quoted price</td><td>£3.40</td><td class="pick">£2.60</td><td>£2.20</td></tr>
+              <tr><td>Incoterm</td><td class="inc">DDP</td><td class="pick inc">FOB</td><td class="inc">EXW</td></tr>
+              <tr><td>Freight &amp; insurance</td><td class="inc">included</td><td class="pick">£0.38</td><td>£0.80</td></tr>
+              <tr><td>Duty &amp; clearance</td><td class="inc">included</td><td class="pick">£0.09</td><td>£0.31</td></tr>
+              <tr><td>Inbound testing</td><td>£0.05</td><td class="pick">£0.05</td><td>£0.12</td></tr>
+              <tr class="total"><td>Landed cost</td><td>£3.45</td><td class="pick">£3.12</td><td>£3.43</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-foot">
+          <div class="saving"><small>Monthly saving at 8,000 units</small>£2,640</div>
+          <span class="note">Supplier B quotes lowest but lands within 2p of today's cost.</span>
+        </div>
+      </figure>
     </div>
   </section>
 
@@ -576,28 +830,24 @@ footer a:hover { color: var(--ink); }
     <div class="wrap faq">
       <div class="section-head">
         <p class="eyebrow">FAQ</p>
-        <h2 id="faq-title">Questions brands ask before they switch.</h2>
+        <h2 id="faq-title">Before we begin.</h2>
       </div>
       <div>
         <details class="qa">
-          <summary>How does Chainex get paid?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <p>We charge a fixed fee for the audit, then a brokerage fee based on the orders we manage. You see every supplier quote, so you always know what you're paying for.</p>
+          <summary>Do you only work with brands switching suppliers?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>No. Many brands come to us for a supplier switch, but others start with product investigation, a compliance check, quality testing or own brand development. You can take one service or the full set.</p>
         </details>
         <details class="qa">
-          <summary>Can I keep some of my current suppliers?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <p>Yes. If a supplier is working well, we keep them and coordinate them alongside the rest of the chain. We only replace links that cost you time or margin.</p>
+          <summary>Will you tell us if our current supplier is the right one?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>Yes. Your current supplier is measured against the same written brief as everyone else. If they come out on top, or the product is what needs to change, we'll say so.</p>
         </details>
         <details class="qa">
-          <summary>What size of brand do you work with?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <p>Most of our brands sell between 2,000 and 100,000 units a month online. Pooled ordering is what lets smaller brands reach the minimums usually reserved for larger ones.</p>
+          <summary>Which markets do you check compliance for?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>We're based in the UK and check ingredients, documentation and labels against the regulations of whichever market you sell into, and give you a written list of any gaps.</p>
         </details>
         <details class="qa">
-          <summary>Who owns the formulas and supplier relationships?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <p>You do. Formulas, artwork and tooling stay yours, and you can contract with any supplier directly if you ever leave.</p>
-        </details>
-        <details class="qa">
-          <summary>Do you handle international shipping and regulations?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <p>Yes. We collect the documents each market needs, including COAs, SDS sheets and product notifications, and work with carriers that ship cosmetics cross-border.</p>
+          <summary>Do we have to buy stock in bulk?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>Not necessarily. We model dropship against bulk plus warehousing for your volumes and cost both honestly, including when it's better not to commit capital yet.</p>
         </details>
       </div>
     </div>
@@ -606,17 +856,14 @@ footer a:hover { color: var(--ink); }
   <section id="contact" class="cta" aria-labelledby="cta-title">
     <div class="wrap">
       <div class="cta-card">
-        <svg class="cta-rings" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="100" cy="100" r="40"/><circle cx="100" cy="100" r="62"/><circle cx="100" cy="100" r="84"/></g></svg>
         <div>
-          <h2 id="cta-title">See where your fulfilment is leaking margin.</h2>
-          <p>Send us your SKU list and current suppliers. Within a week you'll get a fulfilment audit showing what we'd change and what it would save.</p>
+          <p class="eyebrow">Start a brief</p>
+          <h2 id="cta-title" style="margin-top:22px">Tell us what you're <em class="gilt">optimising</em> for.</h2>
+          <p>Book a discovery call. We'll talk through your products, your current suppliers and what you want to improve, then explain how we'd approach it.</p>
         </div>
         <div class="cta-side">
-          <a class="btn btn-primary" href="mailto:hello@chainex.co?subject=Fulfilment%20audit">Book a fulfilment audit <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
-          <div class="email-row">
-            <code id="email">hello@chainex.co</code>
-            <button class="copy" type="button" id="copy-email">Copy</button>
-          </div>
+          <a class="btn btn-gold" href="mailto:hello@chainex.co?subject=Discovery%20call">Book a discovery call <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <div class="email-row"><code id="email">hello@chainex.co</code><button class="copy" type="button" id="copy-email">Copy</button></div>
         </div>
       </div>
     </div>
@@ -625,32 +872,159 @@ footer a:hover { color: var(--ink); }
 
 <footer>
   <div class="wrap">
-    <span>© 2026 Chainex. Supplier brokerage for beauty brands.</span>
+    <span>© 2026 Chainex · Sourcing partner for ecommerce beauty brands · United Kingdom</span>
     <nav aria-label="Footer">
+      <a href="#approach">Approach</a>
       <a href="#services">Services</a>
-      <a href="#process">How it works</a>
-      <a href="#faq">FAQ</a>
+      <a href="#verification">Verification</a>
       <a href="#contact">Contact</a>
     </nav>
   </div>
 </footer>
 
 <script>
-  (function () {
-    var btn = document.getElementById('copy-email');
-    var email = document.getElementById('email');
-    btn.addEventListener('click', function () {
-      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); };
-      var fallback = function () {
-        var r = document.createRange(); r.selectNodeContents(email);
-        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-        btn.textContent = 'Selected';
-      };
-      try {
-        navigator.clipboard.writeText(email.textContent).then(done, fallback);
-      } catch (e) { fallback(); }
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Nav background on scroll */
+  var nav = document.getElementById('nav');
+  var onScroll = function () { nav.classList.toggle('scrolled', window.scrollY > 40); };
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* Hero: molten satin shader */
+  var cv = document.getElementById('hero-bg');
+  var gl = null;
+  try { gl = cv.getContext('webgl', { antialias: false, premultipliedAlpha: false }); } catch (e) {}
+  if (gl) {
+    var vs = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
+    var fs = [
+      'precision mediump float;uniform vec2 r;uniform float t;',
+      'float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+      'float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}',
+      'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*n(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}',
+      'float field(vec2 p){vec2 q=vec2(fbm(p+vec2(0.,t*.06)),fbm(p+vec2(5.2,1.3)-t*.045));return fbm(p*.9+1.8*q);}',
+      'void main(){vec2 uv=gl_FragCoord.xy/r;vec2 p=uv*vec2(r.x/r.y,1.)*1.35;float e=.006;',
+      'float f=field(p);float fx=field(p+vec2(e,0.));float fy=field(p+vec2(0.,e));',
+      'vec3 nr=normalize(vec3((f-fx)/e*.55,(f-fy)/e*.55,1.));vec3 L=normalize(vec3(-.4,.65,.65));',
+      'float d=max(dot(nr,L),0.);float s=pow(max(dot(reflect(-L,nr),vec3(0.,0.,1.)),0.),18.);',
+      'vec3 dark=vec3(.05,.035,.027);vec3 bronze=vec3(.40,.235,.12);vec3 gold=vec3(1.,.82,.55);',
+      'vec3 c=mix(dark,bronze,smoothstep(.25,.95,f*d*1.15));c+=gold*s*.5;',
+      'float v=smoothstep(1.15,.15,length((uv-vec2(.72,.52))*vec2(1.,1.25)));c*=.35+.85*v;',
+      'gl_FragColor=vec4(c,1.);}'
+    ].join('\n');
+    var sh = function (type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
+    var v = sh(gl.VERTEX_SHADER, vs), f = sh(gl.FRAGMENT_SHADER, fs);
+    if (v && f) {
+      var pr = gl.createProgram(); gl.attachShader(pr, v); gl.attachShader(pr, f); gl.linkProgram(pr);
+      if (gl.getProgramParameter(pr, gl.LINK_STATUS)) {
+        gl.useProgram(pr);
+        var b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+        var loc = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+        var uR = gl.getUniformLocation(pr, 'r'), uT = gl.getUniformLocation(pr, 't');
+        var scale = 0.5, visible = true, start = performance.now(), raf = 0;
+        var size = function () {
+          var w = Math.max(1, Math.round(cv.clientWidth * scale)), hgt = Math.max(1, Math.round(cv.clientHeight * scale));
+          if (cv.width !== w || cv.height !== hgt) { cv.width = w; cv.height = hgt; gl.viewport(0, 0, w, hgt); }
+          gl.uniform2f(uR, w, hgt);
+        };
+        var draw = function (time) {
+          size(); gl.uniform1f(uT, 8 + time / 1000); gl.drawArrays(gl.TRIANGLES, 0, 3);
+        };
+        var loop = function (now) { draw(now - start); if (visible && !document.hidden) raf = requestAnimationFrame(loop); else raf = 0; };
+        var kick = function () { if (!raf && !reduce && visible && !document.hidden) raf = requestAnimationFrame(loop); };
+        draw(0); cv.classList.add('on');
+        if (!reduce) {
+          kick();
+          new IntersectionObserver(function (en) { visible = en[0].isIntersecting; kick(); }).observe(cv);
+          document.addEventListener('visibilitychange', kick);
+        }
+        window.addEventListener('resize', function () { if (reduce || !raf) draw(0); });
+      }
+    }
+  }
+
+  /* Hero: gentle parallax on pointer */
+  var stage = document.getElementById('stage');
+  if (!reduce && window.matchMedia('(pointer: fine)').matches) {
+    var layers = stage.querySelectorAll('.layer');
+    document.querySelector('.hero').addEventListener('pointermove', function (e) {
+      var r = stage.getBoundingClientRect();
+      var x = (e.clientX - (r.left + r.width / 2)) / r.width, y = (e.clientY - (r.top + r.height / 2)) / r.height;
+      layers.forEach(function (l) { var d = +l.dataset.depth; l.style.transform = 'translate(' + (-x * d) + 'px,' + (-y * d * .6) + 'px)'; });
     });
-  })();
+  }
+
+  /* Feature: rising serum bubbles on canvas */
+  var sc = document.getElementById('serum-canvas');
+  var cx = sc.getContext('2d');
+  if (cx) {
+    var parts = [], W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2), sv = true, sraf = 0;
+    var rnd = function (a, b) { return a + Math.random() * (b - a); };
+    var mk = function (init) {
+      var rr = Math.random() < .18 ? rnd(40, 90) : rnd(6, 30);
+      return { x: rnd(0, 1), y: init ? rnd(0, 1) : 1.15, r: rr, s: rnd(.00015, .0006) * (60 / rr + .5), w: rnd(0, 6.28), a: rnd(.55, 1) };
+    };
+    for (var i = 0; i < 34; i++) parts.push(mk(true));
+    var resize = function () { var r = sc.getBoundingClientRect(); W = r.width; H = r.height; sc.width = W * dpr; sc.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+    var paint = function (p) {
+      var x = p.x * W + Math.sin(p.w) * 10, y = p.y * H, r = p.r * (W / 520);
+      var g = cx.createRadialGradient(x, y, r * .55, x, y, r);
+      g.addColorStop(0, 'rgba(230,170,90,0.10)'); g.addColorStop(.82, 'rgba(201,132,58,0.38)'); g.addColorStop(.94, 'rgba(140,91,53,0.55)'); g.addColorStop(1, 'rgba(140,91,53,0)');
+      cx.globalAlpha = p.a; cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r, 0, 6.283); cx.fill();
+      var hg = cx.createRadialGradient(x - r * .35, y - r * .38, 0, x - r * .35, y - r * .38, r * .35);
+      hg.addColorStop(0, 'rgba(255,250,240,0.95)'); hg.addColorStop(1, 'rgba(255,250,240,0)');
+      cx.fillStyle = hg; cx.beginPath(); cx.arc(x - r * .35, y - r * .38, r * .35, 0, 6.283); cx.fill();
+      cx.globalAlpha = 1;
+    };
+    var frame = function () {
+      cx.clearRect(0, 0, W, H);
+      var bg = cx.createLinearGradient(0, 0, W, H); bg.addColorStop(0, 'rgba(246,211,150,0.35)'); bg.addColorStop(1, 'rgba(176,112,52,0.45)');
+      cx.fillStyle = bg; cx.beginPath();
+      cx.moveTo(0, H * .62); cx.bezierCurveTo(W * .3, H * .5, W * .55, H * .78, W, H * .58); cx.lineTo(W, H); cx.lineTo(0, H); cx.fill();
+      parts.forEach(paint);
+    };
+    var step = function () {
+      parts.forEach(function (p, k) { p.y -= p.s * 16; p.w += .01; if (p.y < -.2) parts[k] = mk(false); });
+      frame(); sraf = (sv && !document.hidden) ? requestAnimationFrame(step) : 0;
+    };
+    resize(); frame();
+    window.addEventListener('resize', function () { resize(); frame(); });
+    if (!reduce) {
+      new IntersectionObserver(function (en) { sv = en[0].isIntersecting; if (sv && !sraf) sraf = requestAnimationFrame(step); }).observe(sc);
+      document.addEventListener('visibilitychange', function () { if (sv && !document.hidden && !sraf) sraf = requestAnimationFrame(step); });
+    }
+  }
+
+  /* Services explorer */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.svc-tab'));
+  var select = function (tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  };
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { select(t, false); });
+    t.addEventListener('keydown', function (e) {
+      var k = e.key, j = -1;
+      if (k === 'ArrowDown' || k === 'ArrowRight') j = (i + 1) % tabs.length;
+      if (k === 'ArrowUp' || k === 'ArrowLeft') j = (i - 1 + tabs.length) % tabs.length;
+      if (k === 'Home') j = 0; if (k === 'End') j = tabs.length - 1;
+      if (j > -1) { e.preventDefault(); select(tabs[j], true); }
+    });
+  });
+
+  /* Copy email */
+  var btn = document.getElementById('copy-email'), email = document.getElementById('email');
+  btn.addEventListener('click', function () {
+    var fallback = function () { var r = document.createRange(); r.selectNodeContents(email); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected'; };
+    try { navigator.clipboard.writeText(email.textContent).then(function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }, fallback); } catch (e) { fallback(); }
+  });
+})();
 </script>
 </body>
 </html>

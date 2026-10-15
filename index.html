@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chainex</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Chainex brokers suppliers, packaging, manufacturing and 3PL partners for ecommerce beauty brands, so launches ship on time and fulfilment costs less.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: "the manifest" — the page reads like one order moving through the chain; asymmetric hero, ticket-style data, quiet bands between. */
+:root {
+  --bg: #F6F3F7;        /* porcelain, lilac bias */
+  --surface: #FFFFFF;
+  --sunk: #EEE8EE;
+  --ink: #24131F;       /* aubergine */
+  --muted: #6B5866;
+  --line: #E2D8E0;
+  --accent: #B02A63;    /* lacquer */
+  --accent-soft: #F6DCE7;
+  --on-accent: #FFFFFF;
+  --ok: #2C7A69;
+  --ok-soft: #DCEFEA;
+  --band: #24131F;
+  --on-band: #F6EEF3;
+  --band-muted: #BCA9B6;
+
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Figtree", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  --step-4: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
+
+  --radius: 14px;
+  --wrap: 1180px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #140B12; --surface: #1E131B; --sunk: #191017; --ink: #F4ECF1; --muted: #B4A1AE;
+    --line: #382833; --accent: #F0699F; --accent-soft: #3D1A2B; --on-accent: #1A0A13;
+    --ok: #6FCBB5; --ok-soft: #173029; --band: #2A1824; --on-band: #F6EEF3; --band-muted: #BCA9B6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #140B12; --surface: #1E131B; --sunk: #191017; --ink: #F4ECF1; --muted: #B4A1AE;
+  --line: #382833; --accent: #F0699F; --accent-soft: #3D1A2B; --on-accent: #1A0A13;
+  --ok: #6FCBB5; --ok-soft: #173029; --band: #2A1824; --on-band: #F6EEF3; --band-muted: #BCA9B6;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.08; margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.wrap {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (min-width: 720px) {
+  .wrap { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); }
+}
+section { padding-block: clamp(64px, 9vw, 120px); }
+.eyebrow {
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.lede { font-size: var(--step-1); color: var(--muted); max-width: 58ch; }
+.section-head { display: grid; gap: 16px; max-width: 760px; margin-bottom: clamp(36px, 5vw, 56px); }
+.section-head h2 { font-size: var(--step-3); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 600 var(--step-0)/1 var(--f-body);
+  padding: 15px 22px; border-radius: 999px; border: 1px solid transparent;
+  text-decoration: none; cursor: pointer;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+.btn svg { width: 18px; height: 18px; transition: transform .2s ease; }
+.btn-primary { background: var(--accent); color: var(--on-accent); }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-primary:hover svg { transform: translateX(3px); }
+.btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+.btn-ghost:hover { border-color: var(--ink); }
+
+/* Nav */
+.nav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 14px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 800 1.375rem/1 var(--f-display); letter-spacing: -0.03em; }
+.brand-mark { width: 30px; height: 30px; }
+.nav-links { display: none; gap: 28px; font-weight: 500; font-size: 0.9375rem; }
+.nav-links a { text-decoration: none; color: var(--muted); transition: color .2s; }
+.nav-links a:hover { color: var(--ink); }
+.nav .btn { padding: 11px 18px; font-size: 0.9375rem; }
+@media (min-width: 900px) { .nav-links { display: flex; } }
+
+/* Hero */
+.hero { padding-block: clamp(48px, 7vw, 96px) clamp(56px, 8vw, 104px); }
+.hero .wrap { display: grid; gap: clamp(40px, 6vw, 72px); align-items: center; }
+@media (min-width: 980px) { .hero .wrap { grid-template-columns: 1.05fr 0.95fr; } }
+.hero-copy { display: grid; gap: 24px; min-width: 0; }
+.hero h1 { font-size: var(--step-4); font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 8px; }
+.hero-proof { display: flex; flex-wrap: wrap; gap: 8px 22px; padding-top: 12px; color: var(--muted); font-size: 0.9375rem; }
+.hero-proof span { display: inline-flex; align-items: center; gap: 8px; }
+.hero-proof svg { width: 16px; height: 16px; color: var(--ok); flex: none; }
+
+/* Manifest ticket */
+.manifest {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+  box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--ink) 35%, transparent);
+  min-width: 0; position: relative; overflow: hidden;
+}
+.manifest-head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+  padding: 22px 24px 18px; border-bottom: 1px dashed var(--line);
+}
+.manifest-head .po { font-family: var(--f-mono); font-size: var(--step--1); color: var(--muted); letter-spacing: 0.04em; }
+.manifest-head h3 { font-size: var(--step-2); margin-top: 6px; }
+.manifest-head .sku { font-family: var(--f-mono); font-size: var(--step--1); color: var(--muted); margin-top: 4px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font: 500 0.75rem/1 var(--f-mono); letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 7px 10px; border-radius: 999px;
+}
+.pill-ok { background: var(--ok-soft); color: var(--ok); }
+.pill-live { background: var(--accent-soft); color: var(--accent); }
+.pill-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.8s ease-in-out infinite; }
+.steps { list-style: none; margin: 0; padding: 8px 24px 4px; position: relative; }
+.step { display: grid; grid-template-columns: 28px 1fr auto; gap: 14px; align-items: start; padding-block: 14px; position: relative; }
+.step + .step { border-top: 1px solid var(--line); }
+.dot {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--sunk); color: var(--muted); border: 1px solid var(--line);
+}
+.dot svg { width: 14px; height: 14px; }
+.step.done .dot { background: var(--ok); color: var(--surface); border-color: var(--ok); }
+.step.now .dot { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.step-body { min-width: 0; }
+.step-title { font-weight: 600; }
+.step-meta { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.step-time { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.step.now .step-time { color: var(--accent); }
+.bar { height: 4px; background: var(--sunk); border-radius: 4px; margin-top: 10px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 64%; background: var(--accent); border-radius: inherit; transform-origin: left; animation: fill 1.6s cubic-bezier(.2,.7,.2,1) both .3s; }
+.manifest-foot {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px dashed var(--line); background: var(--sunk);
+}
+.manifest-foot div { padding: 16px 20px; }
+.manifest-foot div + div { border-left: 1px solid var(--line); }
+.mf-label { font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mf-value { font: 600 var(--step-1)/1.2 var(--f-display); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.mf-value small { font: 500 0.75rem var(--f-mono); color: var(--ok); margin-left: 4px; }
+.example-tag { position: absolute; top: 12px; right: -34px; transform: rotate(35deg); background: var(--ink); color: var(--bg); font: 500 0.625rem/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 40px; display: none; }
+
+/* Problem band */
+.band { background: var(--band); color: var(--on-band); }
+.band .eyebrow { color: var(--accent); }
+.band .lede { color: var(--band-muted); }
+.pain-grid { display: grid; gap: 1px; background: color-mix(in srgb, var(--on-band) 14%, transparent); border-radius: var(--radius); overflow: hidden; }
+@media (min-width: 720px) { .pain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .pain-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.pain { background: var(--band); padding: 28px 24px; display: grid; gap: 10px; align-content: start; }
+.pain .figure { font: 800 var(--step-3)/1 var(--f-display); letter-spacing: -0.03em; color: var(--on-band); }
+.pain .figure span { font: 500 0.8125rem var(--f-mono); color: var(--band-muted); letter-spacing: 0.04em; margin-left: 6px; }
+.pain h3 { font-size: var(--step-1); font-family: var(--f-body); font-weight: 600; letter-spacing: 0; }
+.pain p { color: var(--band-muted); font-size: 0.9375rem; }
+
+/* Services */
+.services { display: grid; gap: 20px; }
+@media (min-width: 720px) { .services { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .services { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.service {
+  display: grid; gap: 14px; align-content: start; padding: 28px 26px;
+  border-top: 1px solid var(--ink); transition: background-color .25s ease;
+}
+.service:hover { background: var(--surface); }
+.service-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
+.service-icon svg { width: 22px; height: 22px; }
+.service h3 { font-size: var(--step-2); }
+.service p { color: var(--muted); }
+.service .terms { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+.service .terms span { font: 500 0.75rem/1 var(--f-mono); padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+
+/* Process */
+.process { background: var(--sunk); }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; counter-reset: step; }
+@media (min-width: 900px) { .timeline { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; } }
+.timeline li { position: relative; display: grid; gap: 12px; align-content: start; padding: 26px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+@media (min-width: 900px) {
+  .timeline li { border-radius: 0; border-left-width: 0; }
+  .timeline li:first-child { border-left-width: 1px; border-radius: var(--radius) 0 0 var(--radius); }
+  .timeline li:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+}
+.timeline .num { font: 500 var(--step--1) var(--f-mono); color: var(--accent); letter-spacing: 0.06em; }
+.timeline .wk { font: 500 0.75rem var(--f-mono); color: var(--muted); }
+.timeline h3 { font-size: var(--step-2); }
+.timeline p { color: var(--muted); font-size: 0.9375rem; }
+.timeline .out { font-size: 0.875rem; padding-top: 12px; border-top: 1px dashed var(--line); }
+.timeline .out b { font-weight: 600; color: var(--ink); }
+
+/* Network */
+.network { display: grid; gap: clamp(32px, 5vw, 64px); align-items: start; }
+@media (min-width: 980px) { .network { grid-template-columns: 0.85fr 1.15fr; } }
+.network .section-head { margin-bottom: 0; }
+.chain { display: grid; gap: 10px; min-width: 0; }
+.link {
+  display: grid; grid-template-columns: 120px 1fr; gap: 18px; align-items: center;
+  padding: 18px 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.link .tier { font: 500 0.75rem var(--f-mono); color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; }
+.link h3 { font-size: var(--step-1); font-family: var(--f-body); font-weight: 600; letter-spacing: 0; }
+.link p { color: var(--muted); font-size: 0.875rem; }
+.link > div { min-width: 0; }
+@media (max-width: 520px) { .link { grid-template-columns: 1fr; gap: 6px; } }
+
+/* Case */
+.case { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--surface); }
+@media (min-width: 900px) { .case { grid-template-columns: 1.1fr 0.9fr; } }
+.case-copy { padding: clamp(28px, 4vw, 48px); display: grid; gap: 18px; align-content: start; min-width: 0; }
+.case-copy h2 { font-size: var(--step-3); }
+.case-copy p { color: var(--muted); }
+.case-copy ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.case-copy li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; }
+.case-copy li svg { width: 18px; height: 18px; color: var(--accent); margin-top: 3px; }
+.case-stats { background: var(--accent-soft); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.case-stat { padding: clamp(22px, 3vw, 36px); display: grid; gap: 6px; align-content: end; border-top: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); }
+.case-stat:nth-child(odd) { border-right: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); }
+.case-stat:nth-child(-n+2) { border-top: 0; }
+.case-stat .v { font: 800 var(--step-3)/1 var(--f-display); letter-spacing: -0.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.case-stat .k { font-size: 0.875rem; color: var(--ink); }
+.disclaimer { font: 400 0.75rem var(--f-mono); color: var(--muted); }
+
+/* FAQ */
+.faq { display: grid; gap: clamp(32px, 5vw, 64px); }
+@media (min-width: 980px) { .faq { grid-template-columns: 0.8fr 1.2fr; } }
+.faq .section-head { margin-bottom: 0; }
+.qa { border-top: 1px solid var(--line); }
+.qa:last-child { border-bottom: 1px solid var(--line); }
+.qa summary {
+  list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 20px; align-items: center;
+  padding: 22px 4px; font: 600 var(--step-1)/1.3 var(--f-body);
+}
+.qa summary::-webkit-details-marker { display: none; }
+.qa summary svg { width: 20px; height: 20px; flex: none; color: var(--accent); transition: transform .25s ease; }
+.qa[open] summary svg { transform: rotate(45deg); }
+.qa p { padding: 0 4px 24px; color: var(--muted); max-width: 64ch; }
+
+/* CTA */
+.cta { padding-block: 0 clamp(64px, 9vw, 120px); }
+.cta-card {
+  background: var(--band); color: var(--on-band); border-radius: 24px;
+  padding: clamp(32px, 6vw, 72px); display: grid; gap: 32px; position: relative; overflow: hidden;
+}
+@media (min-width: 900px) { .cta-card { grid-template-columns: 1.2fr 0.8fr; align-items: end; } }
+.cta-card h2 { font-size: var(--step-4); font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
+.cta-card p { color: var(--band-muted); max-width: 50ch; margin-top: 18px; }
+.cta-side { display: grid; gap: 14px; min-width: 0; }
+.cta-side .btn-primary { justify-content: center; }
+.email-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--f-mono); font-size: 0.9375rem; color: var(--on-band); }
+.email-row code { user-select: all; font-family: inherit; }
+.copy { font: 500 0.75rem var(--f-mono); color: var(--band-muted); background: transparent; border: 1px solid color-mix(in srgb, var(--on-band) 25%, transparent); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: color .2s, border-color .2s; }
+.copy:hover { color: var(--on-band); border-color: var(--on-band); }
+.cta-rings { position: absolute; right: -120px; top: -120px; width: 380px; height: 380px; pointer-events: none; opacity: .18; color: var(--accent); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-block: 28px; color: var(--muted); font-size: 0.875rem; }
+footer nav { display: flex; gap: 22px; flex-wrap: wrap; }
+footer a { text-decoration: none; }
+footer a:hover { color: var(--ink); }
+
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes rise { from { transform: translateY(14px); } to { transform: none; } }
+.manifest .step { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
+.manifest .step:nth-child(2) { animation-delay: .08s; }
+.manifest .step:nth-child(3) { animation-delay: .16s; }
+.manifest .step:nth-child(4) { animation-delay: .24s; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 100-4 2 2 0 000 4zM17.5 19a2 2 0 100-4 2 2 0 000 4z"/></symbol>
+</svg>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Chainex home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="2" y="9" width="17" height="14" rx="7" fill="none" stroke="var(--ink)" stroke-width="3"/>
+        <rect x="13" y="9" width="17" height="14" rx="7" fill="none" stroke="var(--accent)" stroke-width="3"/>
+      </svg>
+      chainex
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#services">Services</a>
+      <a href="#process">How it works</a>
+      <a href="#network">Network</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-primary" href="#contact">Book an audit</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <p class="eyebrow">Supplier brokerage for beauty brands</p>
+        <h1>From formula to doorstep, <em>without the bottlenecks.</em></h1>
+        <p class="lede">Chainex finds, vets and negotiates with the labs, packaging suppliers, fillers and 3PLs behind your products. You get lower MOQs, shorter lead times and one team accountable for every order.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="#contact">Book a fulfilment audit <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost" href="#process">See how it works</a>
+        </div>
+        <div class="hero-proof">
+          <span><svg aria-hidden="true"><use href="#i-check"/></svg>Vetted, audited suppliers</span>
+          <span><svg aria-hidden="true"><use href="#i-check"/></svg>COA &amp; SDS on every batch</span>
+          <span><svg aria-hidden="true"><use href="#i-check"/></svg>No long-term contract</span>
+        </div>
+      </div>
+
+      <figure class="manifest" aria-label="Example order tracked by Chainex">
+        <div class="manifest-head">
+          <div>
+            <div class="po">PO-2417 · LOT 24-0918-B</div>
+            <h3>Hydrating Peptide Serum</h3>
+            <div class="sku">30 ml · glass dropper · 5,000 units</div>
+          </div>
+          <span class="pill pill-live">In transit</span>
+        </div>
+        <ol class="steps">
+          <li class="step done">
+            <span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+            <div class="step-body">
+              <div class="step-title">Formulation lab</div>
+              <div class="step-meta">Bulk released · COA verified · pH 5.4</div>
+            </div>
+            <span class="step-time">Day 0</span>
+          </li>
+          <li class="step done">
+            <span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+            <div class="step-body">
+              <div class="step-title">Primary packaging</div>
+              <div class="step-meta">Bottles + droppers · MOQ cut 10k → 5k</div>
+            </div>
+            <span class="step-time">Day 9</span>
+          </li>
+          <li class="step done">
+            <span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+            <div class="step-body">
+              <div class="step-title">Filling &amp; QC</div>
+              <div class="step-meta">AQL 1.0 passed · PAO 12M labelled</div>
+            </div>
+            <span class="step-time">Day 16</span>
+          </li>
+          <li class="step now">
+            <span class="dot"><svg aria-hidden="true"><use href="#i-truck"/></svg></span>
+            <div class="step-body">
+              <div class="step-title">3PL inbound</div>
+              <div class="step-meta">ETA 2 days · slotting booked</div>
+              <div class="bar" aria-hidden="true"><i></i></div>
+            </div>
+            <span class="step-time">Day 19</span>
+          </li>
+        </ol>
+        <div class="manifest-foot">
+          <div><div class="mf-label">Lead time</div><div class="mf-value">21 days</div></div>
+          <div><div class="mf-label">Unit cost</div><div class="mf-value">£2.84</div></div>
+          <div><div class="mf-label">On schedule</div><div class="mf-value">Yes <small>+3d buffer</small></div></div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="pain-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Where beauty fulfilment breaks</p>
+        <h2 id="pain-title">Most launch delays start three suppliers upstream.</h2>
+        <p class="lede">A single serum can depend on a lab, a glass supplier, a dropper supplier, a filler, a label printer and a warehouse. When one slips, the whole launch slips.</p>
+      </div>
+      <div class="pain-grid">
+        <div class="pain">
+          <div class="figure">10k<span>units</span></div>
+          <h3>MOQs built for big brands</h3>
+          <p>Component suppliers set minimums you can't sell through, tying up cash in stock that expires.</p>
+        </div>
+        <div class="pain">
+          <div class="figure">12<span>weeks</span></div>
+          <h3>Packaging lead times</h3>
+          <p>Custom bottles, pumps and cartons hold up finished goods long after the formula is ready.</p>
+        </div>
+        <div class="pain">
+          <div class="figure">6+<span>contacts</span></div>
+          <h3>Too many hand-offs</h3>
+          <p>You chase each supplier yourself, by email, in different time zones, with no single view of the order.</p>
+        </div>
+        <div class="pain">
+          <div class="figure">0<span>margin for error</span></div>
+          <h3>Compliance paperwork</h3>
+          <p>Missing COAs, SDS sheets or product notifications can stop stock at the warehouse door.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" aria-labelledby="services-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">What we broker</p>
+        <h2 id="services-title">One partner for every link in your supply chain.</h2>
+        <p class="lede">Pick a single service or hand us the whole chain. Either way, we manage the suppliers and you get one point of contact.</p>
+      </div>
+      <div class="services">
+        <article class="service">
+          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 4a7 7 0 105.2 11.7L20 19.5M11 8v6M8 11h6"/></svg></div>
+          <h3>Supplier sourcing</h3>
+          <p>We shortlist labs and component makers that fit your formula, volumes and price point, then audit them before you commit.</p>
+          <div class="terms"><span>GMP</span><span>ISO 22716</span><span>Site audits</span></div>
+        </article>
+        <article class="service">
+          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h10M4 17h6M17 14l3 3-3 3"/></svg></div>
+          <h3>MOQ &amp; price negotiation</h3>
+          <p>We pool demand across our brand network to unlock lower minimums and better unit pricing than you'd get alone.</p>
+          <div class="terms"><span>MOQ</span><span>Volume tiers</span><span>Payment terms</span></div>
+        </article>
+        <article class="service">
+          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 3h6v3l1.5 2v12a1 1 0 01-1 1h-7a1 1 0 01-1-1V8L9 6zM7.5 12h9"/></svg></div>
+          <h3>Packaging coordination</h3>
+          <p>Bottles, pumps, droppers, jars, cartons and labels, all timed to arrive at the filler on the same week.</p>
+          <div class="terms"><span>Primary</span><span>Secondary</span><span>PCR options</span></div>
+        </article>
+        <article class="service">
+          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 21V10l6 4V10l6 4V6l6 4v11zM7 17h2M12 17h2M17 17h2"/></svg></div>
+          <h3>Contract manufacturing</h3>
+          <p>We match you with fillers who handle your viscosity, fill size and run length, and we sit in on every QC release.</p>
+          <div class="terms"><span>Fill &amp; pack</span><span>AQL checks</span><span>Batch records</span></div>
+        </article>
+        <article class="service">
+          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-truck"/></svg></div>
+          <h3>3PL &amp; fulfilment</h3>
+          <p>We place you with warehouses that know beauty: batch and expiry tracking, gift sets, sampling and same-day dispatch.</p>
+          <div class="terms"><span>FEFO picking</span><span>Shopify</span><span>Returns</span></div>
+        </article>
+        <article class="service">
+          <div class="service-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13H7zM14 3v5h5M10 13l2 2 4-4"/></svg></div>
+          <h3>Compliance documents</h3>
+          <p>We collect and check the paperwork for every batch so your stock clears customs and the warehouse without delays.</p>
+          <div class="terms"><span>COA</span><span>SDS</span><span>CPNP</span><span>MoCRA</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="process" class="process" aria-labelledby="process-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2 id="process-title">From first call to first shipment in four steps.</h2>
+      </div>
+      <ol class="timeline">
+        <li>
+          <span class="num">Step 1</span>
+          <h3>Audit</h3>
+          <p>We map your current suppliers, costs and lead times for every SKU and show you where time and money leak out.</p>
+          <p class="out"><b>You get:</b> a fulfilment audit with ranked fixes.</p>
+          <span class="wk">Week 1</span>
+        </li>
+        <li>
+          <span class="num">Step 2</span>
+          <h3>Shortlist</h3>
+          <p>We put forward two or three vetted options for each link in the chain, with samples and quotes side by side.</p>
+          <p class="out"><b>You get:</b> comparable quotes and samples.</p>
+          <span class="wk">Weeks 2–3</span>
+        </li>
+        <li>
+          <span class="num">Step 3</span>
+          <h3>Negotiate</h3>
+          <p>We agree MOQs, pricing, payment terms and delivery windows, then line up every supplier against your launch date.</p>
+          <p class="out"><b>You get:</b> signed terms and a production calendar.</p>
+          <span class="wk">Weeks 3–4</span>
+        </li>
+        <li>
+          <span class="num">Step 4</span>
+          <h3>Run &amp; monitor</h3>
+          <p>We manage each purchase order through production, QC and inbound, and flag any risk before it reaches your customers.</p>
+          <p class="out"><b>You get:</b> live order tracking and one contact.</p>
+          <span class="wk">Ongoing</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="network" aria-labelledby="network-title">
+    <div class="wrap network">
+      <div class="section-head">
+        <p class="eyebrow">Our network</p>
+        <h2 id="network-title">Specialists for every stage, checked before you meet them.</h2>
+        <p class="lede">Every partner is assessed on quality systems, capacity, lead-time reliability and how they handle small and mid-sized beauty brands.</p>
+        <div><a class="btn btn-ghost" href="#contact">Ask about a category</a></div>
+      </div>
+      <div class="chain">
+        <div class="link"><span class="tier">Formulate</span><div><h3>Labs &amp; private label</h3><p>Skincare, haircare, body and colour cosmetics, including clean and vegan formulas.</p></div></div>
+        <div class="link"><span class="tier">Package</span><div><h3>Primary &amp; secondary packaging</h3><p>Glass, airless, PCR plastics, aluminium, rigid boxes and folding cartons.</p></div></div>
+        <div class="link"><span class="tier">Fill</span><div><h3>Filling &amp; assembly</h3><p>Liquids, creams, powders and kits, from 1,000-unit pilot runs up.</p></div></div>
+        <div class="link"><span class="tier">Store</span><div><h3>3PL warehouses</h3><p>Beauty-specialist fulfilment centres with batch, expiry and temperature control.</p></div></div>
+        <div class="link"><span class="tier">Deliver</span><div><h3>Carriers &amp; returns</h3><p>Domestic and cross-border shipping with rates negotiated across our brands.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="case-title" style="padding-top:0">
+    <div class="wrap">
+      <div class="case">
+        <div class="case-copy">
+          <p class="eyebrow">Example engagement</p>
+          <h2 id="case-title">A skincare brand launching four SKUs in one season.</h2>
+          <p>The brand was ordering components from five suppliers and waiting on its slowest one for every launch. Here is what consolidating through Chainex looks like for an order like theirs.</p>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Moved glass and droppers to one supplier with a shared MOQ across SKUs</span></li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Booked filler capacity before packaging landed, removing a two-week gap</span></li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Switched to a 3PL with FEFO picking to stop expired-stock write-offs</span></li>
+          </ul>
+          <p class="disclaimer">Illustrative figures. Replace with results from a real client.</p>
+        </div>
+        <div class="case-stats">
+          <div class="case-stat"><span class="v">−38%</span><span class="k">lead time, PO to warehouse</span></div>
+          <div class="case-stat"><span class="v">−50%</span><span class="k">minimum order quantity</span></div>
+          <div class="case-stat"><span class="v">−17%</span><span class="k">landed cost per unit</span></div>
+          <div class="case-stat"><span class="v">1</span><span class="k">contact instead of five</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" aria-labelledby="faq-title" style="padding-top:0">
+    <div class="wrap faq">
+      <div class="section-head">
+        <p class="eyebrow">FAQ</p>
+        <h2 id="faq-title">Questions brands ask before they switch.</h2>
+      </div>
+      <div>
+        <details class="qa">
+          <summary>How does Chainex get paid?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>We charge a fixed fee for the audit, then a brokerage fee based on the orders we manage. You see every supplier quote, so you always know what you're paying for.</p>
+        </details>
+        <details class="qa">
+          <summary>Can I keep some of my current suppliers?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>Yes. If a supplier is working well, we keep them and coordinate them alongside the rest of the chain. We only replace links that cost you time or margin.</p>
+        </details>
+        <details class="qa">
+          <summary>What size of brand do you work with?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>Most of our brands sell between 2,000 and 100,000 units a month online. Pooled ordering is what lets smaller brands reach the minimums usually reserved for larger ones.</p>
+        </details>
+        <details class="qa">
+          <summary>Who owns the formulas and supplier relationships?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>You do. Formulas, artwork and tooling stay yours, and you can contract with any supplier directly if you ever leave.</p>
+        </details>
+        <details class="qa">
+          <summary>Do you handle international shipping and regulations?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <p>Yes. We collect the documents each market needs, including COAs, SDS sheets and product notifications, and work with carriers that ship cosmetics cross-border.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="cta" aria-labelledby="cta-title">
+    <div class="wrap">
+      <div class="cta-card">
+        <svg class="cta-rings" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="100" cy="100" r="40"/><circle cx="100" cy="100" r="62"/><circle cx="100" cy="100" r="84"/></g></svg>
+        <div>
+          <h2 id="cta-title">See where your fulfilment is leaking margin.</h2>
+          <p>Send us your SKU list and current suppliers. Within a week you'll get a fulfilment audit showing what we'd change and what it would save.</p>
+        </div>
+        <div class="cta-side">
+          <a class="btn btn-primary" href="mailto:hello@chainex.co?subject=Fulfilment%20audit">Book a fulfilment audit <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <div class="email-row">
+            <code id="email">hello@chainex.co</code>
+            <button class="copy" type="button" id="copy-email">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Chainex. Supplier brokerage for beauty brands.</span>
+    <nav aria-label="Footer">
+      <a href="#services">Services</a>
+      <a href="#process">How it works</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var btn = document.getElementById('copy-email');
+    var email = document.getElementById('email');
+    btn.addEventListener('click', function () {
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); };
+      var fallback = function () {
+        var r = document.createRange(); r.selectNodeContents(email);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = 'Selected';
+      };
+      try {
+        navigator.clipboard.writeText(email.textContent).then(done, fallback);
+      } catch (e) { fallback(); }
+    });
+  })();
+</script>
+</body>
+</html>

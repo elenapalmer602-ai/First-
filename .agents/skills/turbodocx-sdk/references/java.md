@@ -1,0 +1,1853 @@
+# Java SDK Reference
+
+## Install
+
+### Maven
+
+```xml
+<dependency>
+    <groupId>com.turbodocx</groupId>
+    <artifactId>turbodocx-sdk</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```
+
+### Gradle
+
+```groovy
+implementation 'com.turbodocx:turbodocx-sdk:0.9.0'
+```
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+implementation("com.turbodocx:turbodocx-sdk:0.9.0")
+```
+
+## Imports
+
+```java
+import com.turbodocx.TurboDocxClient;
+import com.turbodocx.TurboPartnerClient;
+import com.turbodocx.models.*;
+```
+
+## TurboSign Configuration
+
+```java
+TurboDocxClient client = new TurboDocxClient.Builder()
+    .apiKey(System.getenv("TURBODOCX_API_KEY"))
+    .orgId(System.getenv("TURBODOCX_ORG_ID"))
+    .senderEmail(System.getenv("TURBODOCX_SENDER_EMAIL"))
+    .senderName(System.getenv("TURBODOCX_SENDER_NAME"))
+    .build();
+```
+
+`senderEmail` is **REQUIRED** for TurboSign — an API key has no mailbox of its own, so the API rejects a send without it (400 `SenderEmailRequired`). `senderName` is **optional**; when omitted the sender name resolves to **the API key's name**.
+
+## TurboSign Usage
+
+### sendSignature
+
+```java
+byte[] pdfFile = Files.readAllBytes(Paths.get("contract.pdf"));
+
+SendSignatureResponse result = client.turboSign().sendSignature(
+    new SendSignatureRequest.Builder()
+        .file(pdfFile)
+        .fileName("contract.pdf")
+        .documentName("Partnership Agreement")
+        .recipients(Arrays.asList(
+            new Recipient("John Doe", "john@example.com", 1)
+        ))
+        .fields(Arrays.asList(
+            new Field.Builder()
+                .type("signature")
+                .recipientEmail("john@example.com")
+                .template(new Field.TemplateAnchor.Builder()
+                    .anchor("{signature1}")
+                    .placement("replace")
+                    .size(new Field.Size(100, 30))
+                    .build())
+                .build()
+        ))
+        .build()
+);
+
+System.out.println("Document ID: " + result.getDocumentId());
+```
+
+**`.fileName(...)`** (optional, with `.file(byte[])`) sets the stored document file name: up to 255 characters, no extension needed (`"Acme NDA"` is fine). It is sent as a form field; the uploaded part itself is named `document.<ext>`, and a null or empty `fileName` stores that name. The `CreateSignatureReviewLinkRequest` and `CreateEmbeddedSignatureRequest` builders have it too.
+
+### Choosing field placement
+
+1. **A template set up in TurboDocx, sent by signer role** (recommended for any document sent more than once). Set it up once in the TurboDocx UI: upload the PDF as a template, add each signer as a role, drag their fields onto the page, save the signature setup. Code then sends by `role` with no field positions at all (next section).
+2. **Text anchors** when your code generates or controls the document text: put a tag such as `{ClientSignature}` where the field goes (its own text, one distinct tag per signer and field) and place the field by anchor with `placement` `replace` (see the anchor example in this reference).
+3. **Coordinates** (`page` + `x`/`y`/`width`/`height`). Fully supported: if you already know the positions, use them directly. When you don't, options 1 and 2 are easier than measuring. Coordinates need re-measuring if the layout moves; a review link lets you check placement before sending.
+
+### Send a template with signer roles
+
+Use this when the same document goes out again and again with different signers (an NDA, a contract, an onboarding form). The user sets the template up **once** in TurboDocx: upload the PDF as a template, add each signer as a role on its Signatures tab (e.g. "Client", "Countersigner"), drag each role's fields onto the page, and save the signature setup. A role that is always the same person (e.g. your countersigner) can be given a saved signer there. The code then names each recipient's role with `Recipient.withRole(...)` and passes **no field coordinates or anchors**: the fields saved for that role come with it.
+
+```java
+import java.util.Arrays;
+
+import com.turbodocx.TurboDocxException;
+import com.turbodocx.models.Recipient;
+import com.turbodocx.models.SendSignatureRequest;
+import com.turbodocx.models.SendSignatureResponse;
+import com.turbodocx.models.TemplateSignatureRole;
+import com.turbodocx.models.TemplateSignatureSetup;
+
+// Role keys are shown under "Use via API" on the template's page in TurboDocx, or read them here.
+TemplateSignatureSetup setup = client.turboSign().getTemplateSignatureSetup(templateId);
+for (TemplateSignatureRole role : setup.getRoles()) { // in signing order
+    System.out.println(role.getKey() + " (" + role.getLabel() + ") order " + role.getOrder()
+        + ", saved signer: " + role.hasSavedSigner() + ", " + role.getFieldCount() + " field(s)");
+}
+
+try {
+    SendSignatureResponse result = client.turboSign().sendSignature(
+        new SendSignatureRequest.Builder()
+            .templateId(templateId)
+            .documentName("Services Agreement - Acme")
+            .recipients(Arrays.asList(
+                Recipient.withRole("client", "Jane Doe", "jane@client.com") // no signing order needed
+                // "countersigner" left out: the signer saved on the template is used
+            ))
+            // no .fields(...): each role's saved fields are used
+            .build()
+    );
+    System.out.println(result.getDocumentId());
+} catch (TurboDocxException.ValidationException e) {
+    if ("UnknownSignerRole".equals(e.getCode())) {
+        // e.getMessage() names the bad role and lists the template's roles
+    }
+    throw e;
+}
+```
+
+`getTemplateSignatureSetup(templateId)` returns a `TemplateSignatureSetup` (`getTemplateId()`, `getRoles()`); each `TemplateSignatureRole` has `getKey()`, `getLabel()`, `getOrder()`, `hasSavedSigner()`, `getDefaultName()`/`getDefaultEmail()` (null unless `hasSavedSigner()`), and `getFieldCount()`. `getKey()` is the value for the recipient's role.
+
+On a template with no saved signature setup `getTemplateSignatureSetup` throws a 404 with code `SignatureSetupNotFound`:
+
+```java
+try {
+    TemplateSignatureSetup setup = client.turboSign().getTemplateSignatureSetup(templateId);
+} catch (TurboDocxException.NotFoundException e) {
+    if ("SignatureSetupNotFound".equals(e.getCode())) {
+        // no saved setup: set the template up in TurboDocx, or send with explicit fields
+    }
+    throw e;
+}
+```
+
+- Roles sign in the order saved on the template, so a role recipient needs no signing order (`Recipient.getSigningOrder()` stays an `int` and returns 0 when unset; 0 is left out of the request, and `Recipient.Builder().signingOrder(0)` means the same, where 0.8.0 threw a `NullPointerException`); recipients without a role sign after them.
+- A role left out uses the template's saved signer. If it has none, the API returns a 400 naming the role. Pass a role that has a saved signer to send to someone else this time.
+- An unknown role returns a 400 (`ValidationException` with code `UnknownSignerRole`) whose message lists the template's roles.
+- On a send, `.fields(...)` is optional only when a recipient names a `role` (it is left out of the request when empty); any fields you pass are **added** to the template's (for example an extra witness signature). On a send (`sendSignature`, `createEmbeddedSignature`) where no recipient names a role, an omitted or empty fields is a 400 `FieldsRequired` (SDK 0.8.0 sent the empty list and created a document with nothing to sign). A review link (`createSignatureReviewLink`) needs no fields: the SDK sends an empty list and you place them in the preview.
+- Roles only work for a PDF signature template. A Word template needs a deliverable generated first and sent with `deliverableId`.
+- Use `new Recipient.Builder().role("client").name(...).email(...)` when the role recipient also needs a phone or external id.
+- `role` works the same way on `createSignatureReviewLink` and, via `new EmbeddedSignatureRecipient.Builder().role(...)`, on `createEmbeddedSignature`. A role left out falls back to its saved signer, who also gets an embed URL in the result, so match result entries to signers by email or role rather than by position.
+
+### Optional fields
+
+```java
+SendSignatureResponse result = client.turboSign().sendSignature(
+    new SendSignatureRequest.Builder()
+        .file(pdfFile)
+        .fileName("contract.pdf")
+        .documentName("Service Agreement")
+        .recipients(Arrays.asList(
+            new Recipient("John Doe", "john@example.com", 1)
+        ))
+        .fields(Arrays.asList(
+            // Required (the default): signature and initial fields are always required.
+            new Field.Builder()
+                .type("signature")
+                .recipientEmail("john@example.com")
+                .page(1)
+                .x(100).y(500).width(200).height(50)
+                .build(),
+            // Optional: the signer can finish without filling this in.
+            new Field.Builder()
+                .type("text")
+                .recipientEmail("john@example.com")
+                .page(1)
+                .x(100).y(600).width(200).height(30)
+                .required(false)
+                .build()
+        ))
+        .build()
+);
+```
+
+Fields are required by default, so omit `.required(...)` to keep one required. Set `.required(false)` on a field the signer may leave empty. Signature and initial fields can never be optional (the API returns 400), `.required(...)` must be a boolean, and each recipient still needs at least one required field they fill in (otherwise 400). `.defaultValue(...)` is a real prefilled value that is submitted as-is, not placeholder hint text. `required` is a nullable `Boolean`: leaving it unset omits the key.
+
+### Conditional (IF/THEN) fields
+
+Any field can be made to depend on a **controlling checkbox** so it only appears — or only becomes editable — once the signer ticks that box. Give the checkbox a stable `FieldMetadata` with a `fieldKey`, then reference that key from the dependent field's `FieldMetadata` → `FieldConditional` → `controllingFieldKey`. `.metadata(...)` on the builder is **optional**; a field left without it behaves exactly as before.
+
+```java
+SendSignatureResponse result = client.turboSign().sendSignature(
+    new SendSignatureRequest.Builder()
+        .file(pdfFile)
+        .fileName("contract.pdf")
+        .documentName("Employment Agreement")
+        .recipients(Arrays.asList(
+            new Recipient("John Doe", "john@example.com", 1)
+        ))
+        .fields(Arrays.asList(
+            // Controlling checkbox — the box the signer ticks. Its fieldKey is the stable id others reference.
+            new Field.Builder()
+                .type("checkbox")
+                .recipientEmail("john@example.com")
+                .page(1)
+                .x(100).y(400).width(20).height(20)
+                .metadata(FieldMetadata.forFieldKey("relocation_optin"))
+                .build(),
+            // Dependent field — hidden until the box above is checked (action "show").
+            new Field.Builder()
+                .type("signature")
+                .recipientEmail("john@example.com")
+                .page(1)
+                .x(100).y(460).width(200).height(50)
+                .metadata(FieldMetadata.forConditional(
+                    new FieldConditional(
+                        "relocation_optin", // controllingFieldKey = the checkbox's metadata fieldKey
+                        "is_checked",       // "is_checked" | "is_not_checked"
+                        "show")))           // "show" = hidden until met; "unlock" = visible but read-only until met
+                .build(),
+            // Date field — pins a fixed date in MM/DD/YYYY; omit defaultValue to auto-fill the signing date.
+            new Field.Builder()
+                .type("date")
+                .recipientEmail("john@example.com")
+                .page(1)
+                .x(100).y(530).width(150).height(30)
+                .defaultValue("12/31/2026")
+                .build()
+        ))
+        .build()
+);
+
+System.out.println("Document ID: " + result.getDocumentId());
+```
+
+The link is `fieldKey` → `controllingFieldKey`: the two strings must match exactly (the checkbox carries `FieldMetadata.fieldKey`, the dependent field points at it via `FieldConditional.controllingFieldKey`). `operator` chooses which checkbox state satisfies the condition — `"is_checked"` or `"is_not_checked"`. `action` chooses what happens while the condition is unmet: `"show"` keeps the dependent field **hidden until met**, while `"unlock"` renders it **visible but read-only (locked) until met**.
+
+### getStatus
+
+```java
+DocumentStatusResponse status = client.turboSign().getStatus(documentId);
+System.out.println("Status: " + status.getStatus());     // e.g. "under_review", "completed", "voided"
+System.out.println("Expires: " + status.getExpiresAt()); // ISO timestamp, or null when expiration is off
+```
+
+`DocumentStatusResponse` carries the document-level `status` plus `expiresAt` (an ISO string, or null when expiration is off). For per-recipient detail, use `getRecipients(documentId)` below — it returns the roster directly, so there is no need to reconstruct it from `getAuditTrail(documentId)`.
+
+### getRecipients
+
+Every recipient on the document with their signing status, email history, and who sent it. This is what answers "who has signed and who are we still waiting on".
+
+```java
+DocumentRecipientsResponse progress = client.turboSign().getRecipients(documentId);
+
+System.out.println(progress.getSummary().getCompleted() + "/"
+        + progress.getSummary().getTotal() + " signed, waiting on "
+        + progress.getSummary().getWaitingOn());
+
+for (DocumentRecipientsResponse.RecipientSignatureStatus r : progress.getRecipients()) {
+    // "pending" | "viewed" | "completed" | "voided" | "expired"
+    System.out.println(r.getName() + " <" + r.getEmail() + ">: " + r.getEffectiveStatus()
+            + " (emailed " + r.getDelivery().getTotalSent() + "x)");
+}
+```
+
+Each recipient carries **two** status fields and they differ on purpose:
+
+| Field | Values | Use it for |
+|---|---|---|
+| `status` | `pending`, `viewed`, `completed` | The raw stored value |
+| `effectiveStatus` | `pending`, `viewed`, `completed`, `voided`, `expired` | Display and branching |
+
+There is no per-recipient declined/voided/expired state, so on a voided or expired document an
+unsigned signer still reads `pending` in `status` — branching on it means chasing people whose
+signing links are already dead. A completed signature is never revoked: someone who signed
+before the document was voided still reads `completed`. `effectiveStatus` also reflects a
+lapsed deadline immediately, without waiting for the background sweep to update the row.
+
+`summary` counts by `effectiveStatus` and adds `waitingOn` (pending + viewed), which is zero
+once the document is terminal. Each recipient's `delivery` block — `firstSentOn`, `lastSentOn`,
+`totalSent`, `reminderCount`, `lastRemindedAt`, `warningCount`, `lastWarningAt` — is that
+signer's email history; CC notifications are excluded, since a CC address is not a signer.
+
+In Java, `r.getDelivery()` returns a `DocumentRecipientsResponse.RecipientDelivery` (all in `com.turbodocx.models`) with
+`getTotalSent()`, `getReminderCount()`, `getWarningCount()` (`int`) and `getFirstSentOn()`, `getLastSentOn()`,
+`getLastRemindedAt()`, `getLastWarningAt()` (ISO-8601 `String`, null when never set). The roll-up is
+`progress.getSummary()` (`RecipientStatusSummary`: `getTotal()`, `getPending()`, `getViewed()`,
+`getCompleted()`, `getVoided()`, `getExpired()`, `getWaitingOn()`). `getRecipients` throws `IOException`.
+
+`reminderCount` and `lastRemindedAt` do NOT mean what their names suggest. `reminderCount`
+counts **automatic (scheduled) reminders only** — the counter `maxReminders` caps; a manual
+"remind now" must not consume the cap budget, so it does not increment this even though its
+email does appear in `totalSent`. `lastRemindedAt` is a **cadence clock**, not a record of a
+reminder: the initial signature-request send, each scheduled reminder, each manual "remind now"
+and each expiry warning all stamp it. A freshly-sent document therefore reads a non-null
+`lastRemindedAt` equal to the invitation timestamp alongside `reminderCount: 0` — nobody has
+been reminded. Use `totalSent` to answer "have we actually chased this person".
+`warningCount` / `lastWarningAt` have no such caveat.
+
+### download
+
+```java
+byte[] pdf = client.turboSign().download(documentId);
+Files.write(Paths.get("signed.pdf"), pdf);
+```
+
+### createSignatureReviewLink
+
+Prepares the document with recipients and fields but **does not send signature emails** — use this to preview field placement before sending.
+
+```java
+CreateSignatureReviewLinkResponse review = client.turboSign().createSignatureReviewLink(
+    new CreateSignatureReviewLinkRequest.Builder()
+        .file(pdfFile)
+        .fileName("nda.pdf")
+        .documentName("NDA - Acme")
+        .recipients(Arrays.asList(
+            new Recipient("John Doe", "john@example.com", 1)
+        ))
+        .fields(Arrays.asList(
+            new Field.Builder()
+                .type("signature")
+                .recipientEmail("john@example.com")
+                .page(1)
+                .x(100).y(500).width(200).height(50)
+                .build()
+        ))
+        .build()
+);
+
+System.out.println("Document ID: " + review.getDocumentId());
+System.out.println("Preview URL: " + review.getPreviewUrl()); // open to review field placement
+// Review recipients are ReviewRecipient (id / name / email / metadata) — no signUrl yet
+for (ReviewRecipient r : review.getRecipients()) {
+    System.out.println("  " + r.getName() + ": " + r.getEmail());
+}
+```
+
+### voidDocument
+
+```java
+VoidDocumentResponse voided = client.turboSign().voidDocument(documentId, "Counterparty requested changes");
+System.out.println("Status: " + voided.getStatus());    // "voided"
+System.out.println("Voided at: " + voided.getVoidedAt());
+```
+
+`reason` is **required**.
+
+### resendEmail
+
+```java
+// recipientIds are UUIDs — fetch from sendSignature/createSignatureReviewLink response or getAuditTrail
+List<String> recipientIds = Arrays.asList("recipient-uuid-1", "recipient-uuid-2");
+ResendEmailResponse result = client.turboSign().resendEmail(documentId, recipientIds);
+System.out.println("Resent to " + result.getRecipientCount() + " recipients");
+```
+
+### getAuditTrail
+
+```java
+AuditTrailResponse audit = client.turboSign().getAuditTrail(documentId);
+System.out.println("Document: " + audit.getDocument().getName());
+
+for (AuditTrailEntry entry : audit.getAuditTrail()) {
+    String userEmail = entry.getUser() != null ? entry.getUser().getEmail() : "";
+    System.out.println(entry.getTimestamp() + "  " + entry.getActionType() + "  " + userEmail);
+}
+```
+
+### TurboSign.sendReminder
+
+```java
+// Remind every signer whose turn it is — the one-arg overload.
+SendReminderResponse response = turboSign.sendReminder(documentId);
+for (SendReminderResponse.ReminderResult r : response.getResults()) {
+    System.out.println(r.getRecipientId() + ": " + r.getStatus()); // "sent" | "skipped_wrong_order"
+}
+
+// Or nudge one specific signer.
+turboSign.sendReminder(documentId, List.of("recipient-uuid-1"));
+```
+
+A **standalone nudge**: it ignores the automatic reminder cadence, works even when reminders are disabled or the per-signer cap is spent, and does **not** consume that cap. Only signers at the **current signing order** are emailed — a later-order or already-signed recipient comes back as a `skipped_*` result rather than being dropped, so you can tell whether anyone was actually emailed.
+
+The recipient filter is **optional**. Omit it to remind everyone eligible; do **not** pass an empty list, since the API requires at least one id when the key is present.
+
+### Reminders & expiration on send
+
+Both send methods accept eight optional per-document schedule fields. Omit them and the document inherits your organization's E-Signature defaults — and since both features ship **off** by default, omitting them preserves today's behaviour exactly.
+
+```java
+SignatureSchedule schedule = SignatureSchedule.builder()
+        // Boxed types, so an explicit false or 0 stays distinct from "unset".
+        .remindersEnabled(true)
+        .reminderDelay(new SignatureSchedule.Duration(2, "days"))    // time to the FIRST reminder
+        .reminderInterval(new SignatureSchedule.Duration(1, "days")) // gap between later ones
+        .maxReminders(3)                                             // -1 unlimited, 0 none, max 50
+        .expirationEnabled(true)
+        .expireAfter(new SignatureSchedule.Duration(14, "days"))
+        .expirationWarning(new SignatureSchedule.Duration(2, "days")) // 0 = never warn
+        .expirationWarningInterval(new SignatureSchedule.Duration(1, "days"))
+        .build();
+
+SendSignatureRequest request = new SendSignatureRequest.Builder()
+        .deliverableId("deliverable-uuid")
+        .recipients(recipients)
+        .fields(fields)
+        .schedule(schedule)
+        .build();
+
+turboSign.sendSignature(request);
+```
+
+Durations are `{ value, unit }` with `unit` of `"hours"` or `"days"`. `value` is a whole number, minimum 1 and at most 999 days (23976 hours) — except `expirationWarning`, where `0` means "never send a warning". The resolved schedule is frozen onto the document at send time, so changing your org defaults later never affects a document already out for signature.
+
+Once expiration is on, the document carries an `expiresAt` deadline; after it passes every signing link returns **HTTP 410** and the document reaches the terminal status `expired`. Read that deadline back off `getStatus` — it returns `expiresAt` alongside the status:
+
+```java
+DocumentStatusResponse status = client.turboSign().getStatus(documentId);
+System.out.println(status.getExpiresAt()); // ISO timestamp, or null when expiration is off
+```
+
+## Embedded Signing & Identity Verification
+
+Embedded signing takes a signer from your own app straight to a TurboSign signing page, with no signing-link email. Your backend mints a signing URL for the recipient, then you open it (new tab, redirect, or iframe). A recipient with no `identityVerification` takes the **org's default channel** (`getEmbeddedSigningSettings().getDefaultChannel()`), and that default applies to API/SDK sends too: `"none"` opens straight to the document, while `"email"` / `"sms"` means the org verifies every request, so the signer clears that passcode first. Three methods on `client.turboSign()`: `createSigningUrl` mints one URL for a recipient, `getEmbeddedSigningSettings` reads the org gates, and `createEmbeddedSignature` does send + mint in one call.
+
+**Send embedded documents with `.sendEmail(false)`.** Your app shows the signing page, so the signing-link emails, the initial CC notice, the next signer's "your turn" email, and the scheduled reminder and expiry-warning emails are all suppressed. Passcode emails and the completed-copy email still go out, and an explicit `resendEmail` / `sendReminder` still sends. `createEmbeddedSignature` already defaults to `false`; on `sendSignature` set it yourself.
+
+**A locked channel.** `getAllowChannelOverride()` returns a `Boolean`. When it is `Boolean.FALSE`, the org locked the verification method: an explicit channel other than `defaultChannel` makes the send fail with HTTP 403, a `TurboDocxException.AuthorizationException` whose `getCode()` is `"OtpOverrideNotAllowed"`. Omit the channel to take the default. `null` means the API did not report it (unknown, not locked). Read it before forcing a per-recipient channel even when the default is `"none"` today: an admin can change the default and lock it at any time, so checking `defaultChannel` alone is not enough.
+
+### createSigningUrl
+
+Mint an embedded signing URL for one recipient; request it the moment the signer is ready, and never store it. Provide **exactly one** of `recipientId` / `externalId` (both, or neither, is a 400 `RecipientSelectorInvalid`).
+
+```java
+// Prepare the document with an embedded recipient keyed by YOUR id.
+SendSignatureResponse sent = client.turboSign().sendSignature(
+    new SendSignatureRequest.Builder()
+        .file(pdfFile)
+        .fileName("agreement.pdf")
+        .documentName("Service Agreement")
+        // Embedded: your app shows the signing page, so don't email a signing link (reminder and
+        // expiry-warning emails are suppressed too). Passcode and completed-copy emails still go out.
+        .sendEmail(false)
+        .recipients(Arrays.asList(
+            new Recipient.Builder()
+                .name("Jane Doe")
+                .email("jane@example.com")
+                .signingOrder(1)
+                .externalId("your_customer_123")   // no identityVerification → org defaultChannel
+                .build()
+        ))
+        .fields(Arrays.asList(
+            new Field.Builder()
+                .type("signature")
+                .recipientEmail("jane@example.com")
+                .template(new Field.TemplateAnchor.Builder()
+                    .anchor("{signature1}")
+                    .placement("replace")
+                    .size(new Field.Size(100, 30))
+                    .build())
+                .build()
+        ))
+        .build()
+);
+String documentId = sent.getDocumentId();
+
+CreateSigningUrlResponse link = client.turboSign().createSigningUrl(
+    documentId,
+    new CreateSigningUrlRequest.Builder()
+        .externalId("your_customer_123")                 // XOR .recipientId("recipient-uuid")
+        .returnUrl("https://app.yourcompany.com/signed") // optional, https only
+        .build()
+);
+
+System.out.println(link.getUrl());                      // open / redirect / iframe
+System.out.println(link.getExpiresAt());                // ISO, or null when the document doesn't expire
+System.out.println(link.getIdentityVerificationMode()); // "otp" | "external_idv" | "override" | null
+System.out.println(link.getPendingChecks());            // ["email_otp"] | ["sms_otp"] | []
+```
+
+For an `external_idv` recipient, pass the assertion from your own identity provider. Pass it **only** for `external_idv`: sending it for an OTP, override, or no-verification recipient is rejected with a 400 `IdentityModeConflict` error, not ignored.
+
+```java
+CreateSigningUrlResponse link = client.turboSign().createSigningUrl(
+    documentId,
+    new CreateSigningUrlRequest.Builder()
+        .recipientId("recipient-uuid")
+        .identityAssertion(new IdentityAssertion.Builder()
+            .provider("CAPA")
+            .verificationId("capa_verif_8f2a91")
+            .verifiedAt("2025-01-01T00:00:00Z")
+            .subjectEmail("jane@example.com")
+            // Optional context recorded on the certificate / audit trail (null values are omitted):
+            .method("id_document_liveness")      // id_document | id_document_liveness | kba | database | sso | other
+            // .methodDetail("Video call with a notary") // required when method is "other"
+            .assuranceLevel("ial2_aal2")         // e.g. ial2_aal2, eidas_substantial, eidas_high
+            .verifiedName("Jane Doe")            // legal name as your provider verified it
+            .evidenceUrl("https://idv.example.com/verifications/capa_verif_8f2a91") // https only
+            // .overrideEmailMatching(true)      // skip the subjectEmail check; recorded on the audit trail
+            .build())
+        .build()
+);
+```
+
+Request it **at click time**. For the bypass modes (`external_idv` / `override`) the URL is **single-use** and expires 5 minutes after issue (a `?sut=` link redeemed once when opened), so mint a fresh one each time. For no-verification and `otp` recipients the URL is the reusable signing link (`?token=`) that survives a refresh, and `getExpiresAt()` is the **document's own expiry**, or `null` when the document doesn't expire.
+
+### getEmbeddedSigningSettings
+
+Read-only org gates — check what your org allows before you request signing URLs. Change these in E-Signature settings (Identity & embedding tab) or via the organization preferences API, where the change is recorded in the settings audit trail.
+
+```java
+EmbeddedSigningSettings settings = client.turboSign().getEmbeddedSigningSettings();
+settings.isEnabled();                // embedded signing + OTP turned on for the org
+settings.isAllowExternalIdv();       // may assert identity via your own provider (external_idv)
+settings.isAllowIdentityOverride();  // may issue a link that skips verification (override)
+settings.getDefaultChannel();        // "none" | "email" | "sms": what a recipient with no identityVerification gets
+settings.getAllowChannelOverride();  // Boolean: FALSE = locked, null = unknown (not locked)
+settings.getAllowedFrameAncestors(); // origins allowed to iframe the signing page (empty = denied everywhere)
+
+boolean channelLocked = Boolean.FALSE.equals(settings.getAllowChannelOverride());
+```
+
+- **`defaultChannel`** is the org's default OTP channel. While embedded signing is enabled it applies to **every** recipient that doesn't set one, **SDK/API sends included**. `"none"` means verify only when a request asks for it.
+- **`allowChannelOverride`**: whether a request may give a recipient a channel other than `defaultChannel`. `false` = locked, and a different explicit channel is rejected with `OtpOverrideNotAllowed`. The server reports `true` while the default is `"none"` or embedded signing is off, but an admin can change that at any time, so read this field (not just `defaultChannel`) before forcing a channel. Note the getter is `getAllowChannelOverride()` (boxed), not `is...`.
+- **`allowedFrameAncestors`**: empty means framing is denied everywhere.
+
+### createEmbeddedSignature
+
+Send the document **and** mint a per-recipient embed URL in one call — a thin wrapper over `sendSignature` + `createSigningUrl`, no new endpoint. Each recipient carries an `auth` (identity shorthand) and a `fields` (anchor shorthand); results come back **in signing order**.
+
+```java
+import com.turbodocx.TurboDocxException;
+
+CreateEmbeddedSignatureResponse embedded;
+try {
+    embedded = client.turboSign().createEmbeddedSignature(
+        new CreateEmbeddedSignatureRequest.Builder()
+            .file(pdfFile)
+            .fileName("contract.pdf")
+            .documentName("Auto Policy")
+            // Already the default here: no signing-link, reminder or expiry-warning emails, because
+            // your app shows the signing page. Passcode and completed-copy emails still go out.
+            .sendEmail(false)
+            .recipients(Arrays.asList(
+                new EmbeddedSignatureRecipient.Builder()
+                    .name("John Doe")
+                    .email("john@example.com")
+                    // Per-recipient OTP: emailOtp() or sms("+1..."). Omit auth to take the org's defaultChannel.
+                    .auth(EmbeddedRecipientAuth.emailOtp())
+                    .fields(new EmbeddedRecipientFields.Builder()
+                        .signature("{signature1}")
+                        .date("{date1}")
+                        .build())
+                    .build()
+            ))
+            .returnUrl("https://app.yourcompany.com/signed") // optional, passed to each embed URL
+            .build()
+    );
+} catch (TurboDocxException.AuthorizationException e) {
+    if ("OtpOverrideNotAllowed".equals(e.getCode())) {
+        // The org locked the verification method: drop auth (take defaultChannel) or ask an admin.
+    }
+    throw e;
+}
+
+for (EmbeddedSignatureRecipientResult r : embedded.getRecipients()) {
+    // status: "ready" (embedUrl set — frame it now) | "pending" (not their turn yet)
+    //         | "completed" (already signed). embedUrl is null unless "ready".
+    System.out.println(r.getName() + ": " + r.getStatus() + " -> " + r.getEmbedUrl());
+}
+```
+
+`sendEmail` defaults to `false` for this flow: the signing-link emails, the initial CC notice, the next signer's "your turn" email and the scheduled reminder and expiry-warning emails are suppressed, while passcode and completed-copy emails are still sent. No `auth` means the org's `defaultChannel` applies; an `auth` channel that differs from a locked default fails the whole call with `OtpOverrideNotAllowed`. For a `ready` signer `getIdentityVerificationMode()` is the mode the backend resolved; for `pending` / `completed` no URL was minted, so it is the mode you **requested** via `auth` (`null` when you set none, even if the org's default channel will apply). Pass a top-level `.fields(List<Field>)` to override every recipient's `fields` shorthand verbatim; an empty list counts as absent, so the shorthand still expands (0.8.0 sent the empty list and dropped it). It is **turn-aware**: with a real signing order the backend mints a URL only for the signer whose turn it is: a later signer comes back `pending` with a null `embedUrl`, so re-mint with `createSigningUrl` once earlier signers finish (e.g. an in-person kiosk handing the device to the next signer). A genuine error (any code other than not-in-turn / already-signed) still throws.
+
+### Identity verification modes
+
+Set per recipient via `IdentityVerification` (or the `auth` shorthand on `createEmbeddedSignature`). A recipient with **no** `identityVerification` takes the org's `defaultChannel`: with a `"none"` default it signs with no step-up (`identityVerificationMode` comes back null and `pendingChecks` is empty); with `"email"` / `"sms"` it gets that passcode.
+
+| Mode | Factory | What the signer does |
+|---|---|---|
+| **OTP (email)** | `IdentityVerification.otpEmail()` | Clears an emailed one-time passcode before the document opens |
+| **OTP (SMS)** | `IdentityVerification.otpSms()` | Clears a texted passcode — needs an E.164 phone on the recipient (see note) |
+| **external_idv** | `IdentityVerification.externalIdv("CAPA")` | Verified by your own provider; pass the `IdentityAssertion` to `createSigningUrl` |
+| **override** | `IdentityVerification.override("Sandbox testing")` | Skips verification (development/testing); recorded "not identity-verified" on the certificate |
+
+`external_idv` and `override` are org-gated — see `isAllowExternalIdv()` / `isAllowIdentityOverride()`. For SMS OTP the phone number's source depends on the path: on a `Recipient.Builder` you set `.phone("+13055551234")` yourself; with the `EmbeddedRecipientAuth.sms("+13055551234")` shorthand the number is carried in the `auth` block and `createEmbeddedSignature` resolves it onto the recipient. Either way, an SMS-OTP recipient with no resolved phone fails fast with `PhoneRequiredForSmsOtp`.
+
+On `sendSignature`, attach a mode with `.identityVerification(...)` on the `Recipient.Builder`:
+
+```java
+new Recipient.Builder()
+    .name("Jane Doe")
+    .email("jane@example.com")
+    .signingOrder(1)
+    .externalId("your_customer_123")                 // your key — select by it in createSigningUrl
+    .identityVerification(IdentityVerification.otpEmail())
+    .build()
+```
+
+### Allowed embedding domains
+
+**Embedding is DENY-by-default.** An embed URL (`/e-signature/embed/...`) is framed under a per-tenant `Content-Security-Policy: frame-ancestors`. An origin **not** on the org's allow-list is **hard-blocked** (a blank/refused frame: the clickjacking protection working, not a bug), never merely warned. Add your app's origin under **E-Signature settings → Identity & embedding → Allowed embedding domains**; production origins must be `https://` (`http://localhost` is accepted only as a flagged dev override). Read the current list from `settings.getAllowedFrameAncestors()`; an empty list means framing is denied everywhere.
+
+**Browser side.** Your Java backend returns only the `/e-signature/embed/...` URL; the browser frames it. The `@turbodocx/embed` npm package (`<TurboSignForm>` for React, `<turbosign-form>` web component) owns the iframe and origin pinning. Its `onCompleted` callback (or the `turbosign:completed` event `detail`) receives `{ documentId, status, event, scope }`: `event` is `"signing_complete"` or `"already_signed"` (a reopened, finished link, so skip one-time side effects), and `scope` is `"recipient"` (this signer's step only; read the whole document's status server-side with `getStatus` or the completed webhook). For OTP signers the code is sent only when they click **Send Code** on the signing page, so don't tell them it was already emailed.
+
+### Full reference implementation
+
+For an end-to-end host app (a React SPA that calls a key-holding backend-for-frontend (`server.ts`), which uses the SDK to create documents and mint embed URLs so the API key **never reaches the browser**), see [`examples/embedded-web-app`](https://github.com/TurboDocx/SDK/tree/main/examples/embedded-web-app). It demonstrates four embedding paths side by side: **single signer** (hand-rolled `<iframe>` + origin-checked `postMessage` completion listener), **external IdV** (a simulated identity provider, with the server passing an `identityAssertion` when it mints the URL), **sequential kiosk** (two signers in order on one device, the next URL minted just-in-time when it's their turn), and **widget** (`<TurboSignForm>` from `@turbodocx/embed`, which owns the iframe, origin pinning, and completion event). The Java single-signer equivalent is [`packages/java-sdk/examples/TurboSignEmbeddedIdentity.java`](https://github.com/TurboDocx/SDK/blob/main/packages/java-sdk/examples/TurboSignEmbeddedIdentity.java).
+
+## Deliverable
+
+Document generation: render a TurboDocx template with variable substitution into a deliverable (DOCX/PPTX), then download it or hand its ID to TurboSign as the source document.
+
+### Configuration
+
+Build a Deliverable-only client with `buildDeliverableClient()` — it does NOT require `senderEmail`, since Deliverable never sends email.
+
+```java
+import com.turbodocx.DeliverableClient;
+import com.turbodocx.models.deliverable.*;
+
+DeliverableClient deliverable = new TurboDocxClient.Builder()
+    .apiKey(System.getenv("TURBODOCX_API_KEY"))
+    .orgId(System.getenv("TURBODOCX_ORG_ID"))
+    .buildDeliverableClient();
+```
+
+A full `TurboDocxClient` (built with `.build()`) also exposes `client.deliverable()` alongside `client.turboSign()`.
+
+### generateDeliverable
+
+Generate a document from a template with variable substitution. Method and setter names are camelCase, and they serialize to the camelCase JSON keys (`templateId`, `mimeType`) the API expects verbatim.
+
+```java
+DeliverableVariable employeeVar = new DeliverableVariable();
+employeeVar.setPlaceholder("{EmployeeName}");
+employeeVar.setText("John Smith");
+employeeVar.setMimeType("text");
+
+DeliverableVariable companyVar = new DeliverableVariable();
+companyVar.setPlaceholder("{CompanyName}");
+companyVar.setText("TechCorp Inc.");
+companyVar.setMimeType("text");
+
+CreateDeliverableRequest createReq = new CreateDeliverableRequest();
+createReq.setName("Employee Contract - John Smith");
+createReq.setTemplateId("template-uuid");
+createReq.setVariables(List.of(employeeVar, companyVar));
+createReq.setDescription("Generated via API for HR onboarding"); // optional
+createReq.setTags(List.of("hr", "contract"));                    // optional
+
+CreateDeliverableResponse created = deliverable.generateDeliverable(createReq);
+DeliverableRecord d = created.getResults().getDeliverable();
+System.out.println(d.getId() + "  " + d.getName() + "  " + d.getFileType());
+```
+
+`mimeType` is one of `"text"`, `"html"`, `"image"`, or `"markdown"`. For repeating content (tables, lists), set a variable stack on a `DeliverableVariable`.
+
+### listDeliverables
+
+```java
+ListDeliverablesRequest listReq = new ListDeliverablesRequest();
+listReq.setLimit(20);   // 1-100, default 6
+listReq.setOffset(0);
+listReq.setQuery("contract");
+listReq.setShowTags(true);
+
+DeliverableListResponse list = deliverable.listDeliverables(listReq);
+System.out.println(list.getTotalRecords());
+for (DeliverableRecord record : list.getResults()) {
+    System.out.println("  " + record.getId() + "  " + record.getName());
+}
+```
+
+Pagination uses `offset`, not a page number. Call `deliverable.listDeliverables()` (no args) for defaults.
+
+### getDeliverableDetails
+
+```java
+DeliverableRecord details = deliverable.getDeliverableDetails(deliverableId, true);
+System.out.println(details.getName() + "  " + details.getTemplateName());
+```
+
+Returns a full `DeliverableRecord` (unwrapped from `results`), including variables and (when `showTags` is true) tags.
+
+### updateDeliverableInfo
+
+```java
+UpdateDeliverableRequest updateReq = new UpdateDeliverableRequest();
+updateReq.setName("Employee Contract - John Smith (Final)");
+updateReq.setDescription("Finalized version");
+updateReq.setTags(List.of("hr", "contract", "finalized")); // replaces all existing tags
+
+UpdateDeliverableResponse updated = deliverable.updateDeliverableInfo(deliverableId, updateReq);
+System.out.println(updated.getMessage() + "  " + updated.getDeliverableId());
+```
+
+Setting `tags` **replaces** the full tag set. Pass an empty list to clear all tags; leave it unset to keep existing tags untouched.
+
+### deleteDeliverable
+
+```java
+DeleteDeliverableResponse deleted = deliverable.deleteDeliverable(deliverableId);
+System.out.println(deleted.getMessage()); // soft delete — data is retained but hidden from list
+```
+
+### downloadSourceFile / downloadPDF
+
+Both return a raw `byte[]` — write it straight to disk.
+
+```java
+byte[] docxBytes = deliverable.downloadSourceFile(deliverableId);
+Files.write(Paths.get("contract.docx"), docxBytes);
+
+byte[] pdfBytes = deliverable.downloadPDF(deliverableId);
+Files.write(Paths.get("contract.pdf"), pdfBytes);
+```
+
+`downloadSourceFile` returns the original DOCX/PPTX and requires the `hasFileDownload` entitlement.
+
+### Generate, then send for signature
+
+A full `TurboDocxClient` exposes both modules, so you can generate and sign without downloading and re-uploading:
+
+```java
+TurboDocxClient client = new TurboDocxClient.Builder()
+    .apiKey(System.getenv("TURBODOCX_API_KEY"))
+    .orgId(System.getenv("TURBODOCX_ORG_ID"))
+    .senderEmail(System.getenv("TURBODOCX_SENDER_EMAIL"))
+    .build();
+
+DeliverableVariable clientVar = new DeliverableVariable();
+clientVar.setPlaceholder("{ClientName}");
+clientVar.setText("Acme Corp");
+clientVar.setMimeType("text");
+
+CreateDeliverableRequest genReq = new CreateDeliverableRequest();
+genReq.setName("Consulting Agreement");
+genReq.setTemplateId("template-uuid");
+genReq.setVariables(List.of(clientVar));
+
+CreateDeliverableResponse gen = client.deliverable().generateDeliverable(genReq);
+
+SendSignatureResponse signed = client.turboSign().sendSignature(
+    new SendSignatureRequest.Builder()
+        .deliverableId(gen.getResults().getDeliverable().getId()) // no download/re-upload
+        .documentName("Consulting Agreement")
+        .recipients(Arrays.asList(
+            new Recipient("John Doe", "john@example.com", 1)
+        ))
+        .fields(Arrays.asList(
+            new Field.Builder()
+                .type("signature")
+                .recipientEmail("john@example.com")
+                .template(new Field.TemplateAnchor.Builder()
+                    .anchor("{signature1}")
+                    .placement("replace")
+                    .size(new Field.Size(100, 30))
+                    .build())
+                .build()
+        ))
+        .build()
+);
+```
+
+## TurboPartner
+
+Partner-portal operations: provision and manage customer organizations, their users, API keys, entitlements, and audit logs. Uses **separate partner credentials**. Every method returns a Gson `JsonObject` with `success`, `data`, and optionally `message`. Request-body map keys are **camelCase** (e.g. `maxUsers`, `canManageOrgs`).
+
+### Configuration
+
+```java
+TurboPartnerClient partner = new TurboPartnerClient.Builder()
+    .partnerApiKey(System.getenv("TURBODOCX_PARTNER_API_KEY")) // starts with TDXP-
+    .partnerId(System.getenv("TURBODOCX_PARTNER_ID"))          // UUID
+    .build();
+
+TurboPartner tp = partner.turboPartner();
+```
+
+### Organization management
+
+```java
+// Create
+JsonObject org = tp.createOrganization(
+    "Acme Corp",
+    Map.of("industry", "Technology"),           // metadata (or null)
+    Map.of("maxUsers", 50, "hasTDAI", true));   // optional initial entitlements; camelCase keys
+System.out.println(org.getAsJsonObject("data").get("id").getAsString());
+
+// List (uses limit/offset, not page)
+JsonObject orgs = tp.listOrganizations(20, 0, "acme");
+System.out.println(orgs.getAsJsonObject("data").get("totalRecords"));
+
+// Get details (includes features + tracking)
+JsonObject details = tp.getOrganizationDetails("org-uuid");
+
+// Update name
+tp.updateOrganizationInfo("org-uuid", "Acme Holdings");
+
+// Delete
+tp.deleteOrganization("org-uuid");
+
+// Update entitlements — features and tracking are separate maps
+tp.updateOrganizationEntitlements(
+    "org-uuid",
+    Map.of("maxUsers", 100, "hasTDAI", true, "hasSalesforce", true), // features
+    Map.of("numUsers", 12));                                          // tracking (or null)
+```
+
+### Organization display preferences
+
+Read and set a tenant's TurboSign display preferences without logging into its settings UI. Four
+booleans are partner-settable; the API returns only these keys, never the org's other settings.
+
+```java
+import com.turbodocx.models.PartnerOrgPreferences;
+import com.turbodocx.models.PartnerOrgPreferencesResponse;
+
+// Read — every key comes back with its effective value (defaults applied)
+PartnerOrgPreferencesResponse read = tp.getOrganizationPreferences("org-uuid");
+PartnerOrgPreferences prefs = read.getData().getPreferences();
+System.out.println(prefs.getHideSignatureOutline());       // false by default
+System.out.println(prefs.getHideSignatureHash());          // false by default
+System.out.println(prefs.getLockedFieldsBackground());     // true by default
+System.out.println(prefs.getAllowDownloadBeforeSigning()); // false by default
+
+// Update — setters chain, and any field left null is omitted from the request,
+// so you change only what you name. An explicit false IS sent.
+PartnerOrgPreferencesResponse updated = tp.updateOrganizationPreferences(
+    "org-uuid",
+    new PartnerOrgPreferences().setLockedFieldsBackground(false)); // plain text, not a grey box
+System.out.println(updated.getData().getPreferences().getLockedFieldsBackground()); // false
+```
+
+| Preference | Default | Effect |
+|------------|---------|--------|
+| `hideSignatureOutline` | `false` | Hide the outline/label drawn around signed fields |
+| `hideSignatureHash` | `false` | Hide the verification hash printed on signed fields |
+| `lockedFieldsBackground` | `true` | Grey box behind locked fields (`false` = plain text) |
+| `allowDownloadBeforeSigning` | `false` | When enabled, a signer can download the unsigned PDF from the signing page before they sign it (for example, to review it with their legal team). Defaults to off. |
+
+### Organization user management
+
+```java
+// List
+JsonObject users = tp.listOrganizationUsers("org-uuid", 25, 0, null);
+
+// Invite — ORG role enum: "admin" | "contributor" | "user" | "viewer"
+// ("member" is a PARTNER-portal role and is rejected here with a 400.)
+tp.addUserToOrganization("org-uuid", "newhire@acme.com", "contributor");
+
+// Update role
+tp.updateOrganizationUserRole("org-uuid", "user-uuid", "admin");
+
+// Remove
+tp.removeUserFromOrganization("org-uuid", "user-uuid");
+
+// Resend invitation email
+tp.resendOrganizationInvitationToUser("org-uuid", "user-uuid");
+```
+
+### Organization API key management
+
+```java
+// List
+JsonObject keys = tp.listOrganizationApiKeys("org-uuid", 10, 0, null);
+
+// Create — the full key value is returned ONLY on creation, store it immediately
+// Org API keys use the ORG role enum: "admin" | "contributor" | "user" | "viewer"
+JsonObject created = tp.createOrganizationApiKey("org-uuid", "Production Key", "admin");
+System.out.println(created.getAsJsonObject("data").get("key").getAsString()); // capture once
+
+// Update (rename or change role)
+tp.updateOrganizationApiKey("org-uuid", "key-uuid", "Renamed", null);
+
+// Revoke
+tp.revokeOrganizationApiKey("org-uuid", "key-uuid");
+```
+
+### Partner API key management
+
+```java
+// List
+JsonObject keys = tp.listPartnerApiKeys(10, 0, null);
+
+// Create with scopes — full key returned only on creation
+JsonObject created = tp.createPartnerApiKey(
+    "CI/CD Key",
+    List.of("org:create", "org:read", "entitlements:update"),
+    "Used by GitHub Actions");
+System.out.println(created.getAsJsonObject("data").get("key").getAsString()); // store immediately
+
+// Update name / description / scopes
+tp.updatePartnerApiKey(
+    "key-uuid",
+    "CI/CD Key (extended)",
+    null,
+    List.of("org:create", "org:read", "org:update", "entitlements:update"));
+
+// Revoke
+tp.revokePartnerApiKey("key-uuid");
+```
+
+Available scopes cover `org:*`, `entitlements:update`, `org-users:*`, `partner-users:*`, `org-apikeys:*`, `partner-apikeys:*`, and `audit:read` (see `PartnerScope`).
+
+### Partner-portal user management
+
+```java
+// List
+JsonObject users = tp.listPartnerPortalUsers(25, 0, null);
+
+// Add — PARTNER role enum: "admin" | "member" | "viewer"
+// ("contributor" / "user" are ORG roles and are rejected here with a 400.)
+// All SEVEN permission keys are required.
+tp.addUserToPartnerPortal(
+    "admin@partner.com",
+    "admin",
+    Map.of(
+        "canManageOrgs", true,
+        "canManageOrgUsers", true,
+        "canManagePartnerUsers", false,
+        "canManageOrgAPIKeys", true,
+        "canManagePartnerAPIKeys", false,
+        "canUpdateEntitlements", true,
+        "canViewAuditLogs", true));
+
+// Update — the permissions map is optional, but there is NO partial update:
+// if you pass a map at all it must contain ALL SEVEN keys, or the backend returns
+// 400. Read the current permissions first, then override only what changes.
+JsonObject currentUser = null;
+for (JsonElement e : tp.listPartnerPortalUsers(100, 0, null)
+                       .getAsJsonObject("data").getAsJsonArray("results")) {
+    if ("user-uuid".equals(e.getAsJsonObject().get("id").getAsString())) {
+        currentUser = e.getAsJsonObject();
+        break;
+    }
+}
+
+Map<String, Boolean> permissions = new HashMap<>();
+JsonObject currentPerms = currentUser.getAsJsonObject("permissions");
+for (String key : currentPerms.keySet()) {          // all 7 keys, from the server
+    permissions.put(key, currentPerms.get(key).getAsBoolean());
+}
+permissions.put("canManageOrgs", true);             // then override only what changes
+permissions.put("canManageOrgUsers", true);
+
+tp.updatePartnerUserPermissions("user-uuid", "member", permissions);
+
+// To change ONLY the role, pass null for the permissions map:
+tp.updatePartnerUserPermissions("user-uuid", "viewer", null);
+
+// Remove
+tp.removeUserFromPartnerPortal("user-uuid");
+
+// Resend invitation
+tp.resendPartnerPortalInvitationToUser("user-uuid");
+```
+
+### Audit logs
+
+```java
+// (limit, offset, search, action, resourceType, resourceId, success, startDate, endDate)
+JsonObject logs = tp.getPartnerAuditLogs(
+    100, 0, null, "org.created", "organization", null, true, "2026-01-01", "2026-12-31");
+System.out.println(logs.getAsJsonObject("data").get("totalRecords"));
+```
+
+## Spring Boot Integration Example
+
+```java
+// src/main/java/.../config/TurboDocxConfig.java
+package com.example.app.config;
+
+import com.turbodocx.TurboDocxClient;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class TurboDocxConfig {
+
+    @Bean
+    public TurboDocxClient turboDocxClient(
+        @Value("${TURBODOCX_API_KEY}") String apiKey,
+        @Value("${TURBODOCX_ORG_ID}") String orgId,
+        @Value("${TURBODOCX_SENDER_EMAIL}") String senderEmail,
+        @Value("${TURBODOCX_SENDER_NAME:}") String senderName
+    ) {
+        return new TurboDocxClient.Builder()
+            .apiKey(apiKey)
+            .orgId(orgId)
+            .senderEmail(senderEmail)
+            .senderName(senderName)
+            .build();
+    }
+}
+```
+
+```java
+// src/main/java/.../controller/SignatureController.java
+package com.example.app.controller;
+
+import com.turbodocx.TurboDocxClient;
+import com.turbodocx.models.*;
+import com.turbodocx.TurboDocxException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/signatures")
+public class SignatureController {
+
+    private final TurboDocxClient client;
+    private final ObjectMapper objectMapper;
+
+    public SignatureController(TurboDocxClient client, ObjectMapper objectMapper) {
+        this.client = client;
+        this.objectMapper = objectMapper;
+    }
+
+    @PostMapping("/send")
+    public ResponseEntity<?> sendSignature(
+        @RequestParam("file") MultipartFile file,
+        @RequestParam("documentName") String documentName,
+        @RequestParam("recipients") String recipientsJson,
+        @RequestParam("fields") String fieldsJson
+    ) {
+        try {
+            List<Recipient> recipients = objectMapper.readValue(
+                recipientsJson, new TypeReference<>() {}
+            );
+            List<Field> fields = objectMapper.readValue(
+                fieldsJson, new TypeReference<>() {}
+            );
+
+            SendSignatureResponse result = client.turboSign().sendSignature(
+                new SendSignatureRequest.Builder()
+                    .file(file.getBytes())
+                    .fileName(file.getOriginalFilename())
+                    .documentName(documentName)
+                    .recipients(recipients)
+                    .fields(fields)
+                    .build()
+            );
+
+            return ResponseEntity.ok(result);
+        } catch (TurboDocxException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Signature request failed");
+        }
+    }
+
+    @GetMapping("/{id}/status")
+    public ResponseEntity<?> getStatus(@PathVariable String id) {
+        try {
+            DocumentStatusResponse status = client.turboSign().getStatus(id);
+            return ResponseEntity.ok(status);
+        } catch (TurboDocxException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getMessage());
+        }
+    }
+}
+```
+
+## TurboWebhooks
+
+TurboWebhooks subscribes a single per-org HTTPS endpoint (locked to the name `signature`) to TurboSign document events. The SDK is intentionally one-webhook-per-org to mirror the dashboard's Signature Webhooks page.
+
+### Webhook events
+
+TurboSign dispatches **7** events. All of them are live — subscribe to whichever your integration needs.
+
+| Event (wire string) | Fires when |
+|---|---|
+| `signature.document.sent` | The document is dispatched to recipients |
+| `signature.document.viewed` | A recipient opens the document for the first time |
+| `signature.document.recipient_signed` | An individual signer completes their signature — fires **once per signer** |
+| `signature.document.signed` | A signer signs but the document is **not yet complete** (document-level partial progress) |
+| `signature.document.completed` | All recipients have signed and the signed PDF is finalized |
+| `signature.document.finalization_failed` | The signed PDF fails to finalize (e.g. KMS signing error); the document is **not** completed |
+| `signature.document.voided` | The document is voided or cancelled |
+
+The SDK exposes these as the `com.turbodocx.WebhookEvent` enum — `WebhookEvent.SENT`, `.VIEWED`, `.RECIPIENT_SIGNED`, `.SIGNED`, `.COMPLETED`, `.FINALIZATION_FAILED`, `.VOIDED`. Call `getValue()` for the wire string (`WebhookEvent.COMPLETED.getValue()` → `"signature.document.completed"`), and `WebhookEvent.allValues()` for a `List<String>` of all 7 you can hand straight to `createWebhook`. The literal wire strings above are what actually travel in the top-level `event` field of the delivered payload (the envelope is `{ event, event_id, created_at, version, data }` — a receiver written against `eventType` reads `null` and silently dispatches nothing), and they are always accepted by `createWebhook`/`updateWebhook`. `getWebhook()` also returns an `availableEvents` array — the backend advertises the live catalog at runtime.
+
+#### Lifecycle: `recipient_signed` vs `signed` vs `completed`
+
+This is the part integrations get wrong. On **every** signature, `recipient_signed` fires first. Then exactly one of `signed`, `completed`, or `finalization_failed` follows:
+
+```
+Recipient signs
+   │
+   ├─ signature.document.recipient_signed   (always — one per signer)
+   │
+   └─ more signers remaining?
+        ├─ yes → signature.document.signed                 (partial progress)
+        └─ no  → signature.document.completed              (finalized OK)
+                 or signature.document.finalization_failed (finalization failed)
+```
+
+- **`recipient_signed`** is the **per-person** event. It fires once for every signer, *including the last one*, and carries the signer's identity plus `is_final_signer` (true only on the last signature) and `remaining_signers`.
+- **`signed`** is a **document-level partial-progress** event. It fires **only when a signer signs and the document is NOT yet complete**.
+- **`signed` never fires on the final signature.** To detect "the whole document is done", use `completed` (or `recipient_signed` with `is_final_signer: true`) — **never** `signed`.
+- **A single-signer document never emits `signed` at all.** It emits `recipient_signed` (`is_final_signer: true`) and then `completed`.
+
+### Configuration
+
+`buildWebhooksClient()` does NOT require `senderEmail` — webhook routes don't send signature emails. It returns a `TurboWebhooks` instance directly (no `.turboWebhooks()` accessor on the parent client).
+
+```java
+import com.turbodocx.TurboDocxClient;
+import com.turbodocx.TurboWebhooks;
+
+TurboWebhooks webhooks = new TurboDocxClient.Builder()
+    .apiKey(System.getenv("TURBODOCX_API_KEY"))   // must be an admin TDX- key
+    .orgId(System.getenv("TURBODOCX_ORG_ID"))
+    .baseUrl(System.getenv("TURBODOCX_BASE_URL")) // optional, defaults to api.turbodocx.com
+    .buildWebhooksClient();
+```
+
+### createWebhook
+
+```java
+import com.google.gson.JsonObject;
+import java.util.Arrays;
+
+JsonObject created = webhooks.createWebhook(
+    Arrays.asList("https://your-server.example.com/webhooks/turbodocx"),  // 1-10, HTTPS only
+    Arrays.asList(                                                        // at least 1
+        "signature.document.sent",
+        "signature.document.viewed",
+        "signature.document.recipient_signed",    // once per signer; carries is_final_signer
+        "signature.document.completed",           // the ONLY reliable "document is done" signal
+        "signature.document.finalization_failed",
+        "signature.document.voided"
+        // "signature.document.signed"            // add only if you want partial-progress pings;
+        //                                        // it never fires on the final signature
+    )
+);
+System.out.println("id: "     + created.get("id").getAsString());
+System.out.println("secret: " + created.get("secret").getAsString()); // shown ONCE — save immediately
+```
+
+`urls` must contain **1–10** HTTPS URLs and `events` at least **1** event, or the backend throws `ValidationException` (400). Webhook management requires an **administrator** API key.
+
+### getWebhook
+
+Returns the webhook record plus aggregate `deliveryStats` and the server-provided event catalog. All TurboWebhooks methods return `JsonObject` so new fields surface without an SDK upgrade.
+
+```java
+JsonObject webhook = webhooks.getWebhook();
+```
+
+### updateWebhook
+
+Patch any subset of fields. Pass `null` for fields you don't want to change. Renaming is not supported.
+
+```java
+JsonObject updated = webhooks.updateWebhook(
+    Arrays.asList("https://new-server.example.com/hook"),  // urls — 1-10 HTTPS URLs
+    null,                                                   // events (unchanged)
+    Boolean.FALSE                                           // isActive
+);
+
+// To pause deliveries without touching the routing, pass null for both lists:
+webhooks.updateWebhook(null, null, Boolean.FALSE);
+```
+
+`null` means "leave unchanged" — but an **empty list is not the same as null**. If you pass a non-null `urls` it still has to hold 1–10 URLs, and a non-null `events` still has to hold at least 1; `Collections.emptyList()` throws `ValidationException` (400). Pass `null` to skip a field.
+
+### deleteWebhook
+
+```java
+JsonObject deleted = webhooks.deleteWebhook(); // soft-delete; delivery history wiped
+```
+
+### testWebhook / notifyWebhook
+
+`testWebhook` and `notifyWebhook` route through the same backend handler — prefer `testWebhook` in new code. The response carries a `summary` with `successful` / `failed` counts and a per-URL `errors` list when any delivery fails.
+
+```java
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+Map<String, Object> payload = new LinkedHashMap<>();
+payload.put("documentId",   "00000000-0000-0000-0000-000000000000");
+payload.put("documentName", "Smoke test");
+
+JsonObject result = webhooks.testWebhook("signature.document.completed", payload);
+```
+
+### regenerateWebhookSecret
+
+```java
+JsonObject rotated = webhooks.regenerateWebhookSecret();
+String newSecret = rotated.get("secret").getAsString(); // shown ONCE
+```
+
+Rotating immediately invalidates old signatures.
+
+### listWebhookDeliveries
+
+Pass `null` for any filter you don't want to apply. The no-arg overload skips all filters.
+
+```java
+JsonObject page = webhooks.listWebhookDeliveries(
+    50,                              // limit
+    null,                            // offset
+    "signature.document.completed",  // eventType
+    Boolean.TRUE,                    // isDelivered
+    null                             // httpStatus
+);
+```
+
+### replayWebhookDelivery
+
+```java
+JsonObject replayed = webhooks.replayWebhookDelivery(deliveryId);
+```
+
+### getWebhookStats
+
+```java
+JsonObject stats = webhooks.getWebhookStats(30); // sliding window in days; pass null for backend default
+```
+
+### Verifying inbound webhook signatures (Spring Boot)
+
+When TurboDocx POSTs to your receiver, verify the `X-TurboDocx-Signature` header before trusting the payload. Java has no free functions — the helper is exposed as `WebhookSignatureVerifier.verify(...)`, a static method on a final utility class. It enforces a 5-minute timestamp tolerance and uses `MessageDigest.isEqual` for constant-time comparison. Use the 6-arg overload to override `toleranceSeconds`: `0` disables the check (not recommended in production); a negative value rejects every delivery.
+
+`WebhookSignatureVerifier.verify(...)` returns `false` (it does not throw) on bad or missing input, such as a `null` body, a `null` or empty header or secret, or a malformed timestamp, so answer 401 on `false` without a try/catch.
+
+```java
+package com.example.webhooks;
+
+import com.turbodocx.WebhookSignatureVerifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class TurboDocxWebhookController {
+
+    @Value("${turbodocx.webhook.secret}")
+    private String secret;
+
+    // IMPORTANT: bind to byte[], not a parsed @RequestBody Map / DTO.
+    // The signature is computed over raw bytes — Jackson would re-serialize
+    // and lose whitespace, which breaks verification.
+    @PostMapping(value = "/webhooks/turbodocx", consumes = "application/json")
+    public ResponseEntity<Void> receive(
+            @RequestBody byte[] rawBody,
+            @RequestHeader("X-TurboDocx-Signature") String signature,
+            @RequestHeader("X-TurboDocx-Timestamp") String timestamp) {
+
+        if (!WebhookSignatureVerifier.verify(rawBody, signature, timestamp, secret)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // Now safe to parse rawBody as JSON. The envelope is
+        // { event, event_id, created_at, version, data } — dispatch on the top-level
+        // "event" field, NOT "eventType" (that key does not exist and reads null).
+        return ResponseEntity.ok().build();
+    }
+}
+```
+
+For a plain Servlet receiver, read the body with `request.getInputStream().readAllBytes()` instead of `@RequestBody byte[]`; everything else stays the same.
+
+**Canonical end-to-end Java example:** [`packages/java-sdk/examples/TurboWebhooksCrud.java`](https://github.com/TurboDocx/SDK/blob/main/packages/java-sdk/examples/TurboWebhooksCrud.java) walks through create → conflict → get → update → test-fire → rotate → list → delete + every error branch.
+
+### TurboWebhooks error handling
+
+```java
+import com.turbodocx.TurboDocxException;
+
+try {
+    webhooks.createWebhook(urls, events);
+} catch (TurboDocxException.ConflictException e) {
+    // 409 — webhook with that name already exists; update or delete
+} catch (TurboDocxException.ValidationException e) {
+    // 400 — non-HTTPS URL or empty events
+} catch (TurboDocxException.AuthorizationException e) {
+    // 403 — TDX- key lacks administrator role
+} catch (TurboDocxException.AuthenticationException e) {
+    // 401 — bad / revoked API key
+} catch (TurboDocxException.NotFoundException e) {
+    // 404 — webhook does not exist
+} catch (TurboDocxException.RateLimitException e) {
+    // 429 — back off and retry
+} catch (TurboDocxException.NetworkException e) {
+    // never reached the server
+}
+```
+
+## TurboQuote
+
+TurboQuote provides end-to-end CPQ (configure-price-quote) operations: create and send professional quotes, manage your product catalog and bundles, apply pricebooks, and handle the full quote lifecycle (draft, sent, accepted, declined, voided).
+
+### Configuration
+
+`TurboQuoteClient` takes no `senderEmail` / `senderName` — but that does **not** mean quotes never email anyone. **Sending a quote DOES create a signature request and email the recipient.** The sender identity comes from the org's **quote template** (Quote Settings), not from the client config. An API-key caller has no mailbox of its own, so if the template has no sender email set, the call fails with HTTP 400 `SenderEmailRequired`. Set one on the template once (via `updateTemplate`) and every subsequent create/duplicate/send resolves cleanly.
+
+`orgId` is technically optional in the config but the backend will return 401 if it is missing, so always supply it.
+
+```java
+import com.turbodocx.TurboQuoteClient;
+import com.turbodocx.TurboQuote;
+// Every quote model (CreateQuoteRequest, AddLineItemRequest, SendQuoteRequest, Quote, LineItem,
+// Currency, BulkImportResult, ...) lives in com.turbodocx.models.quote, not com.turbodocx.models.
+import com.turbodocx.models.quote.*;
+
+TurboQuote tq = new TurboQuoteClient.Builder()
+    .apiKey(System.getenv("TURBODOCX_API_KEY"))
+    .orgId(System.getenv("TURBODOCX_ORG_ID"))
+    // .baseUrl(System.getenv("TURBODOCX_BASE_URL")) // optional, defaults to api.turbodocx.com
+    .build()
+    .turboQuote();
+```
+
+### createQuote
+
+```java
+CreateQuoteRequest req = new CreateQuoteRequest();
+req.setName("Q1 Software Proposal");
+req.setCompanyId(companyId);
+req.setContactId(contactId);
+req.setTermDays(365);   // optional; DEFAULT IS 60. Max 3650 (10 years). -1 = auto-renewal.
+req.setCurrency(Currency.USD);
+
+Quote quote = tq.createQuote(req);
+System.out.println("Quote ID: " + quote.getId());
+System.out.println("Status: "   + quote.getStatus()); // "draft"
+```
+
+**`termDays` / `renewalPeriod`** — `termDays` defaults to **60** when unset, and may be any integer up to **3650**, or the sentinel **`-1`** meaning auto-renewal. The two fields are coupled:
+
+- `termDays == -1` → `renewalPeriod` is **required** (`RenewalPeriod.WEEKLY | MONTHLY | QUARTERLY | ANNUALLY`).
+- any other `termDays` → `renewalPeriod` must be **unset/null**; sending it is a 400.
+
+```java
+// Auto-renewing quote — renewalPeriod is mandatory
+CreateQuoteRequest autoRenew = new CreateQuoteRequest();
+autoRenew.setName("Managed Services - auto-renew");
+autoRenew.setCompanyId(companyId);
+autoRenew.setContactId(contactId);
+autoRenew.setTermDays(-1);
+autoRenew.setRenewalPeriod(RenewalPeriod.MONTHLY);
+tq.createQuote(autoRenew);
+
+// Fixed-term quote — leave renewalPeriod null
+CreateQuoteRequest fixed = new CreateQuoteRequest();
+fixed.setName("Fixed 90-day engagement");
+fixed.setCompanyId(companyId);
+fixed.setContactId(contactId);
+fixed.setTermDays(90);
+tq.createQuote(fixed);
+```
+
+### addLineItems
+
+`addLineItems` accepts either a single `AddLineItemRequest` or a `List` — the single-item overload is auto-wrapped internally. The list is capped at **50 items** per call (reorder allows up to 200).
+
+**Four fields are required on every line item**: `productId` (the key must be present on the wire — its value may be `null` for a custom, non-catalog item), `productName`, `unitPrice`, and `billingFrequency`. `quantity` defaults to 1.
+
+```java
+AddLineItemRequest item = new AddLineItemRequest();
+item.setProductId(productId);      // REQUIRED — null = ad-hoc item, a real ID links a catalog product
+item.setProductName("Enterprise License"); // REQUIRED
+item.setUnitPrice(1200.00);        // REQUIRED
+item.setBillingFrequency("annual"); // REQUIRED
+item.setQuantity(5.0);             // optional, defaults to 1
+item.setDiscountType(DiscountType.PERCENT);
+item.setDiscountPercent(10.0);
+
+List<LineItem> lineItems = tq.addLineItems(quote.getId(), item);
+System.out.println("Total line items: " + lineItems.size());
+```
+
+### addBundleLineItems
+
+Attaching a bundle to a quote needs only `bundleId` and `bundleName` — the server expands the bundle's child products itself, so you never send them. Single request or a `List` of 1–50.
+
+```java
+AddBundleLineItemRequest bundleItem = new AddBundleLineItemRequest();
+bundleItem.setBundleId(bundle.getId());   // REQUIRED
+bundleItem.setBundleName("Starter Pack"); // REQUIRED
+bundleItem.setQuantity(2.0);
+
+List<LineItem> bundleItems = tq.addBundleLineItems(quote.getId(), bundleItem);
+```
+
+### sendQuote
+
+```java
+SendQuoteResponse sent = tq.sendQuote(quote.getId());
+System.out.println("Status: " + sent.getQuote().getStatus()); // "sent"
+System.out.println(sent.getMessage());
+```
+
+Sending a quote also **creates a signature request and emails the recipient**. Each precondition failure is a 400 with its own `getCode()`:
+
+| `getCode()` | Meaning |
+|---|---|
+| `QuoteNotSendable` | Only draft quotes can be sent |
+| `QuoteValidUntilRequired` | The quote has no `validUntil` date |
+| `QuoteExpired` | The quote is past its `validUntil` date |
+| `QuoteHasNoLineItems` | Add at least one line item first |
+| `QuoteContactRequired` | The quote's contact is missing a name or email |
+| `QuoteCustomerInactive` | The quote's company or contact was deleted/deactivated |
+| `SenderEmailRequired` | No sender email on the org quote template (Quote Settings) |
+
+**Reminders & expiration on quote send.** `sendQuote` / `sendQuoteWithDeliverable` accept the same `SignatureSchedule` as signature send — reminders/expiration work the same way, **except the expiry date is pinned to the quote's `validUntil`, so `expireAfter` is ignored** (`expirationEnabled` still toggles expiration per-quote, and the reminder/warning cadence must fit inside the `validUntil` window).
+
+```java
+SignatureSchedule schedule = SignatureSchedule.builder()
+        .remindersEnabled(true)
+        .reminderDelay(new SignatureSchedule.Duration(2, "days"))
+        .reminderInterval(new SignatureSchedule.Duration(1, "days"))
+        .maxReminders(3)         // -1 unlimited, 0 none, max 50
+        .expirationEnabled(true) // deadline = validUntil; expireAfter is ignored
+        .build();
+
+SendQuoteRequest req = new SendQuoteRequest();
+req.setSchedule(schedule);
+tq.sendQuote(quote.getId(), req);
+```
+
+### preparedBy
+
+The **single-quote fetch only** (`getQuote`) resolves the customer-facing "Prepared by" identity. It is not present on list responses.
+
+```java
+Quote quote = tq.getQuote(quoteId);
+if (quote.getPreparedBy() != null) {
+    System.out.println(quote.getPreparedBy().getName());
+    System.out.println(quote.getPreparedBy().getEmail()); // may be null — render a placeholder
+}
+```
+
+### handleExpiredQuote
+
+Act on a sent quote whose `validUntil` has passed. **`action` accepts exactly two values: `"void"` and `"decline"`.** There is no `"extend"` and no `"resend"` — those are not implemented and return a 400. `reason` (max 190 chars) and `newValidUntil` (ISO date) are **both required**.
+
+The endpoint voids/declines the original quote and creates a duplicate carrying the new `validUntil` date — that duplicate is how you "extend" an expired quote.
+
+```java
+HandleExpiredQuoteRequest expired = new HandleExpiredQuoteRequest();
+expired.setAction("void");                       // "void" | "decline" — nothing else
+expired.setReason("Pricing refreshed for Q4");   // REQUIRED, max 190 chars
+expired.setNewValidUntil("2026-12-31");          // REQUIRED, ISO date — carried by the duplicate
+
+tq.handleExpiredQuote(quote.getId(), expired);
+```
+
+### downloadQuotePdf
+
+```java
+byte[] pdf = tq.downloadQuotePdf(quoteId);
+Files.write(Paths.get("quote.pdf"), pdf);
+```
+
+### Catalog example (product / bundle / pricebook)
+
+```java
+// Create a product.
+// name, listPrice, billingFrequency and categoryId are all REQUIRED.
+// categoryId is a real UUID — from a createType(...) with categoryType PRODUCT_CATEGORY.
+// Product images (if any) are capped at 5 per product, 2 MB each.
+CreateProductRequest prod = new CreateProductRequest();
+prod.setName("Support Add-On");
+prod.setListPrice(500.00);
+prod.setBillingFrequency("annual");
+prod.setCategoryId(productCategoryId);
+Product product = tq.createProduct(prod);
+
+// Create a bundle. categoryId is required, and each BundleItemInput requires
+// productId, unitPrice and billingFrequency (quantity defaults to 1). Note this is a
+// DIFFERENT shape from a quote line item — there is no productName on a bundle item.
+BundleItemInput bundleItem = new BundleItemInput();
+bundleItem.setProductId(product.getId());
+bundleItem.setUnitPrice(500.00);
+bundleItem.setBillingFrequency("annual");
+bundleItem.setQuantity(1.0);
+
+CreateBundleRequest bundle = new CreateBundleRequest();
+bundle.setName("Starter Pack");
+bundle.setCategoryId(bundleCategoryId);
+bundle.setItems(List.of(bundleItem));
+Bundle b = tq.createBundle(bundle);
+
+// Create and apply a pricebook — name, priceBookTypeId, and validFrom are required; discountPercent is optional.
+// priceBookTypeId comes from a createType(...) with categoryType PRICEBOOK_TYPE.
+CreatePriceBookRequest pb = new CreatePriceBookRequest();
+pb.setName("Partner Pricing");
+pb.setPriceBookTypeId(priceBookTypeId);
+pb.setValidFrom("2025-01-01");
+pb.setDiscountPercent(15.0);
+PriceBook priceBook = tq.createPriceBook(pb);
+
+ApplyPriceBookResponse applied = tq.applyPriceBook(quote.getId(), priceBook.getId());
+System.out.println("Updated items: " + applied.getUpdatedCount());
+System.out.println("Skipped items: " + applied.getSkippedCount());
+```
+
+### getQuoteNumberConfig
+
+Admin-only. Reads the org's quote-numbering config — the `format` plus the per-period `currentFloor`.
+
+```java
+QuoteNumberConfig config = tq.getQuoteNumberConfig();
+System.out.println("Prefix: "        + config.getFormat().getPrefix());
+System.out.println("Current floor: " + config.getCurrentFloor()); // startNumber can't be set below this
+```
+
+Response: `{ format, currentFloor }`. `format` carries `prefix`, `yearToken`, `monthToken`, `separator`, `padWidth`, `suffix`, `startNumber`, `resetCadence` (field keys are camelCase verbatim); `currentFloor` is the highest number already issued for the current period.
+
+### updateQuoteNumberConfig
+
+Admin-only. Replaces the org's quote-number format (all eight fields are sent) so you can customize how new quote numbers are generated — prefix, year/month tokens, separator, zero-padding, suffix, starting number, and reset cadence.
+
+```java
+QuoteNumberFormat format = new QuoteNumberFormat();
+format.setPrefix("INV");
+format.setYearToken(QuoteNumberYearToken.NONE);
+format.setMonthToken(QuoteNumberMonthToken.OFF);
+format.setSeparator("-");
+format.setPadWidth(4);                                  // integer 0-12
+format.setSuffix("");
+format.setStartNumber(1000);                            // integer >= 0, can't be below currentFloor
+format.setResetCadence(QuoteNumberResetCadence.NEVER);
+
+QuoteNumberConfig updated = tq.updateQuoteNumberConfig(format);
+System.out.println("New prefix: "    + updated.getFormat().getPrefix());   // "INV"
+System.out.println("Current floor: " + updated.getCurrentFloor());
+```
+
+Response: `{ format, currentFloor }` — the same shape as `getQuoteNumberConfig`. Request-body keys stay camelCase verbatim (`prefix`, `yearToken`, `monthToken`, `separator`, `padWidth`, `suffix`, `startNumber`, `resetCadence`); `padWidth` and `startNumber` are integers.
+
+### Bulk create (CSV-style imports)
+
+Six catalog resources support bulk creation from a `List` of typed request rows (e.g. a parsed CSV): `bulkCreateProducts`, `bulkCreatePriceBooks`, `bulkCreateBundles`, `bulkCreateCompanies`, `bulkCreateContacts`, and `bulkCreateTypes`. Each takes a `List` of the same request objects the matching single `create*` call uses; the SDK wraps them in the `{ "rows": [...] }` envelope the `POST {resource}/bulk` endpoint expects. Each returns a `BulkImportResult`.
+
+Every product row requires `name`, `categoryId`, `listPrice`, and `billingFrequency`. **`categoryId` must be a real category UUID** — there is no category-by-name convenience field on the bulk row, and because the backend rejects unknown keys a name-based field would 400 the row. Resolve (or create) the category first and pass its UUID:
+
+```java
+import com.turbodocx.models.quote.CreateProductRequest;
+import com.turbodocx.models.quote.CreateQuoteTypeRequest;
+import com.turbodocx.models.quote.BulkImportResult;
+import com.turbodocx.models.quote.BulkImportRowIssue;
+import java.util.List;
+
+// 1. Resolve the category UUID once — create it if it doesn't exist yet.
+String categoryId = tq.listTypes().getResults().stream()
+    .filter(t -> "Subscriptions".equals(t.getName())
+              && CategoryType.PRODUCT_CATEGORY.equals(t.getCategoryType()))
+    .map(QuoteType::getId)
+    .findFirst()
+    .orElse(null);
+
+if (categoryId == null) {
+    CreateQuoteTypeRequest type = new CreateQuoteTypeRequest();
+    type.setName("Subscriptions");
+    type.setCategoryType(CategoryType.PRODUCT_CATEGORY);
+    categoryId = tq.createType(type).getId();   // createType throws IOException
+}
+
+// 2. Reference it by UUID on every row.
+CreateProductRequest basic = new CreateProductRequest();
+basic.setName("Basic Plan");
+basic.setListPrice(10.00);
+basic.setBillingFrequency("monthly");
+basic.setCategoryId(categoryId);
+
+CreateProductRequest premium = new CreateProductRequest();
+premium.setName("Premium Plan");
+premium.setListPrice(100.00);
+premium.setBillingFrequency("monthly");
+premium.setCategoryId(categoryId);
+
+BulkImportResult result = tq.bulkCreateProducts(List.of(basic, premium));
+
+System.out.println("Imported: " + result.getImported());
+
+// Partial success: inspect failed rows instead of assuming all-or-nothing
+for (BulkImportRowIssue issue : result.getFailed()) {
+    System.err.println("Row " + issue.getRow() + " failed: " + issue.getReason());   // row is 1-indexed
+}
+for (BulkImportRowIssue issue : result.getAdjusted()) {
+    System.out.println("Row " + issue.getRow() + " adjusted: " + issue.getReason()); // imported with a server-side tweak
+}
+```
+
+Response: a `BulkImportResult` — `getImported()` (int), `getFailed()` and `getAdjusted()` (`List<BulkImportRowIssue>`); each `BulkImportRowIssue` exposes `getRow()` (1-indexed int) and `getReason()` (String).
+
+Bulk-create semantics:
+
+- **Partial success** — a failed row does **not** throw and does **not** roll back the rows before it. It is reported by `result.getFailed()` with a 1-indexed row and a reason. Rows the server tweaked (e.g. an unknown bundle item dropped) appear in `result.getAdjusted()`. Always read `getFailed()` rather than assuming every row imported.
+- **500-row cap per request** — more than 500 rows throws `ValidationException` (400). The SDK does not validate the rows or the cap client-side.
+- **Roles** — available to administrator and contributor API keys.
+- **Rows are validated against the strict backend schema and unknown keys are rejected.** For products the required row fields are exactly `name`, `categoryId` (UUID), `listPrice`, `billingFrequency` — there is no category-by-name shortcut.
+
+### Quote templates (auto-provisioned — get, then update)
+
+Quote templates are **provisioned for you**. `GET /v1/quote-template` self-heals: if the org has no template it creates one from the org's branding and returns it. Consequences:
+
+- **Never call `createTemplate()` on an established org** — a template already exists, so it throws `ValidationException` (400 `TEMPLATE_ALREADY_EXISTS`). The method is effectively unreachable. Do not write get-then-create-if-missing logic.
+- **`deleteTemplate()` is really "reset to org branding defaults"** — it soft-deletes, and the very next `getTemplate()` regenerates one.
+
+The correct flow is always **`getTemplate()` → `updateTemplate()`**:
+
+```java
+QuoteTemplate template = tq.getTemplate();   // always returns one; creates it if needed
+
+UpdateQuoteTemplateRequest update = new UpdateQuoteTemplateRequest();
+update.setPrimaryColor("#0B5FFF");
+update.setClosingMessage("Thanks for your business!");
+
+tq.updateTemplate(template.getId(), update);
+```
+
+### TurboQuote error handling
+
+```java
+import com.turbodocx.TurboDocxException;
+
+try {
+    tq.sendQuote(quoteId);
+} catch (TurboDocxException.ValidationException e) {
+    // 400 — e.g. quote has no line items, or quote is already sent
+} catch (TurboDocxException.AuthenticationException e) {
+    // 401 — bad / revoked API key, or missing orgId
+} catch (TurboDocxException.NotFoundException e) {
+    // 404 — quote or related resource does not exist
+} catch (TurboDocxException.RateLimitException e) {
+    // 429 — back off and retry
+} catch (TurboDocxException e) {
+    System.err.println("Error " + e.getStatusCode() + ": " + e.getMessage());
+}
+```
+
+## Error Handling
+
+```java
+import com.turbodocx.TurboDocxException;
+
+try {
+    client.turboSign().sendSignature(request);
+} catch (TurboDocxException.AuthenticationException e) {
+    // 401 — invalid/missing API key
+} catch (TurboDocxException.AuthorizationException e) {
+    // 403 — key lacks the required role
+} catch (TurboDocxException.ValidationException e) {
+    // 400 — bad request (e.g., missing senderEmail)
+} catch (TurboDocxException.NotFoundException e) {
+    // 404 — document/org not found
+} catch (TurboDocxException.ConflictException e) {
+    // 409 — resource already exists
+} catch (TurboDocxException.RateLimitException e) {
+    // 429 — too many requests
+} catch (TurboDocxException.NetworkException e) {
+    // connection failure — never reached the server
+} catch (TurboDocxException e) {
+    // Catch-all for any SDK error
+    System.err.println("Error " + e.getCode() + ": " + e.getMessage());
+}
+```
+
+All seven subtypes are **nested classes** on `com.turbodocx.TurboDocxException` — there is no `com.turbodocx.exceptions` package. Every exception exposes `getStatusCode()` (int) and `getCode()` (String). **`getCode()` is always populated** — the API's code when it sends one, otherwise the subclass default: `VALIDATION_ERROR` (400), `AUTHENTICATION_ERROR` (401), `AUTHORIZATION_ERROR` (403), `NOT_FOUND` (404), `CONFLICT` (409), `RATE_LIMIT_EXCEEDED` (429), `NETWORK_ERROR` (no status). Branch on it without a null check.
+
+## Method Reference
+
+| Method | Description |
+|--------|-------------|
+| `client.turboSign().sendSignature(req)` | Send document for e-signature |
+| `client.turboSign().createSignatureReviewLink(req)` | Preview without emails |
+| `client.turboSign().getTemplateSignatureSetup(templateId)` | List a template's signer roles (`getKey()`, `getOrder()`, `hasSavedSigner()`, `getFieldCount()`) to send it with `Recipient.withRole(...)` |
+| `client.turboSign().getStatus(id)` | Get document-level status + expiresAt (no recipients) |
+| `client.turboSign().download(id)` | Download signed PDF as byte[] |
+| `client.turboSign().voidDocument(id, reason)` | Cancel a signature request (`reason` required) |
+| `client.turboSign().resendEmail(id, recipientIds)` | Resend signature email to recipient UUIDs |
+| `client.turboSign().getAuditTrail(id)` | Get complete audit trail |
+| `client.turboSign().createSigningUrl(id, req)` | Mint an embedded signing URL for one recipient (exactly one of `recipientId`/`externalId`) |
+| `client.turboSign().getEmbeddedSigningSettings()` | Read-only org embedded-signing gates (enabled, allowExternalIdv, allowIdentityOverride, defaultChannel, allowChannelOverride, allowedFrameAncestors) |
+| `client.turboSign().createEmbeddedSignature(req)` | Send + mint a per-recipient embed URL in one call; results in signing order with `ready`/`pending`/`completed` status |
+| `builder.buildDeliverableClient()` | Build a Deliverable client (no senderEmail needed) |
+| `deliverable.generateDeliverable(req)` | Render a template with variables into a new deliverable |
+| `deliverable.listDeliverables(req)` | Paginated list with search and tag filters |
+| `deliverable.getDeliverableDetails(id, showTags)` | Get full record including variables and fonts |
+| `deliverable.updateDeliverableInfo(id, req)` | Update name, description, or tags (tags replace) |
+| `deliverable.deleteDeliverable(id)` | Soft-delete (data retained, hidden from list) |
+| `deliverable.downloadSourceFile(id)` | Download original DOCX/PPTX as `byte[]` |
+| `deliverable.downloadPDF(id)` | Download rendered PDF as `byte[]` |
+| `new TurboPartnerClient.Builder()...build().turboPartner()` | Construct a `TurboPartner` (partnerApiKey, partnerId) |
+| `tp.createOrganization(name, metadata, features)` | Provision a new customer org |
+| `tp.listOrganizations(limit, offset, search)` | List managed orgs (uses limit/offset, not page) |
+| `tp.getOrganizationDetails(id)` | Get org details including features + tracking |
+| `tp.updateOrganizationInfo(id, name)` | Rename an org |
+| `tp.deleteOrganization(id)` | Delete an org |
+| `tp.updateOrganizationEntitlements(id, features, tracking)` | Update features and/or tracking |
+| `tp.getOrganizationPreferences(id)` | Read the org's TurboSign display preferences |
+| `tp.updateOrganizationPreferences(id, preferences)` | Set display preferences (null fields are omitted) |
+| `tp.listOrganizationUsers(id, limit, offset, search)` | Paginated org-user list |
+| `tp.addUserToOrganization(id, email, role)` | Invite a user with an ORG role (`admin` \| `contributor` \| `user` \| `viewer`) |
+| `tp.updateOrganizationUserRole(id, userId, role)` | Change a user's ORG role (`admin` \| `contributor` \| `user` \| `viewer`) |
+| `tp.removeUserFromOrganization(id, userId)` | Remove user from org |
+| `tp.resendOrganizationInvitationToUser(id, userId)` | Resend invite email |
+| `tp.listOrganizationApiKeys(id, limit, offset, search)` | Paginated org API-key list |
+| `tp.createOrganizationApiKey(id, name, role)` | Create org key with an ORG role (`admin` \| `contributor` \| `user` \| `viewer`); value returned only on creation |
+| `tp.updateOrganizationApiKey(id, keyId, name, role)` | Rename or change role |
+| `tp.revokeOrganizationApiKey(id, keyId)` | Revoke org key |
+| `tp.listPartnerApiKeys(limit, offset, search)` | Paginated partner API-key list |
+| `tp.createPartnerApiKey(name, scopes, description)` | Create partner key with scopes |
+| `tp.updatePartnerApiKey(keyId, name, description, scopes)` | Rename, edit scopes |
+| `tp.revokePartnerApiKey(keyId)` | Revoke partner key |
+| `tp.listPartnerPortalUsers(limit, offset, search)` | Paginated partner-portal user list |
+| `tp.addUserToPartnerPortal(email, role, permissions)` | Invite with a PARTNER role (`admin` \| `member` \| `viewer`) + all 7 permission keys |
+| `tp.updatePartnerUserPermissions(userId, role, permissions)` | Update role and/or permissions. The map may be `null`, but if supplied it must contain **all 7 keys** — there is no partial update |
+| `tp.removeUserFromPartnerPortal(userId)` | Remove partner-portal user |
+| `tp.resendPartnerPortalInvitationToUser(userId)` | Resend invite email |
+| `tp.getPartnerAuditLogs(limit, offset, search, action, resourceType, resourceId, success, startDate, endDate)` | Filter audit logs |
+| `new TurboDocxClient.Builder()...buildWebhooksClient()` | Construct an admin-scoped `TurboWebhooks` (no `senderEmail` required) |
+| `webhooks.createWebhook(urls, events)` | Subscribe the org to events. `urls`: 1–10 HTTPS URLs; `events`: at least 1. Requires an **administrator** API key |
+| `webhooks.getWebhook()` | Get the org's signature webhook + delivery stats |
+| `webhooks.updateWebhook(urls, events, isActive)` | Patch URLs / events / isActive (pass `null` to skip). A non-null `urls`/`events` still has to be non-empty — an empty list is a 400 |
+| `webhooks.deleteWebhook()` | Soft-delete the webhook |
+| `webhooks.testWebhook(eventType, payload)` | Fire a test delivery; surfaces per-URL errors |
+| `webhooks.notifyWebhook(eventType, payload)` | Manual notify; same backend handler as testWebhook |
+| `webhooks.regenerateWebhookSecret()` | Rotate the HMAC secret (shown ONCE) |
+| `webhooks.listWebhookDeliveries(limit, offset, eventType, isDelivered, httpStatus)` | Paginated delivery history with filters |
+| `webhooks.replayWebhookDelivery(deliveryId)` | Retry a past delivery; returns the new delivery row |
+| `webhooks.getWebhookStats(days)` | Aggregate stats over a sliding window (`null` = backend default) |
+| `WebhookSignatureVerifier.verify(rawBody, sigHeader, tsHeader, secret)` | Static utility; verifies inbound deliveries |
+| `new TurboQuoteClient.Builder()...build().turboQuote()` | Construct a `TurboQuote` instance (no `senderEmail` required) |
+| `tq.listQuotes(options)` | List quotes with optional filters (status, search, pagination) |
+| `tq.createQuote(req)` | Create a new quote in draft status |
+| `tq.getQuote(id)` | Get quote by ID (statusInfo merged into response) |
+| `tq.updateQuote(id, req)` | PATCH quote fields; explicitly `null` fields are cleared |
+| `tq.deleteQuote(id)` | Delete a quote |
+| `tq.duplicateQuote(id)` | Duplicate a quote |
+| `tq.applyPriceBook(quoteId, priceBookId)` | Apply pricebook to a quote; returns updatedCount + skippedCount |
+| `tq.removePriceBook(quoteId)` | Remove applied pricebook from a quote |
+| `tq.downloadQuotePdf(id)` | Download quote as PDF; returns raw `byte[]` |
+| `tq.sendQuote(id)` | Send quote to recipient; transitions status to `sent` |
+| `tq.sendQuoteWithDeliverable(id, req)` | Send quote and attach a TurboDocx deliverable |
+| `tq.declineQuote(id, req)` | Decline a quote (reason required once sent; a draft's is not recorded) |
+| `tq.voidQuote(id, req)` | Void a sent quote (reason required) |
+| `tq.handleExpiredQuote(id, req)` | Void or decline an expired sent quote and re-issue it as a duplicate. `action` is `"void"` \| `"decline"` only; `reason` (max 190) and `newValidUntil` (ISO date) are both required |
+| `tq.listLineItems(quoteId)` | List line items on a quote |
+| `tq.addLineItems(quoteId, item)` | Add 1–50 product line items (single or `List` overload). `productId` (may be null), `productName`, `unitPrice`, `billingFrequency` all required |
+| `tq.addBundleLineItems(quoteId, items)` | Add 1–50 bundle line items; each needs only `bundleId` + `bundleName` (the server expands the children) |
+| `tq.updateLineItem(quoteId, itemId, req)` | Update a line item |
+| `tq.removeLineItem(quoteId, itemId)` | Remove a line item |
+| `tq.listProducts(options)` | List products in the catalog |
+| `tq.createProduct(req)` | Create a product; `categoryId` required (supports image upload via multipart — max 5 images, 2 MB each) |
+| `tq.bulkCreateProducts(rows)` | Bulk-import products; each row needs `name`, `categoryId` (UUID), `listPrice`, `billingFrequency`. Returns a partial-success `BulkImportResult` |
+| `tq.getProduct(id)` | Get product by ID |
+| `tq.updateProduct(id, req)` | Update a product (max 5 images, 2 MB each) |
+| `tq.deleteProduct(id)` | Delete a product |
+| `tq.duplicateProduct(id)` | Duplicate a product |
+| `tq.getProductPrimaryImages(productIds)` | Batch-fetch primary images for product IDs |
+| `tq.listPriceBooks(options)` | List pricebooks |
+| `tq.createPriceBook(req)` | Create a pricebook |
+| `tq.bulkCreatePriceBooks(rows)` | Bulk-import price books; returns a partial-success `BulkImportResult` |
+| `tq.getPriceBook(id)` | Get pricebook by ID |
+| `tq.updatePriceBook(id, req)` | Update a pricebook |
+| `tq.deletePriceBook(id)` | Delete a pricebook |
+| `tq.duplicatePriceBook(id)` | Duplicate a pricebook |
+| `tq.listPriceBookProducts(id, options)` | List products in a pricebook |
+| `tq.listBundles(options)` | List bundles |
+| `tq.createBundle(req)` | Create a bundle |
+| `tq.bulkCreateBundles(rows)` | Bulk-import bundles; returns a partial-success `BulkImportResult` |
+| `tq.getBundle(id)` | Get bundle by ID |
+| `tq.updateBundle(id, req)` | Update a bundle |
+| `tq.deleteBundle(id)` | Delete a bundle |
+| `tq.duplicateBundle(id)` | Duplicate a bundle |
+| `tq.listCompanies(options)` | List companies |
+| `tq.createCompany(req)` | Create a company (contacts required) |
+| `tq.bulkCreateCompanies(rows)` | Bulk-import companies; returns a partial-success `BulkImportResult` |
+| `tq.getCompany(id)` | Get company by ID |
+| `tq.updateCompany(id, req)` | Update a company |
+| `tq.deleteCompany(id)` | Delete a company |
+| `tq.listCompanyContacts(companyId, options)` | List contacts belonging to a company |
+| `tq.listContacts(options)` | List contacts |
+| `tq.createContact(req)` | Create a contact |
+| `tq.bulkCreateContacts(rows)` | Bulk-import contacts; returns a partial-success `BulkImportResult` |
+| `tq.updateContact(id, req)` | Update a contact |
+| `tq.deleteContact(id)` | Delete a contact |
+| `tq.listTemplates(options)` | List quote templates |
+| `tq.getTemplate()` | Get the org's singleton quote template. Self-heals: auto-creates one from org branding if none exists, so it always returns a template |
+| `tq.getTemplateById(id)` | Get a specific quote template by ID |
+| `tq.createTemplate(req)` | Effectively unreachable — the template is auto-provisioned, so this throws 400 `TEMPLATE_ALREADY_EXISTS` on any established org. Use `getTemplate()` → `updateTemplate()` |
+| `tq.updateTemplate(id, req)` | Update a quote template — this is how you customize it |
+| `tq.deleteTemplate(id)` | Reset to org branding defaults (soft-delete; the next `getTemplate()` regenerates one) |
+| `tq.listTypes(options)` | List quote types |
+| `tq.createType(req)` | Create a quote type |
+| `tq.bulkCreateTypes(rows)` | Bulk-import types/categories; returns a partial-success `BulkImportResult` |
+| `tq.updateType(id, req)` | Update a quote type |
+| `tq.deleteType(id)` | Delete a quote type |
+| `tq.createAndSend(req)` | Convenience: create quote + add line items + add bundles + send in one call |
+| `tq.getQuoteNumberConfig()` | Admin: get the org's quote-number config (`format` + `currentFloor`) |
+| `tq.updateQuoteNumberConfig(format)` | Admin: replace the quote-number format; returns updated `{ format, currentFloor }` |
+
+## Gotchas
+
+- **TurboSign send 400 codes** (read with `e.getCode()`; the message names the problem): `FieldsRequired` (a send, not a review link, with no or empty fields and no recipient `role`), `FieldPageOutOfRange` (a field's `page` is past the last page), `UnknownSignerRole`, `DuplicateSignerRole` (two recipients for one role), `SignerRoleUnfilled` (a role has no recipient and no saved signer), `TemplateHasNoSignerRoles` (`role` used on a template with no saved setup), `RoleRequiresTemplate` (`role` without `templateId`), `TemplateRolesNeedPdfTemplate` (roles on a non-PDF template). Surface the message to the user.
+- **Java SDK uses Builder pattern** — create clients with `.Builder()...build()`
+- **`senderEmail` is required** for TurboSign operations. **`senderName` is optional** — when omitted, the sender name resolves to the **API key's name**.
+- **TurboQuote takes no `senderEmail`/`senderName`, but `sendQuote` still emails the recipient** (it creates a signature request). The sender comes from the org's quote template (Quote Settings); an API-key caller whose template has no sender gets 400 `SenderEmailRequired`.
+- **Exceptions live on `com.turbodocx.TurboDocxException` as nested classes** — `TurboDocxException.ValidationException`, `.AuthenticationException`, `.AuthorizationException`, `.NotFoundException`, `.ConflictException`, `.RateLimitException`, `.NetworkException`. There is no `com.turbodocx.exceptions` package. `getStatusCode()` and `getCode()` are on the base class, and `getCode()` is never null.
+- **Spring Boot**: use `@Value` or `application.properties` for env vars, not `System.getenv()` directly
+- **Spring Boot auto-scans** controllers in sub-packages — ensure your controller is under the base package
+- **Partner API keys are distinct** from regular API keys — using the wrong one returns `AuthenticationException`
+- **File input** accepts: `byte[]`, file path `String`, URL `String`, or `InputStream`
+- **Do not rely on `signUrl` from send/review.** `SendSignatureResponse.getRecipients()` is typed `List<RecipientResponse>`, so `getSignUrl()` compiles — but these endpoints do not return a sign URL, so it is `null` in practice (the other SDKs model the same payload as an id/name/email/metadata recipient). `createSignatureReviewLink` returns `ReviewRecipient` (`getId()` / `getName()` / `getEmail()` / `getMetadata()` — no `getSignUrl()` at all); use `CreateSignatureReviewLinkResponse.getPreviewUrl()` for the document-level preview.
+- **`resendEmail` takes recipient UUIDs** (`List<String>`), not email addresses — fetch them from the send/review response or `getAuditTrail`.
+- **`download` is a two-step operation.** `GET /api/signature/:id/download` returns JSON `{"downloadUrl", "fileName"}` — not bytes — and the presigned `downloadUrl` must then be fetched **without an `Authorization` header** (S3 rejects a presigned request that also carries one). The SDK does both steps for you; hand-rolled REST calls must too.
+- **Two different role enums — do not mix them.** Organization users and organization API keys take `"admin" | "contributor" | "user" | "viewer"`. Partner-portal users take `"admin" | "member" | "viewer"`. `"member"` is not a valid org role, and `"contributor"` / `"user"` are not valid partner roles — either mistake is a 400.
+- **Partner `permissions` has no partial update.** The map argument may be `null` on `updatePartnerUserPermissions`, but every key inside it is required by the backend, so a non-null map must contain **all seven**: `canManageOrgs`, `canManageOrgUsers`, `canManagePartnerUsers`, `canManageOrgAPIKeys`, `canManagePartnerAPIKeys`, `canUpdateEntitlements`, `canViewAuditLogs`. A `Map.of(...)` with a subset is a 400. To flip one flag, read the user's current permissions and copy all 7 across; to change only the role, pass `null` for the map.
+- **`updateOrganizationEntitlements` takes `features` and `tracking` — the two key sets are not interchangeable.** `features` holds capability/limit columns (`maxUsers`, `maxStorage`, `maxAPIKeys`, `hasTDAI`, …); `tracking` holds usage counters, which use the `num*` names: `numUsers`, `numProjectspaces`, `numTemplates`, `storageUsed`, `numGeneratedDeliverables`, `numSignaturesUsed`, `numQuotesSent`, `currentAICredits`. A `maxUsers` key inside `tracking` is rejected. `currentAICredits` accepts `-1` (unlimited); every other counter floors at 0.
+- **TurboWebhooks needs an admin TDX- key** — the backend route gate is `requireOrgRole(administrator)`. Non-admin keys return `AuthorizationException` (403).
+- **`WebhookSignatureVerifier` is a static utility** (final class, private constructor) — Java has no free functions, so call it as `WebhookSignatureVerifier.verify(...)`. Semantically equivalent to the free-function form in JS / Py / Go / PHP.
+- **Read raw bytes for signature verification.** In Spring, bind to `@RequestBody byte[] rawBody` — never `Map`/DTO. Jackson would re-serialize and whitespace mismatch breaks HMAC. In Servlets, use `request.getInputStream().readAllBytes()`.
+- **One webhook per org, fixed name `signature`.** There is no `listWebhooks` method by design — the SDK stays in sync with the dashboard's Signature Webhooks page. Use the REST API directly for multi-webhook setups.
+- **Webhook secrets are shown ONCE** — capture `created.get("secret").getAsString()` immediately. `regenerateWebhookSecret()` returns a new one and invalidates the old immediately.
+- **HTTPS-only URLs** — `http://` returns `ValidationException` (400).
+- **`urls` is 1–10, `events` is 1+ — on create AND on update.** `null` means "leave unchanged" on `updateWebhook`, but an **empty list is not null**: a non-null `urls`/`events` still has to satisfy the minimum, so `Collections.emptyList()` is a 400. Pass `null` to skip a field.
+- **Catch `ConflictException` (409) on `createWebhook`** — the signature webhook may already exist from a previous run; update or delete instead.
+
+- **TurboQuote decimal fields come back as numbers, not strings.** The Java `ResponseNormalizer` (`FlexIntAdapter`) coerces string-serialized decimals (`listPrice`, `unitPrice`, `discountPercent`, `grandTotal`, `subtotal`, etc.) to `double`. Do not attempt to parse them manually from the raw JSON.
+- **`PATCH` null-clears nullable fields.** On `updateQuote`, `updateLineItem`, and similar PATCH methods, explicitly setting a field to `null` sends `null` in the request body and clears the value on the server. Fields you never set are omitted from the request entirely and left unchanged. This matters for fields like `priceBookId`, `validUntil`, and `taxRate`.
+- **`discountType` must be `"percent"` or `"amount"`.** Use the `DiscountType` enum constants (`DiscountType.PERCENT` / `DiscountType.AMOUNT`) to avoid silent 400 errors. Passing a raw string bypasses compile-time checking.
+- **Every product line item needs four fields: `productId`, `productName`, `unitPrice`, `billingFrequency`.** `productId` must be *set*, but its value may be `null` — that is how you add a custom, non-catalog item. `quantity` defaults to 1.
+- **Three distinct bundle shapes — don't conflate them.** `createBundle`'s `items` (`BundleItemInput`, the catalog bundle contents) need `productId`, `unitPrice`, `billingFrequency` and nothing else — there is no product name on a bundle item. `addBundleLineItems` (attaching a bundle to a quote) needs only `bundleId` + `bundleName`; the server expands the child products for you.
+- **Line-item list limits: `addLineItems` and `addBundleLineItems` accept 1–50 items per call; reorder accepts up to 200.** Chunk larger imports.
+- **`termDays` defaults to 60** (not 30), maxes out at 3650, and `-1` means auto-renewal. `renewalPeriod` (the `RenewalPeriod` enum: `WEEKLY` / `MONTHLY` / `QUARTERLY` / `ANNUALLY`) is **required when `termDays` is -1** and must be null for any other `termDays` — setting it otherwise is a 400.
+- **`handleExpiredQuote` only accepts `action` `"void"` or `"decline"`.** `"extend"` and `"resend"` do not exist in the API and return a 400. `reason` (max 190 chars) and `newValidUntil` (ISO date) are both required — neither is optional; the endpoint voids/declines the original and issues a duplicate carrying the new date, and that duplicate *is* the "extend".
+- **Quote templates are auto-provisioned.** `getTemplate()` self-heals — it creates one from org branding when none exists — so `createTemplate()` on an established org throws 400 `TEMPLATE_ALREADY_EXISTS` and is effectively unreachable. Always do `getTemplate()` → `updateTemplate()`. `deleteTemplate()` is a reset-to-branding-defaults, not a permanent removal.
+- **Product images: max 5 per product, 2 MB each.** Exceeding either returns 400 `MAX_IMAGES_EXCEEDED`.
+- **Bulk creates are partial-success, not transactional.** `bulkCreateProducts`/`bulkCreatePriceBooks`/`bulkCreateBundles`/`bulkCreateCompanies`/`bulkCreateContacts`/`bulkCreateTypes` never throw on a bad row — read `result.getFailed()` (`List<BulkImportRowIssue>` with 1-indexed `getRow()` + `getReason()`) and `result.getAdjusted()`; earlier rows are not rolled back. Cap is 500 rows/request (over → `ValidationException` 400). Admin + contributor keys only.
+- **Bulk product rows take `categoryId`, never a category name.** The row schema is strict and rejects unknown keys. Resolve or create the category with `listTypes()` / `createType()` first and pass its UUID. Required per row: `name`, `categoryId`, `listPrice`, `billingFrequency`.
+
+**Full API reference:** https://docs.turbodocx.com/docs

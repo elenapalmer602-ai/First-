@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "turbodocx-html-to-docx": {
+      "source": "TurboDocx/quickstart",
+      "sourceType": "github",
+      "skillPath": "skills/turbodocx-html-to-docx/SKILL.md",
+      "computedHash": "adb5bd3018462ac7adc6a5a5adf036db4c6ffaa7fa475859d82a72c07af988cf"
+    },
+    "turbodocx-sdk": {
+      "source": "TurboDocx/quickstart",
+      "sourceType": "github",
+      "skillPath": "skills/turbodocx-sdk/SKILL.md",
+      "computedHash": "12d220c96ce650f834c4ffdbbe0ea235e010d9feb2740cb747f88a41410d8bd9"
+    }
+  }
+}

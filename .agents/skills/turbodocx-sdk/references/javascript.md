@@ -1,0 +1,1875 @@
+# JavaScript/TypeScript SDK Reference
+
+## Install
+
+Requires **Node.js 18+** (`engines.node` in the SDK's `package.json`).
+
+```bash
+# npm
+npm install @turbodocx/sdk
+
+# pnpm
+pnpm add @turbodocx/sdk
+
+# yarn
+yarn add @turbodocx/sdk
+
+# bun
+bun add @turbodocx/sdk
+```
+
+Also install dotenv if not already present:
+```bash
+npm install dotenv
+```
+
+Add `import 'dotenv/config'` at the top of your entry point file.
+
+## Imports
+
+```typescript
+// ESM (package.json "type": "module" or TypeScript)
+import { TurboSign, TurboPartner, Deliverable, TurboWebhooks, TurboQuote } from '@turbodocx/sdk';
+
+// CommonJS
+const { TurboSign, TurboPartner, Deliverable, TurboWebhooks, TurboQuote } = require('@turbodocx/sdk');
+```
+
+Only import what you use — for a project that only sends signatures, import only `TurboSign`.
+
+---
+
+## TurboSign
+
+Digital signature operations: prepare, send, track, download, void, resend, remind, and audit-trail signed PDFs.
+
+### TurboSign.configure
+
+```typescript
+TurboSign.configure({
+  apiKey: process.env.TURBODOCX_API_KEY!,
+  orgId: process.env.TURBODOCX_ORG_ID!,
+  senderEmail: process.env.TURBODOCX_SENDER_EMAIL!,
+  senderName: process.env.TURBODOCX_SENDER_NAME, // optional but recommended
+});
+```
+
+`senderEmail` is required — without it `ValidationError` is thrown. `senderName` is optional; when omitted it resolves to **your API key's name**, so give the key a recognisable name in the dashboard.
+
+### TurboSign.createSignatureReviewLink
+
+Upload a document with recipients and fields, but **do not send emails** — useful for previewing field placement.
+
+```typescript
+const review = await TurboSign.createSignatureReviewLink({
+  file: pdfBuffer, // Buffer | string (path) | File | URL via fileLink | deliverableId | templateId
+  documentName: 'NDA - Acme',
+  recipients: [
+    { name: 'John Doe', email: 'john@example.com', signingOrder: 1 },
+  ],
+  fields: [
+    { type: 'signature', page: 1, x: 100, y: 500, width: 200, height: 50, recipientEmail: 'john@example.com' },
+  ],
+});
+
+console.log(review.documentId);  // string
+console.log(review.previewUrl);  // string — open this URL to review the document
+console.log(review.status);      // string
+```
+
+Response: `{ success, documentId, status, previewUrl?, recipients, message }` (`recipients` is always present on a successful response).
+
+### TurboSign.sendSignature
+
+Upload a document with recipients and fields, and immediately email signature requests.
+
+```typescript
+const result = await TurboSign.sendSignature({
+  file: pdfBuffer, // Buffer | path string | File | fileLink (URL) | deliverableId | templateId
+  documentName: 'Partnership Agreement',
+  recipients: [
+    { name: 'John Doe', email: 'john@example.com', signingOrder: 1 },
+    { name: 'Jane Smith', email: 'jane@example.com', signingOrder: 2 },
+  ],
+  fields: [
+    { type: 'signature', page: 1, x: 100, y: 500, width: 200, height: 50, recipientEmail: 'john@example.com' },
+    { type: 'signature', page: 1, x: 100, y: 600, width: 200, height: 50, recipientEmail: 'jane@example.com' },
+  ],
+});
+
+console.log(result.documentId);   // string
+console.log(result.status);       // string — e.g., 'under_review'
+console.log(result.recipients);   // ReviewRecipient[] with { id, name, email, metadata? }
+```
+
+Fields support either coordinate-based (`page` + `x` / `y` / `width` / `height`) or anchor-based placement via `template: { anchor: '{TagName}', placement: 'replace', size: {...} }`.
+
+**`fileName`** (optional, with an uploaded `file`) sets the stored document file name: up to 255 characters, no extension needed (`'Acme NDA'` is fine). It applies whatever the `file` input is (Buffer, path string or browser `File`). Empty or omitted: the uploaded part's name is stored. `createSignatureReviewLink` and `createEmbeddedSignature` take it too.
+
+### Choosing field placement
+
+1. **A template set up in TurboDocx, sent by signer role** (recommended for any document sent more than once). Set it up once in the TurboDocx UI: upload the PDF as a template, add each signer as a role, drag their fields onto the page, save the signature setup. Code then sends by `role` with no field positions at all (next section).
+2. **Text anchors** when your code generates or controls the document text: put a tag such as `{ClientSignature}` where the field goes (its own text, one distinct tag per signer and field) and place the field with `template: { anchor: '{ClientSignature}', placement: 'replace' }`.
+3. **Coordinates** (`page` + `x`/`y`/`width`/`height`). Fully supported: if you already know the positions, use them directly. When you don't, options 1 and 2 are easier than measuring. Coordinates need re-measuring if the layout moves; a review link lets you check placement before sending.
+
+### Send a template with signer roles
+
+Use this when the same document goes out again and again with different signers (an NDA, a contract, an onboarding form). The user sets the template up **once** in TurboDocx: upload the PDF as a template, add each signer as a role on its Signatures tab (e.g. "Client", "Countersigner"), drag each role's fields onto the page, and save the signature setup. A role that is always the same person (e.g. your countersigner) can be given a saved signer there. The code then names each recipient's `role` and passes **no field coordinates or anchors**: the fields saved for that role come with it.
+
+```typescript
+import { TurboSign, ValidationError } from '@turbodocx/sdk';
+
+// Role keys are shown under "Use via API" on the template's page in TurboDocx, or read them here.
+const { roles } = await TurboSign.getTemplateSignatureSetup(templateId);
+// roles (in signing order): [{ key: 'client', label: 'Client', order: 1, hasSavedSigner: false, fieldCount: 3 },
+//   { key: 'countersigner', label: 'Countersigner', order: 2, hasSavedSigner: true,
+//     defaultName: 'Sam Lee', defaultEmail: 'sam@yourco.com', fieldCount: 2 }]
+
+try {
+  const result = await TurboSign.sendSignature({
+    templateId,
+    documentName: 'Services Agreement - Acme',
+    recipients: [
+      { role: 'client', name: 'Jane Doe', email: 'jane@client.com' }, // no signingOrder needed
+      // 'countersigner' left out: the signer saved on the template is used
+    ],
+    // no `fields`: each role's saved fields are used
+  });
+  console.log(result.documentId);
+} catch (err) {
+  if (err instanceof ValidationError && err.code === 'UnknownSignerRole') {
+    // err.message names the bad role and lists the template's roles
+  }
+  throw err;
+}
+```
+
+`getTemplateSignatureSetup(templateId)` returns `{ templateId, roles: TemplateSignatureRole[] }`; each role is `{ key, label, order, hasSavedSigner, defaultName?, defaultEmail?, fieldCount }`, and `key` is the value for `recipients[].role`.
+
+On a template with no saved signature setup `getTemplateSignatureSetup` returns a 404 with code `SignatureSetupNotFound`:
+
+```typescript
+import { NotFoundError } from '@turbodocx/sdk';
+
+try {
+  const { roles } = await TurboSign.getTemplateSignatureSetup(templateId);
+} catch (err) {
+  if (err instanceof NotFoundError && err.code === 'SignatureSetupNotFound') {
+    // no saved setup: set the template up in TurboDocx, or send with explicit fields
+  }
+  throw err;
+}
+```
+
+- Roles sign in the order saved on the template, so a recipient with a `role` needs no `signingOrder`; recipients without a `role` sign after them.
+- A role left out uses the template's saved signer. If it has none, the API returns a 400 naming the role. Pass a role that has a saved signer to send to someone else this time.
+- An unknown role returns a 400 (`ValidationError`, `code === 'UnknownSignerRole'`) whose message lists the template's roles.
+- On a send, `fields` is optional only when a recipient names a `role` (it is left out of the request when empty); any fields you pass are **added** to the template's (for example an extra witness signature). On a send (`sendSignature`, `createEmbeddedSignature`) where no recipient names a role, an omitted or empty `fields` is a 400 `FieldsRequired` (SDK 0.8.0 sent the empty list and created a document with nothing to sign). A review link (`createSignatureReviewLink`) needs no fields: the SDK sends `[]` and you place them in the preview.
+- Roles only work for a PDF signature template. A Word template needs a deliverable generated first and sent with `deliverableId`.
+- `role` works the same way on `createSignatureReviewLink` and on `createEmbeddedSignature` recipients. A role left out falls back to its saved signer, who also gets an embed URL in the result, so match result entries to signers by email or role rather than by position.
+
+### Optional fields
+
+```typescript
+const result = await TurboSign.sendSignature({
+  file: pdfBuffer,
+  documentName: 'Service Agreement',
+  recipients: [
+    { name: 'John Doe', email: 'john@example.com', signingOrder: 1 },
+  ],
+  fields: [
+    // Required (the default): signature and initial fields are always required.
+    { type: 'signature', page: 1, x: 100, y: 500, width: 200, height: 50, recipientEmail: 'john@example.com' },
+    // Optional: the signer can finish without filling this in.
+    { type: 'text', page: 1, x: 100, y: 600, width: 200, height: 30, recipientEmail: 'john@example.com', required: false },
+  ],
+});
+```
+
+Fields are required by default, so omit `required` to keep one required. Set `required: false` on a field the signer may leave empty. Signature and initial fields can never be optional (the API returns 400), `required` must be a boolean, and each recipient still needs at least one required field they fill in (otherwise 400). `defaultValue` is a real prefilled value that is submitted as-is, not placeholder hint text.
+
+### Conditional (IF/THEN) fields
+
+Any field can be made to depend on a **controlling checkbox** so it only appears — or only becomes editable — once the signer ticks that box. Give the checkbox a stable `metadata.fieldKey`, then reference that key from the dependent field's `metadata.conditional.controllingFieldKey`. Both live in an **optional** `metadata` object on the field; fields without it behave exactly as before.
+
+```typescript
+const result = await TurboSign.sendSignature({
+  file: pdfBuffer,
+  documentName: 'Employment Agreement',
+  recipients: [
+    { name: 'John Doe', email: 'john@example.com', signingOrder: 1 },
+  ],
+  fields: [
+    // Controlling checkbox — the box the signer ticks. Its metadata.fieldKey is the stable id others reference.
+    {
+      type: 'checkbox',
+      page: 1, x: 100, y: 400, width: 20, height: 20,
+      recipientEmail: 'john@example.com',
+      metadata: { fieldKey: 'relocation_optin' },
+    },
+    // Dependent field — hidden until the box above is checked (action: 'show').
+    {
+      type: 'signature',
+      page: 1, x: 100, y: 460, width: 200, height: 50,
+      recipientEmail: 'john@example.com',
+      metadata: {
+        conditional: {
+          controllingFieldKey: 'relocation_optin', // = the checkbox's metadata.fieldKey
+          operator: 'is_checked',                  // 'is_checked' | 'is_not_checked'
+          action: 'show',                          // 'show' = hidden until met; 'unlock' = visible but read-only until met
+        },
+      },
+    },
+    // Date field — pins a fixed date in MM/DD/YYYY; omit defaultValue to auto-fill the signing date.
+    {
+      type: 'date',
+      page: 1, x: 100, y: 530, width: 150, height: 30,
+      recipientEmail: 'john@example.com',
+      defaultValue: '12/31/2026',
+    },
+  ],
+});
+```
+
+The link is `fieldKey` → `controllingFieldKey`: the two strings must match exactly (the checkbox carries `metadata.fieldKey`, the dependent field points at it via `metadata.conditional.controllingFieldKey`). `operator` chooses which checkbox state satisfies the condition — `is_checked` or `is_not_checked`. `action` chooses what happens while the condition is unmet: `show` keeps the dependent field **hidden until met**, while `unlock` renders it **visible but read-only (locked) until met**.
+
+### TurboSign.getStatus
+
+```typescript
+const status = await TurboSign.getStatus(documentId);
+console.log(status.status);    // e.g., 'under_review', 'completed', 'voided', 'expired'
+console.log(status.expiresAt); // ISO timestamp, or null when expiration is off
+```
+
+Response: `{ status: string, expiresAt: string | null }` (`expiresAt` is null when expiration is off). For per-recipient state, use `getAuditTrail`.
+
+### TurboSign.getRecipients
+
+Every recipient on the document with their signing status, email history, and who sent it. This is what answers "who has signed and who are we still waiting on".
+
+```typescript
+const { document, recipients, summary } = await TurboSign.getRecipients(documentId);
+
+console.log(`Sent by ${document.sentBy.name}, ${summary.completed}/${summary.total} signed`);
+console.log(`Still waiting on ${summary.waitingOn}`);
+
+for (const r of recipients) {
+  // 'pending' | 'viewed' | 'completed' | 'voided' | 'expired'
+  console.log(`${r.name} <${r.email}>: ${r.effectiveStatus}`);
+  console.log(`  emailed ${r.delivery.totalSent}x, last ${r.delivery.lastSentOn ?? 'never'}`);
+}
+```
+
+Each recipient carries **two** status fields and they differ on purpose:
+
+| Field | Values | Use it for |
+|---|---|---|
+| `status` | `pending`, `viewed`, `completed` | The raw stored value |
+| `effectiveStatus` | `pending`, `viewed`, `completed`, `voided`, `expired` | Display and branching |
+
+There is no per-recipient declined/voided/expired state, so on a voided or expired document an
+unsigned signer still reads `pending` in `status` — branching on it means chasing people whose
+signing links are already dead. A completed signature is never revoked: someone who signed
+before the document was voided still reads `completed`. `effectiveStatus` also reflects a
+lapsed deadline immediately, without waiting for the background sweep to update the row.
+
+`summary` counts by `effectiveStatus` and adds `waitingOn` (pending + viewed), which is zero
+once the document is terminal. Each recipient's `delivery` block — `firstSentOn`, `lastSentOn`,
+`totalSent`, `reminderCount`, `lastRemindedAt`, `warningCount`, `lastWarningAt` — is that
+signer's email history; CC notifications are excluded, since a CC address is not a signer.
+
+`reminderCount` and `lastRemindedAt` do NOT mean what their names suggest. `reminderCount`
+counts **automatic (scheduled) reminders only** — the counter `maxReminders` caps; a manual
+"remind now" must not consume the cap budget, so it does not increment this even though its
+email does appear in `totalSent`. `lastRemindedAt` is a **cadence clock**, not a record of a
+reminder: the initial signature-request send, each scheduled reminder, each manual "remind now"
+and each expiry warning all stamp it. A freshly-sent document therefore reads a non-null
+`lastRemindedAt` equal to the invitation timestamp alongside `reminderCount: 0` — nobody has
+been reminded. Use `totalSent` to answer "have we actually chased this person".
+`warningCount` / `lastWarningAt` have no such caveat.
+
+### TurboSign.download
+
+```typescript
+const blob = await TurboSign.download(documentId);
+
+// In Node, persist to disk:
+import { writeFile } from 'node:fs/promises';
+const arrayBuffer = await blob.arrayBuffer();
+await writeFile('signed.pdf', Buffer.from(arrayBuffer));
+
+// In the browser:
+const url = URL.createObjectURL(blob);
+```
+
+Returns a `Blob`. The download is a **two-step** operation and the SDK performs both for you: `GET /api/signature/:id/download` returns **JSON** (`{ downloadUrl, fileName }`, not bytes), and the SDK then fetches the presigned `downloadUrl` **with no `Authorization` header** (S3 rejects a presigned signature that also carries an `Authorization` header). If you ever hit the REST endpoint directly, you must replicate both steps.
+
+### TurboSign.void
+
+```typescript
+const voided = await TurboSign.void(documentId, 'Counterparty requested changes');
+console.log(voided.status);   // 'voided'
+console.log(voided.voidedAt); // ISO timestamp
+```
+
+`reason` is **required**.
+
+### TurboSign.resend
+
+```typescript
+// recipientIds — fetch these from sendSignature/createSignatureReviewLink response
+//                or getAuditTrail entries.
+const result = await TurboSign.resend(documentId, ['recipient-uuid-1', 'recipient-uuid-2']);
+console.log(result.success, result.recipientCount);
+```
+
+`recipientIds` is an array of recipient UUIDs, **not** email addresses.
+
+### TurboSign.sendReminder
+
+```typescript
+// Remind every signer whose turn it is — omit the ids entirely.
+const { results } = await TurboSign.sendReminder(documentId);
+for (const r of results) {
+  console.log(r.recipientId, r.status); // 'sent' | 'skipped_wrong_order' | ...
+}
+
+// Or nudge one specific signer.
+await TurboSign.sendReminder(documentId, ['recipient-uuid-1']);
+```
+
+A **standalone nudge**: it ignores the automatic reminder cadence, works even when reminders are disabled or the per-signer cap is spent, and does **not** consume that cap. Only signers at the **current signing order** are emailed — a later-order or already-signed recipient comes back as a `skipped_*` result rather than being dropped, so you can tell whether anyone was actually emailed.
+
+The recipient filter is **optional**. Omit it to remind everyone eligible; do **not** pass an empty list, since the API requires at least one id when the key is present.
+
+### Reminders & expiration on send
+
+Both send methods accept eight optional per-document schedule fields. Omit them and the document inherits your organization's E-Signature defaults — and since both features ship **off** by default, omitting them preserves today's behaviour exactly.
+
+```typescript
+await TurboSign.sendSignature({
+  deliverableId: 'deliverable-uuid',
+  recipients,
+  fields,
+  // Reminders
+  remindersEnabled: true,
+  reminderDelay: { value: 2, unit: 'days' },   // time to the FIRST reminder
+  reminderInterval: { value: 1, unit: 'days' },// gap between later ones
+  maxReminders: 3,                             // -1 unlimited, 0 none, max 50
+  // Expiration
+  expirationEnabled: true,
+  expireAfter: { value: 14, unit: 'days' },
+  expirationWarning: { value: 2, unit: 'days' },        // 0 = never warn
+  expirationWarningInterval: { value: 1, unit: 'days' },
+});
+```
+
+Durations are `{ value, unit }` with `unit` of `"hours"` or `"days"`. `value` is a whole number, minimum 1 and at most 999 days (23976 hours) — except `expirationWarning`, where `0` means "never send a warning". The resolved schedule is frozen onto the document at send time, so changing your org defaults later never affects a document already out for signature.
+
+Once expiration is on, the document carries an `expiresAt` deadline; after it passes every signing link returns **HTTP 410** and the document reaches the terminal status `expired`. Read that deadline back off `getStatus` — it returns `expiresAt` alongside the status:
+
+```typescript
+const status = await TurboSign.getStatus(documentId);
+console.log(status.expiresAt); // ISO timestamp, or null when expiration is off
+```
+
+### TurboSign.getAuditTrail
+
+```typescript
+const audit = await TurboSign.getAuditTrail(documentId);
+console.log(audit.document.name);
+
+for (const entry of audit.auditTrail) {
+  console.log(entry.timestamp, entry.actionType, entry.user?.email);
+}
+```
+
+Response: `{ document: { id, name }, auditTrail: AuditTrailEntry[] }`. Each entry has `id, documentId, actionType, timestamp, user?, recipient?, details?` and hash fields for tamper-evident chaining.
+
+### Embedded signing & identity verification
+
+Embedded signing takes a signer from **your own app** straight to a TurboSign signing page, with no signing-link email. It is two steps: your server mints a signing URL for the recipient, then your app opens it (new tab, redirect, or iframe). A recipient with **no** `identityVerification` takes the **org's default channel** (`getEmbeddedSigningSettings().defaultChannel`), and that default applies to API/SDK sends too: when it is `'none'` the page opens straight to the document; when it is `'email'` or `'sms'` the org verifies every request, so the signer clears that passcode first.
+
+**Send embedded documents with `sendEmail: false`.** Your app shows the signing page, so TurboSign should not email the signer a link. With `sendEmail: false` the signing-link emails, the initial CC notice, the next signer's "your turn" email, and the scheduled reminder and expiry-warning emails are all suppressed. Passcode emails and the completed-copy email still go out, and an explicit `resend` / `sendReminder` call still sends. `createEmbeddedSignature` already defaults to `false`; on `sendSignature` you must pass it yourself.
+
+**Choosing a channel when the org locked it.** `getEmbeddedSigningSettings().allowChannelOverride` says whether a request may give a recipient a channel other than `defaultChannel`. When it is `false`, an explicit different channel (for example `auth: { sms: ... }` while the default is `'email'`) is rejected by the send with HTTP 403, an `AuthorizationError` whose `code` is `'OtpOverrideNotAllowed'`. Omit the channel to take the default instead. Always read this field before forcing a per-recipient channel, even when the default is `'none'` today: an admin can change the default and lock the channel at any time, so a `defaultChannel !== 'none'` check alone is not enough. Compare with `=== false`: an API that does not report the field leaves it `undefined`, which means unknown, not locked.
+
+Identity verification is an optional layer on top. Each signer runs in exactly one of three modes:
+
+| Mode | What the signer does | How you set it |
+|---|---|---|
+| `otp` | Clears a one-time passcode (email or SMS) before the document opens | `identityVerification: { mode: 'otp', channel: 'email' \| 'sms' }` (SMS also needs the recipient's `phone` in E.164), or the `auth` shorthand on `createEmbeddedSignature` |
+| `external_idv` | Was already verified by your own identity provider; you assert it when minting the URL | `identityVerification: { mode: 'external_idv', provider: 'CAPA' }` on `sendSignature`, then pass `identityAssertion` to `createSigningUrl` |
+| `override` | Skips verification entirely (development/testing); the signature is recorded as not identity-verified on the certificate | `identityVerification: { mode: 'override', overrideIdentityVerification: true, reason: '...' }` |
+
+The `auth` shorthand on `createEmbeddedSignature` covers **OTP only** (`emailOtp` / `sms`). `external_idv` and `override` have no shorthand: reach them with `sendSignature` (a full `identityVerification` block on the recipient) followed by `createSigningUrl`.
+
+The SDK fail-fast validates each recipient's identity block before the network call (the server still enforces everything): SMS OTP with no E.164 `phone` throws `ValidationError` with code `PhoneRequiredForSmsOtp`, `external_idv` with no `provider` throws `IdvProviderRequired`, and `override` requires **both** the literal boolean `overrideIdentityVerification: true` and a non-empty `reason` or it throws `OverrideNotAcknowledged`.
+
+**Allowed embedding domains are DENY-by-default.** The embeddable signing URL (`/e-signature/embed/...`) carries a per-tenant `Content-Security-Policy: frame-ancestors`. An origin that is not on the org's allow-list is hard-blocked from framing the page (a blank or refused frame, not a warning): that is the clickjacking protection working, not a bug. An org admin adds your app's origin under E-Signature settings, Identity & embedding, Allowed origins (production origins must be `https://`; `http://localhost` is accepted only as a flagged dev override). Read the current list from `getEmbeddedSigningSettings().allowedFrameAncestors`; an **empty** list means framing is denied everywhere, not "unrestricted". The email-invite signing links (`/e-signature/sign/...`) deny all framing.
+
+### TurboSign.getEmbeddedSigningSettings
+
+Read-only. The org-wide gates an admin sets once (in E-Signature settings on the Identity & embedding tab, or via the organization preferences API). Check them before you start requesting signing URLs.
+
+```typescript
+const settings = await TurboSign.getEmbeddedSigningSettings();
+if (!settings.enabled) {
+  throw new Error('Embedded signing is not enabled for this organization.');
+}
+console.log(settings.allowExternalIdv);      // may you assert identity with your own provider?
+console.log(settings.allowIdentityOverride); // may a sender skip verification (dev/testing)?
+console.log(settings.allowedFrameAncestors); // origins allowed to iframe the signing page ([] = denied everywhere)
+console.log(settings.defaultChannel);        // 'none' | 'email' | 'sms': what a recipient with no identityVerification gets
+const channelLocked = settings.allowChannelOverride === false; // true: a different explicit channel → OtpOverrideNotAllowed
+```
+
+Response: `{ enabled, allowExternalIdv, allowIdentityOverride, defaultChannel, allowChannelOverride, allowedFrameAncestors }`.
+
+- **`defaultChannel`** (`'none' | 'email' | 'sms'`) is the org's default OTP channel. While embedded signing is enabled it applies to **every** recipient that does not set one, SDK/API sends included. `'none'` means verify only when a request asks for it.
+- **`allowChannelOverride`** says whether a request may pick a channel other than `defaultChannel`. `false` means the org locked the method: an explicit different channel fails with `OtpOverrideNotAllowed`, so omit it. The server reports `true` while the default is `'none'` or embedded signing is off, but an admin can change that at any time, so read this field (not just `defaultChannel`) before forcing a channel. Treat a missing value as unknown, not locked.
+- **`allowedFrameAncestors`**: origins allowed to iframe the signing page. Empty means framing is denied everywhere.
+
+Everything here is read-only from the SDK; change these in settings, where the change is recorded in the settings audit trail.
+
+### TurboSign.createSigningUrl
+
+Mint a single embedded signing URL for one recipient, requested the moment the signer is ready. Open the returned `url` in a new tab, a redirect, or an iframe. This is the counterpart of DocuSign's `createRecipientView`.
+
+```typescript
+// Prepare the document with an embedded recipient keyed by YOUR id.
+const { documentId } = await TurboSign.sendSignature({
+  file: pdfBuffer,
+  documentName: 'Service Agreement',
+  // Embedded: your app shows the signing page, so don't email the signer a signing link
+  // (reminder and expiry-warning emails are suppressed too). Passcode and completed-copy emails still go out.
+  sendEmail: false,
+  recipients: [
+    { name: 'Jane Doe', email: 'jane@example.com', signingOrder: 1, externalId: 'your_customer_123' },
+    // no identityVerification → the org's defaultChannel applies
+  ],
+  fields: [
+    { type: 'signature', recipientEmail: 'jane@example.com', template: { anchor: '{signature1}', placement: 'replace', size: { width: 100, height: 30 } } },
+  ],
+});
+
+// Select the recipient by TurboDocx recipientId OR by your own externalId (exactly one).
+const link = await TurboSign.createSigningUrl(documentId, {
+  externalId: 'your_customer_123',                  // XOR recipientId
+  returnUrl: 'https://app.yourcompany.com/signed',  // optional, https only
+});
+
+console.log(link.url);                      // open / redirect / iframe this
+console.log(link.identityVerificationMode); // 'otp' | 'external_idv' | 'override' | null
+console.log(link.pendingChecks);            // ['email_otp'] | ['sms_otp'] | [] (non-empty only for otp)
+console.log(link.expiresAt);                // ISO timestamp, or null (see below)
+
+// external_idv recipients: pass the assertion from your own identity provider.
+const verified = await TurboSign.createSigningUrl(documentId, {
+  recipientId,
+  identityAssertion: {
+    provider: 'CAPA',                        // must match the recipient's configured provider
+    verificationId: 'capa_verif_8f2a91',
+    verifiedAt: new Date().toISOString(),    // rejected if in the future or too old
+    subjectEmail: 'jane@example.com',        // must match the recipient's email
+    // Optional context recorded on the certificate / audit trail (omit any you don't have):
+    method: 'id_document_liveness',          // id_document | id_document_liveness | kba | database | sso | other
+    // methodDetail: 'Video call with a notary', // required when method is 'other'
+    assuranceLevel: 'ial2_aal2',             // e.g. ial2_aal2, eidas_substantial, eidas_high
+    verifiedName: 'Jane Doe',                // legal name as your provider verified it
+    evidenceUrl: 'https://idv.example.com/verifications/capa_verif_8f2a91', // https only
+    // overrideEmailMatching: true,          // skip the subjectEmail check; recorded on the audit trail
+  },
+});
+```
+
+Response: `{ url, expiresAt, recipientId, externalId?, identityVerificationMode, pendingChecks }`.
+
+- **Provide exactly one selector.** `recipientId` or `externalId`, not both and not neither, or the SDK throws `ValidationError` with code `RecipientSelectorInvalid`. `externalId` is your own key for the signer (an Airtable row, a CRM id), set on the recipient at `sendSignature` time; it is not part of the one-call `createEmbeddedSignature` path.
+- **`identityAssertion` is only for `external_idv` recipients.** Sending it for an OTP, override, or no-verification recipient is rejected with a 400 `IdentityModeConflict` error, so pass it only when the recipient is `external_idv`. The four keys `provider`, `verificationId`, `verifiedAt`, `subjectEmail` are required; `method`, `methodDetail` (required when `method` is `'other'`), `assuranceLevel`, `verifiedName`, `evidenceUrl` (https) and `overrideEmailMatching` are optional audit-trail context and are left off the wire when unset.
+- **Request at click time, never store the URL.** For the bypass modes (`external_idv` / `override`) the link is single-use and expires 5 minutes after issue (a `?sut=` redeem-once URL), so mint a fresh one each time. For `otp` and no-verification recipients `url` is the reusable signing link (a `?token=` URL), so `expiresAt` is the **document's own expiry**, or `null` when the document doesn't expire.
+- **`returnUrl` must be https**, or the SDK throws `ValidationError` with code `InvalidReturnUrl`.
+
+### TurboSign.createEmbeddedSignature
+
+Create the signature request **and** mint a per-recipient embed URL in one call. It is a thin wrapper over `sendSignature` + `createSigningUrl` (no new endpoint) with an ergonomic per-recipient `auth` and `fields` shorthand. Recipient emails are suppressed by default, since you own the signing UX.
+
+```typescript
+import { TurboSign, AuthorizationError } from '@turbodocx/sdk';
+
+const settings = await TurboSign.getEmbeddedSigningSettings();
+// An explicit channel other than the org default is only safe when the org did not lock it.
+// `=== false` keeps an unreported value (undefined) as "unknown", not "locked".
+const canPickChannel = settings.allowChannelOverride !== false || settings.defaultChannel === 'sms';
+
+try {
+  const { documentId, recipients } = await TurboSign.createEmbeddedSignature({
+    file: pdfBuffer,
+    documentName: 'Auto Policy',
+    // Already the default for this method: no signing-link, reminder or expiry-warning emails,
+    // because your app shows the signing page. Passcode and completed-copy emails still go out.
+    sendEmail: false,
+    recipients: [
+      {
+        name: 'John Doe',
+        email: 'john@example.com',
+        // Per-recipient OTP shorthand: { emailOtp: true } or { sms: { phoneNumber: '+1...' } }.
+        // Omit `auth` to take the org's defaultChannel.
+        ...(canPickChannel ? { auth: { sms: { phoneNumber: '+13055551234' } } } : {}),
+        fields: { signature: '{signature1}', date: '{date1}' },
+      },
+    ],
+    returnUrl: 'https://app.yourcompany.com/signed',  // optional, https, passed to each embed URL
+  });
+
+  for (const r of recipients) {
+    // 'ready' → embedUrl is set, frame it now; 'pending' / 'completed' → embedUrl is null
+    console.log(r.name, r.status, r.embedUrl, r.identityVerificationMode);
+  }
+} catch (err) {
+  if (err instanceof AuthorizationError && err.code === 'OtpOverrideNotAllowed') {
+    // The org locked the verification method: drop `auth` (take defaultChannel) or ask an admin.
+  }
+  throw err;
+}
+```
+
+Response: `{ documentId, recipients: EmbeddedSignatureRecipientResult[] }`, one result per signer **in signing order**, each `{ recipientId, name, email, embedUrl, status, identityVerificationMode }`. For a `'ready'` signer `identityVerificationMode` is the mode the backend resolved for the URL. For `'pending'` / `'completed'` no URL was minted, so it is the mode you **requested** via `auth`: `null` when you set none, even if the org's default channel will apply. `createSigningUrl` reports the effective mode once you mint the URL.
+
+- **Turn-aware `status`.** `signingOrder` defaults to each recipient's array index + 1, so a two-signer call is sequential: only signer 1 comes back `'ready'` with an `embedUrl`, and the rest are `'pending'` with `embedUrl: null` (an earlier signer has not finished) or `'completed'` (already signed). Re-mint the next signer's URL with `createSigningUrl` once earlier signers finish (the just-in-time kiosk pattern). Give every recipient the same `signingOrder` if you want them all `'ready'` at once.
+- **`auth` is OTP-only.** `{ emailOtp: true }` maps to `{ mode: 'otp', channel: 'email' }`; `{ sms: { phoneNumber: '+13055551234' } }` maps to `{ mode: 'otp', channel: 'sms' }` and sets the recipient's `phone`. No `auth` means the org's `defaultChannel` applies. An `auth` channel that differs from a locked default (`allowChannelOverride === false`) makes the whole call fail with `AuthorizationError` code `OtpOverrideNotAllowed`. For `external_idv` / `override`, use `sendSignature` + `createSigningUrl` instead.
+- **The `fields` shorthand anchors by text.** Each key (`signature`, `date`, `initials`, `fullName`) takes the anchor text to replace, expanded to a full field with `placement: 'replace'` and a default size. Note `initials` emits the field type `'initial'` (there is no `'initials'` type). Pass a top-level `fields: Field[]` for full control; it **replaces** the per-recipient shorthand, it does not merge with it. An empty top-level `fields` counts as absent, so the shorthand still expands (0.8.0 sent the empty list and dropped it).
+- **`sendEmail` defaults to `false`** for this flow: the signing-link emails, the initial CC notice, the next signer's "your turn" email and the scheduled reminder and expiry-warning emails are suppressed. Passcode and completed-copy emails are still sent.
+
+### Browser side: `@turbodocx/embed`
+
+The browser only frames the `embedUrl` / `url` your server returns (an `/e-signature/embed/...` URL; use it exactly as returned). `@turbodocx/embed` (`npm install @turbodocx/embed`) owns the iframe, pins the message origin, and reports completion. Do not tell the signer a passcode was already sent: for OTP signers the code is sent only when they click **Send Code** on the signing page.
+
+```tsx
+import { TurboSignForm } from '@turbodocx/embed/react';
+
+<TurboSignForm
+  embedUrl={embedUrl}                    // from your server, never the API key
+  origin="https://app.turbodocx.com"     // only messages from this origin are trusted
+  height={720}
+  onCompleted={({ documentId, event, scope }) => {
+    // event: 'signing_complete' (just signed) | 'already_signed' (reopened a finished link):
+    // skip one-time "thanks for signing" side effects on 'already_signed'.
+    // scope: 'recipient' = THIS signer's step. Other signers may still be pending, so read the
+    // document status server-side (getStatus or the completed webhook) for the whole document.
+    if (event === 'signing_complete') showThankYou(documentId);
+  }}
+/>
+```
+
+Framework-agnostic web component: `<turbosign-form embed-url="..." origin="https://app.turbodocx.com">` dispatches a bubbling `turbosign:completed` event whose `event.detail` is the same `{ documentId, status, event, scope }`.
+
+### Reference implementations
+
+- **Embedding web app:** [`examples/embedded-web-app`](https://github.com/TurboDocx/SDK/blob/main/examples/embedded-web-app) is a Vite + React + shadcn host app wired the production way. The React SPA never sees the API key: it calls a small backend-for-frontend (`server.ts`) that holds the key and uses `@turbodocx/sdk` to create documents and mint embed URLs. It shows four paths side by side: a **single signer** (the host hand-rolls the `<iframe>` and an origin-checked `message` completion listener), **external IdV** (a simulated identity provider verifies the signer and the server passes an `identityAssertion` when minting the URL, so no passcode step), a **sequential kiosk** (two signers in order on one device, the next signer's URL minted just-in-time when it is their turn), and a **widget** (`<TurboSignForm>` from `@turbodocx/embed`, which owns the iframe, origin pinning, and completion event for you).
+- **Minimal script:** [`packages/js-sdk/examples/turbosign-embedded-identity.ts`](https://github.com/TurboDocx/SDK/blob/main/packages/js-sdk/examples/turbosign-embedded-identity.ts) walks the baseline embedded flow plus each identity mode in one file.
+
+---
+
+## Deliverable
+
+Document generation: render a TurboDocx template with variable substitution into a deliverable (DOCX/PPTX), then download it or hand its ID to TurboSign as the source document.
+
+### Deliverable.configure
+
+```typescript
+Deliverable.configure({
+  apiKey: process.env.TURBODOCX_API_KEY!,
+  orgId: process.env.TURBODOCX_ORG_ID!,
+});
+```
+
+No `senderEmail` needed — Deliverable doesn't send email.
+
+### Deliverable.generateDeliverable
+
+Generate a document from a template with variable substitution.
+
+```typescript
+const result = await Deliverable.generateDeliverable({
+  templateId: 'template-uuid',
+  name: 'Employee Contract - John Smith',
+  variables: [
+    { placeholder: '{EmployeeName}', text: 'John Smith', mimeType: 'text' },
+    { placeholder: '{CompanyName}', text: 'TechCorp Inc.', mimeType: 'text' },
+    { placeholder: '{StartDate}',   text: '2026-06-01',  mimeType: 'text' },
+  ],
+  description: 'Generated via API for HR onboarding',
+  tags: ['hr', 'contract'],
+});
+
+const deliverable = result.results.deliverable;
+console.log(deliverable.id, deliverable.name, deliverable.fileType);
+```
+
+`mimeType` is one of `'text' | 'html' | 'image' | 'markdown'`. For repeating content (tables, lists), use `variableStack` on a `DeliverableVariable`.
+
+You can pass the resulting `deliverable.id` straight to `TurboSign.sendSignature({ deliverableId: ... })` to generate-then-sign in one workflow.
+
+### Deliverable.listDeliverables
+
+```typescript
+const list = await Deliverable.listDeliverables({
+  limit: 20,      // 1-100, default 6
+  offset: 0,
+  query: 'contract',
+  showTags: true,
+});
+
+console.log(list.totalRecords);
+for (const d of list.results) {
+  console.log(d.id, d.name, d.createdOn);
+}
+```
+
+Response: `{ results: DeliverableRecord[], totalRecords: number }`.
+
+### Deliverable.getDeliverableDetails
+
+```typescript
+const d = await Deliverable.getDeliverableDetails(deliverableId, { showTags: true });
+console.log(d.name, d.templateName, d.variables, d.tags);
+```
+
+Returns a full `DeliverableRecord` including `variables` and (when `showTags: true`) `tags`.
+
+### Deliverable.updateDeliverableInfo
+
+```typescript
+const result = await Deliverable.updateDeliverableInfo(deliverableId, {
+  name: 'Employee Contract - John Smith (Final)',
+  description: 'Finalized version',
+  tags: ['hr', 'contract', 'finalized'], // replaces all existing tags
+});
+console.log(result.message, result.deliverableId);
+```
+
+Passing `tags` **replaces** the full tag set. To remove all tags, pass `tags: []`. To add a tag, fetch existing tags first and append.
+
+### Deliverable.deleteDeliverable
+
+```typescript
+const result = await Deliverable.deleteDeliverable(deliverableId);
+console.log(result.message); // soft delete — data is retained but hidden from list
+```
+
+### Deliverable.downloadSourceFile
+
+```typescript
+const arrayBuffer = await Deliverable.downloadSourceFile(deliverableId);
+
+// Node:
+import { writeFile } from 'node:fs/promises';
+await writeFile('contract.docx', Buffer.from(arrayBuffer));
+
+// Browser:
+const blob = new Blob([arrayBuffer]);
+const url = URL.createObjectURL(blob);
+```
+
+Returns the original DOCX/PPTX as `ArrayBuffer`. Requires `hasFileDownload` entitlement.
+
+### Deliverable.downloadPDF
+
+```typescript
+const arrayBuffer = await Deliverable.downloadPDF(deliverableId);
+// Same persistence pattern as downloadSourceFile, but it's a PDF.
+const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+```
+
+---
+
+## TurboPartner
+
+Partner-portal operations: provision and manage customer organizations, their users, API keys, entitlements, and audit logs.
+
+### TurboPartner.configure
+
+```typescript
+TurboPartner.configure({
+  partnerApiKey: process.env.TURBODOCX_PARTNER_API_KEY!,
+  partnerId: process.env.TURBODOCX_PARTNER_ID!,
+});
+```
+
+### Organization management
+
+```typescript
+// Create
+const org = await TurboPartner.createOrganization({
+  name: 'Acme Corp',
+  metadata: { industry: 'Technology' },
+  features: { maxUsers: 50, hasTDAI: true }, // optional initial entitlements
+});
+console.log(org.data.id);
+
+// List (uses offset, not page)
+const orgs = await TurboPartner.listOrganizations({ limit: 20, offset: 0, search: 'acme' });
+console.log(orgs.data.totalRecords);
+orgs.data.results.forEach((o) => console.log(o.id, o.name));
+
+// Get details (includes features + tracking)
+const details = await TurboPartner.getOrganizationDetails('org-uuid');
+console.log(details.data.features, details.data.tracking);
+
+// Update name
+await TurboPartner.updateOrganizationInfo('org-uuid', { name: 'Acme Holdings' });
+
+// Delete
+await TurboPartner.deleteOrganization('org-uuid');
+
+// Update entitlements — features and tracking are separate top-level keys
+await TurboPartner.updateOrganizationEntitlements('org-uuid', {
+  features: { maxUsers: 100, hasTDAI: true, hasSalesforce: true },
+  tracking: { numUsers: 12 }, // optional: seed usage counters
+});
+```
+
+### Organization display preferences
+
+Read and set a tenant's TurboSign display preferences without logging into its settings UI. Four
+booleans are partner-settable; the API returns only these keys, never the org's other settings.
+
+```typescript
+// Read — every key comes back with its effective value (defaults applied)
+const { data } = await TurboPartner.getOrganizationPreferences('org-uuid');
+console.log(data.preferences.hideSignatureOutline);       // false by default
+console.log(data.preferences.hideSignatureHash);          // false by default
+console.log(data.preferences.lockedFieldsBackground);     // true by default
+console.log(data.preferences.allowDownloadBeforeSigning); // false by default
+
+// Update — pass only the keys you want to change; the rest are left as they are
+const updated = await TurboPartner.updateOrganizationPreferences('org-uuid', {
+  lockedFieldsBackground: false, // render locked fields as plain text, not a grey box
+});
+console.log(updated.data.preferences.lockedFieldsBackground); // false
+```
+
+| Preference | Default | Effect |
+|------------|---------|--------|
+| `hideSignatureOutline` | `false` | Hide the outline/label drawn around signed fields |
+| `hideSignatureHash` | `false` | Hide the verification hash printed on signed fields |
+| `lockedFieldsBackground` | `true` | Grey box behind locked fields (`false` = plain text) |
+| `allowDownloadBeforeSigning` | `false` | When enabled, a signer can download the unsigned PDF from the signing page before they sign it (for example, to review it with their legal team). Defaults to off. |
+
+### Organization user management
+
+```typescript
+// List
+const users = await TurboPartner.listOrganizationUsers('org-uuid', { limit: 25, offset: 0 });
+
+// Invite — ORG role enum: 'admin' | 'contributor' | 'user' | 'viewer'
+// ('member' is a PARTNER-portal role and is rejected here with a 400.)
+const user = await TurboPartner.addUserToOrganization('org-uuid', {
+  email: 'newhire@acme.com',
+  role: 'contributor',
+});
+
+// Update role
+await TurboPartner.updateOrganizationUserRole('org-uuid', 'user-uuid', { role: 'admin' });
+
+// Remove
+await TurboPartner.removeUserFromOrganization('org-uuid', 'user-uuid');
+
+// Resend invitation email
+await TurboPartner.resendOrganizationInvitationToUser('org-uuid', 'user-uuid');
+```
+
+### Organization API key management
+
+```typescript
+// List keys for an org
+const keys = await TurboPartner.listOrganizationApiKeys('org-uuid', { limit: 10 });
+
+// Create — the full key value is returned ONLY on creation, store it immediately
+// Org API keys use the ORG role enum: 'admin' | 'contributor' | 'user' | 'viewer'
+const created = await TurboPartner.createOrganizationApiKey('org-uuid', {
+  name: 'Production Key',
+  role: 'admin',
+});
+console.log(created.data.key); // capture this once, it won't be shown again
+
+// Update (e.g., rename)
+await TurboPartner.updateOrganizationApiKey('org-uuid', 'key-uuid', { name: 'Renamed' });
+
+// Revoke
+await TurboPartner.revokeOrganizationApiKey('org-uuid', 'key-uuid');
+```
+
+### Partner API key management
+
+```typescript
+// List
+const keys = await TurboPartner.listPartnerApiKeys({ limit: 10 });
+
+// Create with scopes — full key returned only on creation
+const created = await TurboPartner.createPartnerApiKey({
+  name: 'CI/CD Key',
+  scopes: ['org:create', 'org:read', 'entitlements:update'],
+  description: 'Used by GitHub Actions',
+});
+console.log(created.data.key); // store this immediately
+
+// Update name / scopes
+await TurboPartner.updatePartnerApiKey('key-uuid', {
+  name: 'CI/CD Key (extended)',
+  scopes: ['org:create', 'org:read', 'org:update', 'entitlements:update'],
+});
+
+// Revoke
+await TurboPartner.revokePartnerApiKey('key-uuid');
+```
+
+Available scopes (see `PartnerScope` in the SDK types) cover `org:*`, `entitlements:update`, `org-users:*`, `partner-users:*`, `org-apikeys:*`, `partner-apikeys:*`, and `audit:read`.
+
+### Partner-portal user management
+
+```typescript
+// List
+const users = await TurboPartner.listPartnerPortalUsers({ limit: 25 });
+
+// Add — PARTNER role enum: 'admin' | 'member' | 'viewer'
+// ('contributor' / 'user' are ORG roles and are rejected here with a 400.)
+// All SEVEN permission keys are required.
+const user = await TurboPartner.addUserToPartnerPortal({
+  email: 'admin@partner.com',
+  role: 'admin',
+  permissions: {
+    canManageOrgs: true,
+    canManageOrgUsers: true,
+    canManagePartnerUsers: false,
+    canManageOrgAPIKeys: true,
+    canManagePartnerAPIKeys: false,
+    canUpdateEntitlements: true,
+    canViewAuditLogs: true,
+  },
+});
+
+// Update — `permissions` itself is optional, but there is NO partial update:
+// if you send `permissions` at all you must send ALL SEVEN keys, or the
+// backend returns 400. Read the current values first and spread them.
+const current = (await TurboPartner.listPartnerPortalUsers({ limit: 100 }))
+  .data.results.find((u) => u.id === 'user-uuid');
+
+await TurboPartner.updatePartnerUserPermissions('user-uuid', {
+  role: 'member',
+  permissions: {
+    ...current.permissions,       // all 7 keys, from the server
+    canManageOrgs: true,          // then override only what changes
+    canManageOrgUsers: true,
+  },
+});
+
+// To change ONLY the role, omit `permissions` entirely:
+await TurboPartner.updatePartnerUserPermissions('user-uuid', { role: 'viewer' });
+
+// Remove
+await TurboPartner.removeUserFromPartnerPortal('user-uuid');
+
+// Resend invitation
+await TurboPartner.resendPartnerPortalInvitationToUser('user-uuid');
+```
+
+### Audit logs
+
+```typescript
+const logs = await TurboPartner.getPartnerAuditLogs({
+  action: 'org.created',
+  resourceType: 'organization',
+  startDate: '2026-01-01',
+  endDate: '2026-12-31',
+  success: true,
+  limit: 100,
+  offset: 0,
+});
+
+console.log(logs.data.totalRecords);
+for (const entry of logs.data.results) {
+  console.log(entry.createdOn, entry.action, entry.resourceId, entry.success);
+}
+```
+
+---
+
+## TurboWebhooks
+
+TurboWebhooks subscribes a single per-org HTTPS endpoint (locked to the name `signature`) to TurboSign document events. The SDK is intentionally one-webhook-per-org to mirror the dashboard's Signature Webhooks page.
+
+### Webhook events
+
+TurboSign dispatches **7** events. All of them are live — subscribe to whichever your integration needs.
+
+| Event (wire string) | Fires when |
+|---|---|
+| `signature.document.sent` | The document is dispatched to recipients |
+| `signature.document.viewed` | A recipient opens the document for the first time |
+| `signature.document.recipient_signed` | An individual signer completes their signature — fires **once per signer** |
+| `signature.document.signed` | A signer signs but the document is **not yet complete** (document-level partial progress) |
+| `signature.document.completed` | All recipients have signed and the signed PDF is finalized |
+| `signature.document.finalization_failed` | The signed PDF fails to finalize (e.g. KMS signing error); the document is **not** completed |
+| `signature.document.voided` | The document is voided or cancelled |
+
+The SDK exports these as first-class constants — `import { WebhookEvents, WEBHOOK_EVENTS, type WebhookEvent } from '@turbodocx/sdk'`. `WebhookEvents` is a const object (`WebhookEvents.SENT`, `.VIEWED`, `.RECIPIENT_SIGNED`, `.SIGNED`, `.COMPLETED`, `.FINALIZATION_FAILED`, `.VOIDED`), `WEBHOOK_EVENTS` is an array of all 7, and `WebhookEvent` is the union type. Use them for autocomplete instead of stringly-typed names — `WebhookEvents.COMPLETED === 'signature.document.completed'`. The literal wire strings above are what actually travel in the top-level `event` field of the delivered payload (the envelope is `{ event, event_id, created_at, version, data }` — a receiver written against `eventType` reads `null` and silently dispatches nothing), and they are always accepted by `createWebhook`/`updateWebhook`. `getWebhook()` also returns an `availableEvents` array — the backend advertises the live catalog at runtime.
+
+#### Lifecycle: `recipient_signed` vs `signed` vs `completed`
+
+This is the part integrations get wrong. On **every** signature, `recipient_signed` fires first. Then exactly one of `signed`, `completed`, or `finalization_failed` follows:
+
+```
+Recipient signs
+   │
+   ├─ signature.document.recipient_signed   (always — one per signer)
+   │
+   └─ more signers remaining?
+        ├─ yes → signature.document.signed                 (partial progress)
+        └─ no  → signature.document.completed              (finalized OK)
+                 or signature.document.finalization_failed (finalization failed)
+```
+
+- **`recipient_signed`** is the **per-person** event. It fires once for every signer, *including the last one*, and carries the signer's identity plus `is_final_signer` (true only on the last signature) and `remaining_signers`.
+- **`signed`** is a **document-level partial-progress** event. It fires **only when a signer signs and the document is NOT yet complete**.
+- **`signed` never fires on the final signature.** To detect "the whole document is done", use `completed` (or `recipient_signed` with `is_final_signer: true`) — **never** `signed`.
+- **A single-signer document never emits `signed` at all.** It emits `recipient_signed` (`is_final_signer: true`) and then `completed`.
+
+### TurboWebhooks.configure
+
+```typescript
+import { TurboWebhooks } from '@turbodocx/sdk';
+
+TurboWebhooks.configure({
+  apiKey: process.env.TURBODOCX_API_KEY!,   // admin TDX- key
+  orgId: process.env.TURBODOCX_ORG_ID!,
+});
+```
+
+`skipSenderValidation: true` is hardcoded inside `configure()` because webhooks don't send email — only TurboSign needs `senderEmail`. The webhook routes require the organization administrator role; a non-admin TDX- key returns `AuthorizationError` (HTTP 403).
+
+### createWebhook
+
+```typescript
+const created = await TurboWebhooks.createWebhook({
+  urls: ['https://your-server.example.com/webhooks/turbodocx'],  // must be HTTPS
+  events: [
+    'signature.document.sent',
+    'signature.document.viewed',
+    'signature.document.recipient_signed',   // once per signer; carries is_final_signer
+    'signature.document.completed',          // the ONLY reliable "document is done" signal
+    'signature.document.finalization_failed',
+    'signature.document.voided',
+    // 'signature.document.signed',          // add only if you want partial-progress pings;
+    //                                       // it never fires on the final signature
+  ],
+});
+
+// Returned secret is shown ONCE — store it server-side immediately.
+const { id, secret } = created;
+```
+
+`urls` must contain **1–10** HTTPS URLs; `events` must contain **at least 1** event. Throws `ConflictError` (409) if the signature webhook already exists for the org. Throws `ValidationError` (400) for non-HTTPS URLs, an empty/oversized `urls` array, or an empty `events` array.
+
+### getWebhook
+
+```typescript
+const webhook = await TurboWebhooks.getWebhook();
+// webhook.urls, webhook.events, webhook.isActive
+// webhook.deliveryStats.{totalDeliveries, successfulDeliveries, failedDeliveries, pendingRetries}
+```
+
+### updateWebhook
+
+```typescript
+await TurboWebhooks.updateWebhook({
+  urls: ['https://your-server.example.com/webhooks/turbodocx'],  // 1–10 HTTPS URLs
+  events: ['signature.document.completed'],                      // at least 1
+  isActive: true,
+});
+
+// To pause deliveries without touching the routing, OMIT urls/events entirely:
+await TurboWebhooks.updateWebhook({ isActive: false });
+```
+
+All three fields are optional — pass only what you want to change. But **optional does not mean "may be empty"**: if you include `urls` it still has to hold 1–10 URLs, and if you include `events` it still has to hold at least 1. Sending `urls: []` or `events: []` is a 400 `ValidationError` — omit the key instead.
+
+### deleteWebhook
+
+```typescript
+await TurboWebhooks.deleteWebhook();  // soft-delete + delivery history wiped
+```
+
+### testWebhook
+
+```typescript
+const result = await TurboWebhooks.testWebhook({
+  eventType: 'signature.document.completed',
+  payload: { documentId: '...', documentName: '...' },
+});
+// result.summary: { total, successful, failed, errors: string[] }
+// result.deliveries: WebhookDelivery[]
+```
+
+Per-URL failure messages live in `summary.errors`. Use this from a CI smoke test before flipping a new receiver into production.
+
+### regenerateWebhookSecret
+
+```typescript
+const rotated = await TurboWebhooks.regenerateWebhookSecret();
+// rotated.secret — shown ONCE; old signatures fail immediately after rotation
+```
+
+### listWebhookDeliveries
+
+```typescript
+const page = await TurboWebhooks.listWebhookDeliveries({
+  limit: 20,
+  offset: 0,
+  eventType: 'signature.document.completed',
+  isDelivered: false,
+  httpStatus: 500,
+});
+// page.results: WebhookDelivery[]; page.totalRecords
+```
+
+### replayWebhookDelivery
+
+```typescript
+const newDelivery = await TurboWebhooks.replayWebhookDelivery(deliveryId);
+// Full WebhookDelivery row returned — id, httpStatus, attemptCount, etc.
+```
+
+### getWebhookStats
+
+```typescript
+const stats = await TurboWebhooks.getWebhookStats({ days: 30 });
+// stats.summary.{successRate, avgResponseTime, ...}
+// stats.eventBreakdown — per-event totals
+```
+
+### Verifying inbound webhook signatures
+
+When TurboDocx POSTs to your receiver, verify the `X-TurboDocx-Signature` header before trusting the payload. The helper enforces a 5-minute timestamp tolerance and uses constant-time comparison. Override with `{ toleranceSeconds: N }` as the fifth argument: `0` disables the check (not recommended in production); a negative value, NaN, `Infinity` or a non-number such as `"300"` rejects every delivery. The `X-TurboDocx-Timestamp` header must be digits only.
+
+`verifyWebhookSignature` returns `false` (it does not throw) on bad or missing input, such as an absent header (`undefined`), a non-string value or a malformed timestamp, so answer 401 on `false` without a try/catch.
+
+```typescript
+import express from 'express';
+import { verifyWebhookSignature } from '@turbodocx/sdk';
+
+const app = express();
+
+// CRITICAL: mount express.raw FOR THE WEBHOOK PATH BEFORE any global
+// express.json(). Express body-parsers set req._body=true on the first
+// parse and later parsers no-op. If app.use(express.json()) runs first,
+// the route-level express.raw() below silently becomes a no-op and
+// req.body is a parsed object instead of a Buffer — verification then
+// always fails.
+app.use(
+  '/webhooks/turbodocx',
+  express.raw({ type: 'application/json' }),
+);
+
+// Now safe to install JSON parsing for the rest of the app.
+app.use(express.json());
+
+app.post('/webhooks/turbodocx', (req, res) => {
+  const signature = req.header('x-turbodocx-signature') ?? '';
+  const timestamp = req.header('x-turbodocx-timestamp') ?? '';
+  const secret = process.env.TURBODOCX_WEBHOOK_SECRET!;
+
+  // req.body is a Buffer because express.raw ran first for this path.
+  if (!verifyWebhookSignature(req.body, signature, timestamp, secret)) {
+    return res.status(401).send('Invalid signature');
+  }
+
+  const event = JSON.parse(req.body.toString('utf8'));
+  // The envelope is { event, event_id, created_at, version, data } — dispatch on
+  // event.event, NOT event.eventType (that key does not exist and reads undefined).
+  // process event.event, event.data, ...
+  res.status(200).send('ok');
+});
+```
+
+If your app already calls `app.use(express.json())` globally, move it to AFTER the `app.use('/webhooks/turbodocx', express.raw(...))` line shown above — order matters.
+
+**Canonical end-to-end JavaScript example:** [`packages/js-sdk/examples/turbowebhooks-crud.ts`](https://github.com/TurboDocx/SDK/blob/main/packages/js-sdk/examples/turbowebhooks-crud.ts) walks through create → conflict → get → update → test-fire → rotate → list → delete + every error branch.
+
+### TurboWebhooks error handling
+
+```typescript
+import {
+  TurboDocxError,
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError,
+  ConflictError,
+  NotFoundError,
+  RateLimitError,
+  NetworkError,
+} from '@turbodocx/sdk';
+
+try {
+  await TurboWebhooks.createWebhook({ urls, events });
+} catch (e) {
+  if (e instanceof ConflictError)        /* 409 — already exists; update or delete */;
+  else if (e instanceof ValidationError) /* 400 — non-HTTPS URL or empty events    */;
+  else if (e instanceof AuthorizationError) /* 403 — TDX- key lacks administrator role */;
+  else if (e instanceof AuthenticationError) /* 401 — bad / revoked API key          */;
+  else if (e instanceof NotFoundError)   /* 404 — webhook does not exist            */;
+  else if (e instanceof RateLimitError)  /* 429 — back off and retry                */;
+  else if (e instanceof NetworkError)    /* never reached the server                */;
+  else if (e instanceof TurboDocxError)  /* other typed SDK error (e.g. 5xx)        */;
+  else                                    throw e;
+}
+```
+
+---
+
+## TurboQuote
+
+Sales quoting operations: build a product catalog, assemble quotes with line items and bundles, apply price books, and send quotes to customers. Includes full CRUD for quotes, products, bundles, price books, companies, contacts, templates, and types.
+
+### TurboQuote.configure
+
+```typescript
+import { TurboQuote } from '@turbodocx/sdk';
+
+TurboQuote.configure({
+  apiKey: process.env.TURBODOCX_API_KEY!,  // required (or accessToken)
+  orgId: process.env.TURBODOCX_ORG_ID!,   // required — backend returns 401 if missing
+});
+```
+
+`QuoteClientConfig` takes only `apiKey` / `accessToken` / `orgId` / `baseUrl` — there is **no** `senderEmail` / `senderName` on the TurboQuote client. `orgId` is technically optional in the config type but the backend rejects requests without it; always provide it.
+
+**Sending a quote still emails the recipient and creates a signature request** — the sender is not taken from your config, it is resolved server-side from the org's **quote template** (Quote Settings), falling back to the quote's creator. An API key has no mailbox, so an API-key caller whose quote template has no sender email gets `400 SenderEmailRequired` (on `createQuote`/`duplicateQuote` as well as on send). Set it once:
+
+```typescript
+const template = await TurboQuote.getTemplate();
+await TurboQuote.updateTemplate(template.id, {
+  senderEmail: 'quotes@yourcompany.com',
+  senderName: 'Acme Billing',
+});
+```
+
+### createQuote
+
+```typescript
+const quote = await TurboQuote.createQuote({
+  name: 'Professional Services — Q3 2026',
+  companyId: 'company-uuid',
+  contactId: 'contact-uuid',
+  currency: 'USD',
+  validUntil: '2026-09-30',
+  termDays: 365,   // optional; DEFAULT IS 60. Max 3650 (10 years). -1 = auto-renewal.
+});
+
+console.log(quote.id);           // string
+console.log(quote.quoteNumber);  // human-readable number e.g. 'Q-0042'
+console.log(quote.status);       // 'draft'
+```
+
+Response: a `Quote` object. Numeric fields such as `subtotalMonthly`, `subtotalAnnual`, `grandTotal`, and `taxRate` are returned as JavaScript `number` (the SDK's response normalizer coerces the backend's decimal strings automatically).
+
+**`termDays` / `renewalPeriod`** — `termDays` defaults to **60** when omitted, and may be any integer up to **3650**, or the sentinel **`-1`** meaning auto-renewal. The two fields are coupled:
+
+- `termDays: -1` → `renewalPeriod` is **required** (`'weekly' | 'monthly' | 'quarterly' | 'annually'`).
+- any other `termDays` → `renewalPeriod` must be **absent or `null`**; sending it is a 400.
+
+```typescript
+// Auto-renewing quote — renewalPeriod is mandatory
+await TurboQuote.createQuote({
+  name: 'Managed Services — auto-renew',
+  companyId: 'company-uuid',
+  contactId: 'contact-uuid',
+  termDays: -1,
+  renewalPeriod: 'monthly',
+});
+
+// Fixed-term quote — do NOT send renewalPeriod
+await TurboQuote.createQuote({
+  name: 'Fixed 90-day engagement',
+  companyId: 'company-uuid',
+  contactId: 'contact-uuid',
+  termDays: 90,
+});
+```
+
+### addLineItems
+
+**Four fields are required on every line item**: `productId` (the KEY must be present — its VALUE may be `null` for a custom, non-catalog item), `productName`, `unitPrice`, and `billingFrequency`. Omitting any of them is a 400. `quantity` defaults to `1`.
+
+```typescript
+// Single item (auto-wrapped to array)
+const items = await TurboQuote.addLineItems(quote.id, {
+  productId: 'product-uuid',    // REQUIRED key; use null for a custom item
+  productName: 'Consulting Service',  // REQUIRED
+  unitPrice: 500,               // REQUIRED
+  billingFrequency: 'monthly',  // REQUIRED — 'monthly' | 'quarterly' | 'annual' | 'one-time'
+  quantity: 3,                  // optional, defaults to 1
+  discountType: 'percent',      // 'percent' | 'amount'
+  discountPercent: 10,
+});
+
+console.log(items[0].id);        // LineItem UUID
+console.log(items[0].subtotal);  // number — already normalised
+
+// Multiple items at once — custom (no-product) items require productId: null explicitly.
+// The array must hold between 1 and 50 items; 51+ is a 400.
+const bulkItems = await TurboQuote.addLineItems(quote.id, [
+  { productId: null, productName: 'Setup Fee', unitPrice: 1500, billingFrequency: 'one-time', quantity: 1 },
+  { productId: null, productName: 'License',   unitPrice: 200,  billingFrequency: 'monthly',  quantity: 10 },
+]);
+```
+
+### addBundleLineItems
+
+Adding a bundle to a quote requires only `bundleId` and `bundleName` — the server expands the bundle's child products itself, so you never send them. Like `addLineItems`, the body takes a single object or an array of **1–50**.
+
+```typescript
+const bundleItems = await TurboQuote.addBundleLineItems(quote.id, {
+  bundleId: 'bundle-uuid',       // REQUIRED
+  bundleName: 'Starter Bundle',  // REQUIRED
+  quantity: 2,
+});
+console.log(bundleItems[0].id);
+```
+
+### sendQuote
+
+```typescript
+const sent = await TurboQuote.sendQuote(quote.id, {
+  ccEmails: ['manager@yourcompany.com'],  // optional
+});
+console.log(sent.message);       // 'Quote sent successfully'
+console.log(sent.quote.status);  // 'sent'
+```
+
+Sending emails the contact **and creates a signature request** for them. Every precondition failure is a 400 with a specific `code` — branch on `err.code`:
+
+| `code` | Meaning |
+|---|---|
+| `QuoteNotSendable` | Only draft quotes can be sent |
+| `QuoteValidUntilRequired` | The quote has no `validUntil` date set |
+| `QuoteExpired` | The quote is past its `validUntil` date |
+| `QuoteHasNoLineItems` | Add at least one line item before sending |
+| `QuoteContactRequired` | The quote's contact is missing a name or email |
+| `QuoteCustomerInactive` | The quote's company or contact was deleted/deactivated |
+| `SenderEmailRequired` | No sender email resolvable — set one on the org quote template |
+
+```typescript
+import { TurboDocxError } from '@turbodocx/sdk';
+
+try {
+  await TurboQuote.sendQuote(quote.id);
+} catch (err) {
+  if (err instanceof TurboDocxError) {
+    console.error(err.statusCode, err.code, err.message);
+    // err.code is ALWAYS populated — the API code when present,
+    // else the class default (VALIDATION_ERROR, NOT_FOUND, ...).
+    if (err.code === 'SenderEmailRequired') {
+      // configure senderEmail on the org quote template once
+    }
+  } else throw err;
+}
+```
+
+**Reminders & expiration on quote send.** `sendQuote` / `sendQuoteWithDeliverable` accept the same schedule fields as signature send — reminders/expiration work the same way, **except the expiry date is pinned to the quote's `validUntil`, so `expireAfter` is ignored** (`expirationEnabled` still toggles expiration per-quote, and the reminder/warning cadence must fit inside the `validUntil` window).
+
+```typescript
+await TurboQuote.sendQuote(quote.id, {
+  remindersEnabled: true,
+  reminderDelay: { value: 2, unit: 'days' },
+  reminderInterval: { value: 1, unit: 'days' },
+  maxReminders: 3,          // -1 unlimited, 0 none, max 50
+  expirationEnabled: true,  // deadline = quote.validUntil; expireAfter is ignored
+});
+```
+
+### preparedBy (single-quote fetch only)
+
+`getQuote(id)` folds in the server-resolved sender identity as `preparedBy` — prefer it over `creator` for anything customer-facing. It is **not** present on `listQuotes` results.
+
+```typescript
+const q = await TurboQuote.getQuote(quote.id);
+console.log(q.preparedBy?.name);   // template sender, else the quote's creator
+console.log(q.preparedBy?.email);  // may be undefined for an API-created quote
+```
+
+### handleExpiredQuote
+
+Act on a sent quote whose `validUntil` has passed. **`action` accepts exactly two values: `'void'` and `'decline'`.** There is no `'extend'` and no `'resend'` — those are not implemented and return a 400. `reason` (max 190 chars) and `newValidUntil` (ISO date) are **both required**.
+
+The endpoint voids/declines the original quote and creates a duplicate carrying the new `validUntil` date — that duplicate is how you "extend" an expired quote.
+
+```typescript
+const result = await TurboQuote.handleExpiredQuote(quoteId, {
+  action: 'void',                     // 'void' | 'decline' — nothing else
+  reason: 'Pricing refreshed for Q4', // REQUIRED, max 190 chars
+  newValidUntil: '2026-12-31',        // REQUIRED, ISO date — carried by the new duplicate
+});
+```
+
+### downloadQuotePdf
+
+```typescript
+import { writeFile } from 'node:fs/promises';
+
+const pdf = await TurboQuote.downloadQuotePdf(quote.id);
+await writeFile('quote.pdf', Buffer.from(pdf));  // pdf is ArrayBuffer
+```
+
+### getQuoteNumberConfig
+
+Admin-only. Read the org's quote-number config — the format that drives how new quote numbers are generated (prefix, year/month tokens, separator, zero-padding, suffix, starting number, reset cadence).
+
+```typescript
+const config = await TurboQuote.getQuoteNumberConfig();
+
+console.log(config.format.prefix);     // string — e.g. 'Q'
+console.log(config.format.padWidth);   // number — zero-pad width
+console.log(config.currentFloor);      // number — per-period issued floor
+```
+
+Response: `{ format, currentFloor }`. `format` carries `prefix`, `yearToken` (`'none' | 'two' | 'four'`), `monthToken` (`'off' | 'two'`), `separator`, `padWidth` (int 0–12), `suffix`, `startNumber` (int >= 0), and `resetCadence` (`'never' | 'yearly' | 'monthly'`). `currentFloor` is the per-period issued floor — `startNumber` can't be set below it.
+
+### updateQuoteNumberConfig
+
+Admin-only. Update the org's quote-number config; returns the same `{ format, currentFloor }` shape. Request-body keys stay camelCase verbatim.
+
+```typescript
+// Fetch the current config first, then update with a custom format
+const current = await TurboQuote.getQuoteNumberConfig();
+console.log(current.format.prefix, current.currentFloor);
+
+const updated = await TurboQuote.updateQuoteNumberConfig({
+  prefix: 'INV',
+  yearToken: 'none',       // 'none' | 'two' | 'four'
+  monthToken: 'off',       // 'off' | 'two'
+  separator: '-',
+  padWidth: 4,             // int 0–12 — zero-pad to 4 digits
+  suffix: '',
+  startNumber: 1000,       // int >= 0; can't be below currentFloor
+  resetCadence: 'never',   // 'never' | 'yearly' | 'monthly'
+});
+
+console.log(updated.format.prefix);  // 'INV'
+console.log(updated.currentFloor);   // number
+```
+
+Response: `{ format, currentFloor }` — the updated config. All eight `format` fields are required; keys (`prefix`, `yearToken`, `monthToken`, `separator`, `padWidth`, `suffix`, `startNumber`, `resetCadence`) stay camelCase verbatim. `padWidth` and `startNumber` are integers.
+
+### Bulk create (CSV-style imports)
+
+Six catalog resources support bulk creation from an array of rows (e.g. a parsed CSV): `bulkCreateProducts`, `bulkCreatePriceBooks`, `bulkCreateBundles`, `bulkCreateCompanies`, `bulkCreateContacts`, and `bulkCreateTypes`. Each takes an array of row objects (the same shape as the matching single `create*` request); the SDK wraps them in the `{ rows: [...] }` envelope the `POST {resource}/bulk` endpoint expects.
+
+Every product row requires `name`, `categoryId`, `listPrice`, and `billingFrequency`. **`categoryId` must be a real category UUID** — there is no `categoryName` convenience field, and because the backend rejects unknown keys, sending `categoryName` fails the whole row with a 400. Resolve (or create) the category first and pass its UUID:
+
+```typescript
+// 1. Resolve the category UUID once — create it if it doesn't exist yet.
+const types = await TurboQuote.listTypes({ limit: 100 });
+const category =
+  types.results.find((t) => t.name === 'Subscriptions' && t.categoryType === 'product_category') ??
+  (await TurboQuote.createType({ name: 'Subscriptions', categoryType: 'product_category' }));
+
+// 2. Reference it by UUID on every row.
+const result = await TurboQuote.bulkCreateProducts([
+  { name: 'Basic Plan',   listPrice: 10,  billingFrequency: 'monthly', categoryId: category.id },
+  { name: 'Premium Plan', listPrice: 100, billingFrequency: 'monthly', categoryId: category.id },
+]);
+
+console.log(result.imported);   // number — rows that were created
+
+// Partial success: inspect failed rows instead of assuming all-or-nothing
+for (const f of result.failed) {
+  console.error(`Row ${f.row} failed: ${f.reason}`);   // row is 1-indexed
+}
+for (const a of result.adjusted) {
+  console.warn(`Row ${a.row} adjusted: ${a.reason}`);  // imported with a server-side tweak
+}
+```
+
+Response: `BulkImportResult` — `{ imported: number, failed: BulkImportRowIssue[], adjusted: BulkImportRowIssue[] }`, where each `BulkImportRowIssue` is `{ row: number, reason: string }` (`row` is 1-indexed into the rows you sent).
+
+Bulk-create semantics:
+
+- **Partial success** — a failed row does **not** throw and does **not** roll back the rows before it. It is reported in `failed` with its 1-indexed `row` and a `reason`. Rows the server tweaked (e.g. an unknown bundle item dropped) appear in `adjusted`. Always read `result.failed` rather than assuming every row imported.
+- **500-row cap per request** — more than 500 rows returns 400 `ValidationError`. The SDK does not validate the rows or the cap client-side.
+- **Rows are validated against the strict backend schema and unknown keys are rejected.** For products the row shape is exactly `{ name, categoryId, listPrice, billingFrequency, ... }` — a `categoryName` key is not part of the schema and 400s the row.
+- **Roles** — available to administrator and contributor API keys.
+
+### Catalog management (products, bundles, price books)
+
+```typescript
+// Products
+const product = await TurboQuote.createProduct({
+  name: 'Enterprise License',
+  listPrice: 1200,
+  billingFrequency: 'annual',
+  categoryId: 'category-uuid',  // required — from a createType({ categoryType: 'product_category' })
+  showInCatalog: true,
+  images: [imageBuffer],        // optional — MAX 5 images per product, MAX 2 MB each
+});
+console.log(product.id);
+
+// Bundles
+const bundle = await TurboQuote.createBundle({
+  name: 'Starter Pack',
+  categoryId: 'bundle-category-uuid',  // required — from a createType({ categoryType: 'bundle_category' })
+  items: [{ productId: product.id, unitPrice: 1200, billingFrequency: 'annual', quantity: 1 }],
+});
+
+// Price books — name + priceBookTypeId + validFrom are required on create; discountPercent is optional
+const priceBook = await TurboQuote.createPriceBook({
+  name: 'Enterprise Pricing',
+  priceBookTypeId: 'pricebook-type-uuid',  // from a createType({ categoryType: 'pricebook_type' })
+  validFrom: '2026-01-01',
+  discountPercent: 15,
+});
+const applied = await TurboQuote.applyPriceBook(quote.id, priceBook.id);
+console.log(applied.updatedCount, applied.skippedCount);
+```
+
+### Quote templates (auto-provisioned — get, then update)
+
+Quote templates are **provisioned for you**. `GET /v1/quote-template` self-heals: if the org has no template it creates one from the org's branding and returns it. Consequences:
+
+- **Never call `createTemplate()` on an established org** — a template already exists, so it returns 400 `TEMPLATE_ALREADY_EXISTS`. The method is effectively unreachable. Do not write get-then-create-if-missing logic.
+- **`deleteTemplate()` is really "reset to org branding defaults"** — it soft-deletes, and the very next `getTemplate()` regenerates one.
+
+The correct flow is always **`getTemplate()` → `updateTemplate()`**:
+
+```typescript
+const template = await TurboQuote.getTemplate();   // always returns one; creates it if needed
+await TurboQuote.updateTemplate(template.id, {
+  primaryColor: '#0B5FFF',
+  closingMessage: 'Thanks for your business!',
+  senderEmail: 'quotes@yourcompany.com',  // required for API-key callers to send quotes
+  senderName: 'Acme Billing',
+});
+```
+
+### Convenience: createAndSend
+
+```typescript
+// Create a quote, add line items, and send in one call
+const result = await TurboQuote.createAndSend({
+  // Quote fields
+  name: 'Q3 Renewal',
+  companyId: 'company-uuid',
+  contactId: 'contact-uuid',
+  currency: 'USD',
+  // Line items (custom no-product item needs productId: null explicitly)
+  items: [
+    { productId: null, productName: 'Support Plan', unitPrice: 800, billingFrequency: 'annual', quantity: 1 },
+  ],
+  // Send options (passed to the underlying sendQuote call)
+  send: {},
+});
+console.log(result.quote.status); // 'sent'
+```
+
+### TurboQuote error handling
+
+```typescript
+import {
+  TurboDocxError,
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError,
+  NotFoundError,
+  RateLimitError,
+} from '@turbodocx/sdk';
+
+try {
+  await TurboQuote.sendQuote(quoteId);
+} catch (e) {
+  if (e instanceof ValidationError)    /* 400 — bad field value, missing required field */;
+  else if (e instanceof AuthenticationError) /* 401 — bad / missing API key or orgId    */;
+  else if (e instanceof NotFoundError) /* 404 — quote or resource not found             */;
+  else if (e instanceof RateLimitError) /* 429 — back off and retry                     */;
+  else if (e instanceof TurboDocxError) /* other typed SDK error                        */;
+  else throw e;
+}
+```
+
+---
+
+## Express Integration Example
+
+```typescript
+import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import { TurboSign, Deliverable } from '../lib/turbodocx';
+
+const upload = multer({ storage: multer.memoryStorage() });
+const router = Router();
+
+// POST /api/signatures/send — upload a PDF and send for signature
+router.post('/send', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const { recipients, fields, documentName } = req.body;
+    const result = await TurboSign.sendSignature({
+      file: req.file!.buffer,
+      documentName,
+      recipients: JSON.parse(recipients),
+      fields: JSON.parse(fields),
+    });
+    res.json(result);
+  } catch (error) {
+    handleError(res, error);
+  }
+});
+
+// GET /api/signatures/:id/status
+router.get('/:id/status', async (req: Request, res: Response) => {
+  try {
+    res.json(await TurboSign.getStatus(req.params.id));
+  } catch (error) { handleError(res, error); }
+});
+
+// GET /api/signatures/:id/download — stream the signed PDF
+router.get('/:id/download', async (req: Request, res: Response) => {
+  try {
+    const blob = await TurboSign.download(req.params.id);
+    const arrayBuffer = await blob.arrayBuffer();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(Buffer.from(arrayBuffer));
+  } catch (error) { handleError(res, error); }
+});
+
+// POST /api/signatures/:id/void
+router.post('/:id/void', async (req: Request, res: Response) => {
+  try {
+    res.json(await TurboSign.void(req.params.id, req.body.reason));
+  } catch (error) { handleError(res, error); }
+});
+
+// POST /api/signatures/:id/resend  (body: { recipientIds: string[] })
+router.post('/:id/resend', async (req: Request, res: Response) => {
+  try {
+    res.json(await TurboSign.resend(req.params.id, req.body.recipientIds));
+  } catch (error) { handleError(res, error); }
+});
+
+// GET /api/signatures/:id/audit-trail
+router.get('/:id/audit-trail', async (req: Request, res: Response) => {
+  try {
+    res.json(await TurboSign.getAuditTrail(req.params.id));
+  } catch (error) { handleError(res, error); }
+});
+
+// POST /api/deliverables — generate from a template then optionally send for signature
+router.post('/deliverables', async (req: Request, res: Response) => {
+  try {
+    const { templateId, name, variables, sendToEmail } = req.body;
+    const { results } = await Deliverable.generateDeliverable({ templateId, name, variables });
+
+    if (sendToEmail) {
+      // Generate-then-sign: hand the deliverableId straight to TurboSign
+      const signResult = await TurboSign.sendSignature({
+        deliverableId: results.deliverable.id,
+        documentName: name,
+        recipients: [{ name: 'Signer', email: sendToEmail, signingOrder: 1 }],
+        fields: [{ type: 'signature', template: { anchor: '{signature1}', placement: 'replace', size: { width: 200, height: 50 } }, recipientEmail: sendToEmail }],
+      });
+      res.json({ deliverable: results.deliverable, signature: signResult });
+    } else {
+      res.json(results.deliverable);
+    }
+  } catch (error) { handleError(res, error); }
+});
+
+export default router;
+```
+
+The helper `handleError` is defined in the next section.
+
+---
+
+## Error Handling
+
+```typescript
+import {
+  TurboDocxError,
+  AuthenticationError,
+  ValidationError,
+  NotFoundError,
+  RateLimitError,
+  NetworkError,
+} from '@turbodocx/sdk';
+
+function handleError(res: Response, error: unknown) {
+  if (error instanceof AuthenticationError) return res.status(401).json({ error: error.message });
+  if (error instanceof ValidationError)     return res.status(400).json({ error: error.message });
+  if (error instanceof NotFoundError)       return res.status(404).json({ error: error.message });
+  if (error instanceof RateLimitError)      return res.status(429).json({ error: error.message });
+  if (error instanceof NetworkError)        return res.status(503).json({ error: error.message });
+  if (error instanceof TurboDocxError)      return res.status(error.statusCode ?? 500).json({ error: error.message, code: error.code });
+  console.error(error);
+  return res.status(500).json({ error: 'Internal error' });
+}
+```
+
+All TurboDocx errors extend `TurboDocxError` and carry `statusCode`, `code`, and `message` (there is no `err.status`). **`code` is always populated** — the API's specific code when it sends one (`SenderEmailRequired`, `QuoteNotSendable`, `QUOTE_NOT_FOUND`, …), otherwise the error class's default: `VALIDATION_ERROR`, `AUTHENTICATION_ERROR`, `AUTHORIZATION_ERROR`, `NOT_FOUND`, `CONFLICT`, `RATE_LIMIT_EXCEEDED`, `NETWORK_ERROR`. Branch on it without a null check. The five specific subtypes above map to HTTP 401 / 400 / 404 / 429 / network failure respectively. Import them directly from `@turbodocx/sdk` — they are **not** namespaced under `TurboSign`.
+
+---
+
+## Method Reference
+
+### TurboSign
+
+| Method | Description |
+|--------|-------------|
+| `TurboSign.configure(config)` | Set apiKey, orgId, senderEmail, senderName |
+| `TurboSign.createSignatureReviewLink(request)` | Prepare a document and get a preview URL (no emails sent) |
+| `TurboSign.sendSignature(request)` | Prepare a document and immediately email recipients |
+| `TurboSign.getTemplateSignatureSetup(templateId)` | List a template's signer roles (`key`, `order`, `hasSavedSigner`, `fieldCount`) to send it with `recipients[].role` |
+| `TurboSign.getStatus(documentId)` | Get current document status + expiresAt |
+| `TurboSign.download(documentId)` | Download signed PDF as `Blob` |
+| `TurboSign.void(documentId, reason)` | Cancel a signature request (reason is required) |
+| `TurboSign.resend(documentId, recipientIds)` | Resend signature email to recipient IDs (array of UUIDs) |
+| `TurboSign.getAuditTrail(documentId)` | Get tamper-evident audit log with all events |
+
+### Deliverable
+
+| Method | Description |
+|--------|-------------|
+| `Deliverable.configure(config)` | Set apiKey, orgId |
+| `Deliverable.generateDeliverable(request)` | Render a template with variables into a new deliverable |
+| `Deliverable.listDeliverables(options?)` | Paginated list with search and tag filters |
+| `Deliverable.getDeliverableDetails(id, options?)` | Get full record including variables and fonts |
+| `Deliverable.updateDeliverableInfo(id, request)` | Update name, description, or tags (tags replace) |
+| `Deliverable.deleteDeliverable(id)` | Soft-delete (data retained, hidden from list) |
+| `Deliverable.downloadSourceFile(id)` | Download original DOCX/PPTX as `ArrayBuffer` |
+| `Deliverable.downloadPDF(id)` | Download rendered PDF as `ArrayBuffer` |
+
+### TurboPartner — Organizations
+
+| Method | Description |
+|--------|-------------|
+| `TurboPartner.configure(config)` | Set partnerApiKey, partnerId |
+| `TurboPartner.createOrganization(request)` | Provision a new customer org |
+| `TurboPartner.listOrganizations(request?)` | List orgs (uses `limit` / `offset`, not `page`) |
+| `TurboPartner.getOrganizationDetails(orgId)` | Get org details including features + tracking |
+| `TurboPartner.updateOrganizationInfo(orgId, request)` | Rename an org |
+| `TurboPartner.deleteOrganization(orgId)` | Delete an org |
+| `TurboPartner.updateOrganizationEntitlements(orgId, request)` | Update features and/or tracking |
+| `TurboPartner.getOrganizationPreferences(orgId)` | Read the org's TurboSign display preferences |
+| `TurboPartner.updateOrganizationPreferences(orgId, preferences)` | Set display preferences (only the keys you pass) |
+
+### TurboPartner — Organization Users
+
+| Method | Description |
+|--------|-------------|
+| `TurboPartner.listOrganizationUsers(orgId, request?)` | Paginated list |
+| `TurboPartner.addUserToOrganization(orgId, request)` | Invite a user with an ORG role (`admin` \| `contributor` \| `user` \| `viewer`) |
+| `TurboPartner.updateOrganizationUserRole(orgId, userId, request)` | Change a user's ORG role (`admin` \| `contributor` \| `user` \| `viewer`) |
+| `TurboPartner.removeUserFromOrganization(orgId, userId)` | Remove from org |
+| `TurboPartner.resendOrganizationInvitationToUser(orgId, userId)` | Resend invite email |
+
+### TurboPartner — Organization API Keys
+
+| Method | Description |
+|--------|-------------|
+| `TurboPartner.listOrganizationApiKeys(orgId, request?)` | Paginated list |
+| `TurboPartner.createOrganizationApiKey(orgId, request)` | Create key with an ORG role (`admin` \| `contributor` \| `user` \| `viewer`); key value returned only on creation |
+| `TurboPartner.updateOrganizationApiKey(orgId, keyId, request)` | Rename or change ORG role |
+| `TurboPartner.revokeOrganizationApiKey(orgId, keyId)` | Revoke key |
+
+### TurboPartner — Partner API Keys
+
+| Method | Description |
+|--------|-------------|
+| `TurboPartner.listPartnerApiKeys(request?)` | Paginated list |
+| `TurboPartner.createPartnerApiKey(request)` | Create key with scopes |
+| `TurboPartner.updatePartnerApiKey(keyId, request)` | Rename, edit scopes |
+| `TurboPartner.revokePartnerApiKey(keyId)` | Revoke key |
+
+### TurboPartner — Partner Portal Users
+
+| Method | Description |
+|--------|-------------|
+| `TurboPartner.listPartnerPortalUsers(request?)` | Paginated list |
+| `TurboPartner.addUserToPartnerPortal(request)` | Invite with a PARTNER role (`admin` \| `member` \| `viewer`) + all 7 permission keys |
+| `TurboPartner.updatePartnerUserPermissions(userId, request)` | Update role and/or permissions. `permissions` is optional, but if sent it must contain **all 7 keys** — there is no partial update |
+| `TurboPartner.removeUserFromPartnerPortal(userId)` | Remove user |
+| `TurboPartner.resendPartnerPortalInvitationToUser(userId)` | Resend invite email |
+
+### TurboPartner — Audit Logs
+
+| Method | Description |
+|--------|-------------|
+| `TurboPartner.getPartnerAuditLogs(request?)` | Filter by action, resource, success, date range |
+
+### TurboWebhooks
+
+| Method | Description |
+|--------|-------------|
+| `TurboWebhooks.configure(config)` | Set apiKey, orgId (skipSenderValidation is hardcoded) |
+| `TurboWebhooks.createWebhook({ urls, events })` | Subscribe the org to events. `urls`: 1–10 HTTPS URLs; `events`: at least 1. Requires an **administrator** API key |
+| `TurboWebhooks.getWebhook()` | Get the org's signature webhook + delivery stats |
+| `TurboWebhooks.updateWebhook(patch)` | Patch urls / events / isActive. Keys are optional, but an included `urls`/`events` still has to be non-empty (`[]` is a 400) |
+| `TurboWebhooks.deleteWebhook()` | Soft-delete the webhook |
+| `TurboWebhooks.testWebhook({ eventType, payload })` | Fire a test delivery; surfaces per-URL errors |
+| `TurboWebhooks.notifyWebhook({ eventType, payload })` | Manual notify; same handler as `testWebhook` |
+| `TurboWebhooks.regenerateWebhookSecret()` | Rotate the HMAC secret (shown ONCE) |
+| `TurboWebhooks.listWebhookDeliveries(filters?)` | Paginated delivery history with filters |
+| `TurboWebhooks.replayWebhookDelivery(deliveryId)` | Retry a past delivery; returns the new delivery row |
+| `TurboWebhooks.getWebhookStats({ days? })` | Aggregate stats over a sliding window |
+| `verifyWebhookSignature(rawBody, sigHeader, tsHeader, secret, opts?)` | Free function; verifies inbound deliveries |
+
+### TurboQuote — Quotes
+
+| Method | Description |
+|--------|-------------|
+| `TurboQuote.configure(config)` | Set apiKey (or accessToken), orgId, baseUrl. There is no `senderEmail`/`senderName` on this config — the quote sender comes from the org quote template |
+| `TurboQuote.listQuotes(options?)` | Paginated list with filters; includes totals/stats |
+| `TurboQuote.createQuote(request)` | Create a new draft quote |
+| `TurboQuote.getQuote(id)` | Get quote details (statusInfo merged in) |
+| `TurboQuote.updateQuote(id, request)` | PATCH quote fields; pass explicit `null` to clear nullable fields |
+| `TurboQuote.deleteQuote(id)` | Delete a quote |
+| `TurboQuote.duplicateQuote(id)` | Clone a quote to a new draft |
+| `TurboQuote.sendQuote(id, request?)` | Email quote to customer; returns `{ quote, message }` |
+| `TurboQuote.sendQuoteWithDeliverable(id, request)` | Send with attached TurboDocx deliverable; returns `{ quote, message, documentId }` |
+| `TurboQuote.declineQuote(id, { reason })` | Mark as declined (reason required once sent; a draft's is not recorded) |
+| `TurboQuote.voidQuote(id, { reason })` | Void a sent quote |
+| `TurboQuote.handleExpiredQuote(id, request)` | Void or decline an expired sent quote and re-issue it as a duplicate. `action` is `'void'` \| `'decline'` only; `reason` (max 190) and `newValidUntil` (ISO date) are both required |
+| `TurboQuote.applyPriceBook(quoteId, priceBookId)` | Apply price-book pricing to all matching line items |
+| `TurboQuote.removePriceBook(quoteId)` | Detach price book from quote |
+| `TurboQuote.downloadQuotePdf(id)` | Download rendered quote PDF as `ArrayBuffer` |
+| `TurboQuote.getQuoteNumberConfig()` | Admin-only: read the org's quote-number config `{ format, currentFloor }` |
+| `TurboQuote.updateQuoteNumberConfig(format)` | Admin-only: update the quote-number format; returns `{ format, currentFloor }` |
+| `TurboQuote.createAndSend(request)` | Convenience: create quote + add items + send in one call |
+
+### TurboQuote — Line Items
+
+| Method | Description |
+|--------|-------------|
+| `TurboQuote.listLineItems(quoteId, options?)` | List line items for a quote |
+| `TurboQuote.addLineItems(quoteId, items)` | Add 1–50 product line items (auto-wraps a single object to an array). `productId` (key), `productName`, `unitPrice`, `billingFrequency` all required |
+| `TurboQuote.addBundleLineItems(quoteId, items)` | Add 1–50 bundle line items; each needs only `bundleId` + `bundleName` (the server expands the children) |
+| `TurboQuote.updateLineItem(quoteId, itemId, request)` | PATCH a single line item |
+| `TurboQuote.removeLineItem(quoteId, itemId)` | Delete a line item |
+
+### TurboQuote — Products
+
+| Method | Description |
+|--------|-------------|
+| `TurboQuote.listProducts(options?)` | Paginated product catalog |
+| `TurboQuote.createProduct(request)` | Create a product (uses multipart when `images` array is provided — max 5 images, 2 MB each) |
+| `TurboQuote.bulkCreateProducts(rows)` | Bulk-import products; each row needs `name`, `categoryId` (UUID), `listPrice`, `billingFrequency`. Returns a partial-success `BulkImportResult` |
+| `TurboQuote.getProduct(id)` | Get a single product |
+| `TurboQuote.updateProduct(id, request)` | PATCH a product; multipart when images included (max 5 images, 2 MB each) |
+| `TurboQuote.deleteProduct(id)` | Delete a product |
+| `TurboQuote.duplicateProduct(id)` | Clone a product |
+| `TurboQuote.getProductPrimaryImages(productIds)` | Batch-fetch primary images; returns `{ [productId]: image \| null }` |
+
+### TurboQuote — Bundles
+
+| Method | Description |
+|--------|-------------|
+| `TurboQuote.listBundles(options?)` | Paginated bundle catalog |
+| `TurboQuote.createBundle(request)` | Create a bundle |
+| `TurboQuote.bulkCreateBundles(rows)` | Bulk-import bundles; returns a partial-success `BulkImportResult` |
+| `TurboQuote.getBundle(id)` | Get a single bundle |
+| `TurboQuote.updateBundle(id, request)` | PATCH a bundle |
+| `TurboQuote.deleteBundle(id)` | Delete a bundle |
+| `TurboQuote.duplicateBundle(id)` | Clone a bundle |
+
+### TurboQuote — Price Books
+
+| Method | Description |
+|--------|-------------|
+| `TurboQuote.listPriceBooks(options?)` | Paginated price book list |
+| `TurboQuote.createPriceBook(request)` | Create a price book |
+| `TurboQuote.bulkCreatePriceBooks(rows)` | Bulk-import price books; returns a partial-success `BulkImportResult` |
+| `TurboQuote.getPriceBook(id)` | Get a single price book |
+| `TurboQuote.updatePriceBook(id, request)` | PATCH a price book |
+| `TurboQuote.deletePriceBook(id)` | Delete a price book |
+| `TurboQuote.duplicatePriceBook(id)` | Clone a price book |
+| `TurboQuote.listPriceBookProducts(id, options?)` | List products attached to a price book |
+
+### TurboQuote — Companies and Contacts
+
+| Method | Description |
+|--------|-------------|
+| `TurboQuote.listCompanies(options?)` | Paginated company list |
+| `TurboQuote.createCompany(request)` | Create a company (`contacts` array with at least one entry required) |
+| `TurboQuote.bulkCreateCompanies(rows)` | Bulk-import companies; returns a partial-success `BulkImportResult` |
+| `TurboQuote.getCompany(id)` | Get a single company |
+| `TurboQuote.updateCompany(id, request)` | PATCH a company |
+| `TurboQuote.deleteCompany(id)` | Delete a company |
+| `TurboQuote.listCompanyContacts(companyId, options?)` | List contacts belonging to a company |
+| `TurboQuote.listContacts(options?)` | Paginated contact list across all companies |
+| `TurboQuote.createContact(request)` | Create a standalone contact |
+| `TurboQuote.bulkCreateContacts(rows)` | Bulk-import contacts; returns a partial-success `BulkImportResult` |
+| `TurboQuote.updateContact(id, request)` | PATCH a contact |
+| `TurboQuote.deleteContact(id)` | Delete a contact |
+
+### TurboQuote — Templates and Types
+
+| Method | Description |
+|--------|-------------|
+| `TurboQuote.listTemplates(options?)` | List all quote templates |
+| `TurboQuote.getTemplate()` | Get the org's singleton default template (`/v1/quote-template`). Self-heals: auto-creates one from org branding if none exists, so it always returns a template |
+| `TurboQuote.getTemplateById(id)` | Get a specific template by ID |
+| `TurboQuote.createTemplate(request)` | Effectively unreachable — the template is auto-provisioned, so this returns 400 `TEMPLATE_ALREADY_EXISTS` on any established org. Use `getTemplate()` → `updateTemplate()` |
+| `TurboQuote.updateTemplate(id, request)` | PATCH a template — this is how you customize it |
+| `TurboQuote.deleteTemplate(id)` | Reset to org branding defaults (soft-delete; the next `getTemplate()` regenerates one) |
+| `TurboQuote.listTypes(options?)` | List quote types/categories |
+| `TurboQuote.createType(request)` | Create a quote type |
+| `TurboQuote.bulkCreateTypes(rows)` | Bulk-import types/categories; returns a partial-success `BulkImportResult` |
+| `TurboQuote.updateType(id, request)` | PATCH a type name |
+| `TurboQuote.deleteType(id)` | Delete a type |
+
+---
+
+## Gotchas
+
+- **TurboSign send 400 codes** (read with `err.code`; the message names the problem): `FieldsRequired` (a send, not a review link, with no or empty `fields` and no recipient `role`), `FieldPageOutOfRange` (a field's `page` is past the last page), `UnknownSignerRole`, `DuplicateSignerRole` (two recipients for one role), `SignerRoleUnfilled` (a role has no recipient and no saved signer), `TemplateHasNoSignerRoles` (`role` used on a template with no saved setup), `RoleRequiresTemplate` (`role` without `templateId`), `TemplateRolesNeedPdfTemplate` (roles on a non-PDF template). Surface the message to the user.
+- **`senderEmail` is required** for `TurboSign.configure()` — without it `ValidationError` is thrown. `senderName` is optional; when omitted it resolves to **your API key's name** (name your keys accordingly). An API-key send with no resolvable sender email is rejected with `400 SenderEmailRequired`.
+- **File input** to TurboSign accepts: `Buffer`, file-path `string`, browser `File`, remote URL (`fileLink`), `deliverableId`, or `templateId`. Magic-byte detection identifies PDF / DOCX / PPTX automatically.
+- **Template anchors** like `{signature1}` must literally exist in the document text for `template.anchor` field placement to work.
+- **Pagination uses `offset`, not `page`**, across all `list*` methods. Defaults vary (Deliverable defaults to 6, partner list endpoints to ~25).
+- **`updateOrganizationEntitlements` takes `{ features?, tracking? }`** — not a bare features object. `features` holds capability/limit columns (`maxUsers`, `maxStorage`, `maxSignatures`, `hasTDAI`, …); `tracking` holds usage counters and uses the `num*` key names: `numUsers`, `numProjectspaces`, `numTemplates`, `storageUsed`, `numGeneratedDeliverables`, `numSignaturesUsed`, `numQuotesSent`, `currentAICredits`. The two key sets are not interchangeable — a `maxUsers` key inside `tracking` is rejected. `currentAICredits` accepts `-1` (unlimited); every other counter floors at 0.
+- **Two different role enums — do not mix them.** Organization users and organization API keys take `'admin' | 'contributor' | 'user' | 'viewer'`. Partner-portal users take `'admin' | 'member' | 'viewer'`. `'member'` is not a valid org role, and `'contributor'` / `'user'` are not valid partner roles — either mistake is a 400.
+- **Partner `permissions` has no partial update.** The `permissions` object is optional on `updatePartnerUserPermissions`, but every key inside it is required, so if you send `permissions` you must send **all seven**: `canManageOrgs`, `canManageOrgUsers`, `canManagePartnerUsers`, `canManageOrgAPIKeys`, `canManagePartnerAPIKeys`, `canUpdateEntitlements`, `canViewAuditLogs`. Sending a subset is a 400. To flip one flag, read the current permissions and spread them; to change only the role, omit `permissions` entirely.
+- **`TurboSign.void` requires a `reason`** as the second argument. **`TurboSign.resend` takes recipient IDs (UUIDs), not email addresses** — fetch them from the send response or audit trail.
+- **`TurboSign.download` returns `Blob`**, not `Buffer`. Call `await blob.arrayBuffer()` then `Buffer.from(...)` in Node. Under the hood the download is **two steps**: the API returns JSON `{ downloadUrl, fileName }` rather than bytes, and the presigned `downloadUrl` must then be fetched **without an `Authorization` header** (S3 rejects a presigned request that also carries one). The SDK does both; hand-rolled REST calls must too.
+- **API key values are only returned on creation** for both `createOrganizationApiKey` and `createPartnerApiKey`. Store `created.data.key` immediately — subsequent lookups omit it.
+- **Updating tags via `updateDeliverableInfo` replaces the full set** — fetch existing tags first if you want to add one.
+- **TypeScript users** get full type definitions out of the box — no `@types/` package needed.
+- **TurboWebhooks requires an admin TDX- key.** The backend route gate is `requireOrgRole(administrator)` — a non-admin key returns 403 `AuthorizationError`.
+- **One webhook per org, fixed name `signature`.** The SDK is hardcoded to `/api/webhooks/signature` to stay in sync with the dashboard's Signature Webhooks page. There is no `listWebhooks` by design. For multi-webhook management call the REST API directly.
+- **Webhook secrets are shown ONCE** — capture `created.secret` from `createWebhook` and `rotated.secret` from `regenerateWebhookSecret` immediately. They are never returned again by `getWebhook` or any other endpoint.
+- **Webhook URLs must be HTTPS.** Non-HTTPS URLs return 400 `ValidationError` from the backend.
+- **`urls` is 1–10, `events` is 1+ — on create AND on update.** Both keys are optional on `updateWebhook`, but optional does not relax the minimum: an included `urls: []` or `events: []` is a 400. To leave routing alone, omit the key rather than passing an empty array.
+- **Use `express.raw({ type: 'application/json' })` on your receiver route, not `express.json()`.** Signature verification is computed over the raw bytes; a JSON re-stringify will not match.
+- **Middleware ORDER matters.** Mount `express.raw()` for the webhook path BEFORE any global `app.use(express.json())`. Express body-parsers set `req._body=true` on the first parse and later parsers silently no-op — if `express.json()` is global and runs first for `/webhooks`, the route-level `express.raw()` becomes a no-op and `req.body` ends up as a parsed object, not a Buffer. Verification will then always fail. The correct pattern is `app.use('/webhooks/turbodocx', express.raw({ type: 'application/json' }))` BEFORE `app.use(express.json())`.
+- **`verifyWebhookSignature` is a free function**, not a method on `TurboWebhooks` — import it directly from `@turbodocx/sdk`. It has no `apiKey`/`orgId` dependency.
+
+- **TurboQuote does not take `senderEmail`/`senderName` on its config — but sending a quote DOES email the recipient and create a signature request.** The sender is resolved server-side from the org's quote template (Quote Settings), falling back to the quote's creator. An API key has no mailbox, so if the template has no sender email an API-key caller gets `400 SenderEmailRequired` on `createQuote` / `duplicateQuote` / send. Fix it once with `getTemplate()` → `updateTemplate(id, { senderEmail, senderName })`.
+- **Quote send preconditions each have their own 400 `code`:** `QuoteNotSendable` (not a draft), `QuoteValidUntilRequired`, `QuoteExpired`, `QuoteHasNoLineItems`, `QuoteContactRequired`, `QuoteCustomerInactive`, `SenderEmailRequired`. Branch on `err.code`, not on the message.
+- **`preparedBy` is only on the single-quote fetch.** `getQuote(id)` folds in `preparedBy: { name?, email? }`; `listQuotes()` results do not carry it. Prefer `preparedBy` over `creator` for customer-facing display — `email` may be `undefined` on an API-created quote.
+- **Quote template fields are `closingMessage` / `disclaimer` / `termsAndConditions`** (plus `logoUrl`, `primaryColor`, `primaryTextColor`, `senderName`, `senderEmail`, `senderPhone`, `contactEmail`). There is no `footerText` key.
+- **TurboQuote decimal fields come back as `number`, not strings.** The SDK's response normalizer coerces the backend's decimal strings (`listPrice`, `unitPrice`, `grandTotal`, `taxRate`, `discountPercent`, etc.) to JavaScript numbers before returning — do not parse them with `parseFloat`.
+- **`PATCH` with explicit `null` clears nullable fields.** For `updateQuote`, `updateLineItem`, `updateProduct`, and similar PATCH methods, passing `{ priceBookId: null }` sends `null` in the request body and the backend clears the field. Omitting the key entirely leaves it unchanged. This is intentional for fields like `validUntil`, `taxRate`, `priceBookId`.
+- **`discountType` is `'percent' | 'amount'`** on line items. When using `'percent'`, set `discountPercent` (0–100). When using `'amount'`, set the flat discount value. Mixing both in the same item produces a 400 `ValidationError`.
+- **`addLineItems` auto-wraps a single object to an array.** You can pass either one `AddLineItemRequest` or `AddLineItemRequest[]` — the SDK normalizes it. The return is always `LineItem[]`.
+- **Every product line item needs four fields: `productId`, `productName`, `unitPrice`, `billingFrequency`.** `productId` is a required *key* whose *value* may be `null` (that's how you add a custom, non-catalog item) — omitting the key entirely is a 400. `quantity` defaults to 1.
+- **Three distinct bundle shapes — don't conflate them.** `createBundle`'s `items[]` (catalog bundle contents) need `productId`, `unitPrice`, `billingFrequency` and nothing else — no `productName`. `addBundleLineItems` (attaching a bundle to a quote) needs only `bundleId` + `bundleName`; the server expands the child products for you.
+- **Line-item array limits: `addLineItems` and `addBundleLineItems` accept 1–50 items per call; reorder accepts up to 200.** Chunk larger imports.
+- **`termDays` defaults to 60** (not 30), maxes out at 3650, and `-1` means auto-renewal. `renewalPeriod` (`'weekly' | 'monthly' | 'quarterly' | 'annually'`) is **required when `termDays === -1`** and must be absent/`null` for any other `termDays` — sending it otherwise is a 400.
+- **`handleExpiredQuote` only accepts `action: 'void' | 'decline'`.** `'extend'` and `'resend'` do not exist in the API and return a 400. `reason` (max 190 chars) and `newValidUntil` (ISO date) are both required; the endpoint voids/declines the original and issues a duplicate carrying the new date — that duplicate *is* the "extend".
+- **Quote templates are auto-provisioned.** `getTemplate()` self-heals — it creates one from org branding when none exists — so `createTemplate()` on an established org returns 400 `TEMPLATE_ALREADY_EXISTS` and is effectively unreachable. Always do `getTemplate()` → `updateTemplate()`. `deleteTemplate()` is a reset-to-branding-defaults, not a permanent removal.
+- **Product images: max 5 per product, 2 MB each.** Exceeding either returns 400 `MAX_IMAGES_EXCEEDED`.
+- **`createCompany` requires at least one contact.** Pass a `contacts` array with at least one entry or the backend returns 400.
+- **No `getContact` or `getType` methods.** The backend has no `GET /v1/contacts/:id` or `GET /v1/types/:id` routes — this is intentional, not an SDK gap.
+- **Bulk creates are partial-success, not transactional.** `bulkCreateProducts`/`bulkCreatePriceBooks`/`bulkCreateBundles`/`bulkCreateCompanies`/`bulkCreateContacts`/`bulkCreateTypes` never throw on a bad row — read `result.failed` (`[{ row, reason }]`, `row` 1-indexed) and `result.adjusted`; earlier rows are not rolled back. Cap is 500 rows/request (over → 400). Admin + contributor keys only.
+- **Bulk product rows take `categoryId`, never `categoryName`.** The row schema is strict and rejects unknown keys, so a `categoryName` field 400s the row. Resolve or create the category with `listTypes()` / `createType()` first and pass its UUID. Required per row: `name`, `categoryId`, `listPrice`, `billingFrequency`.
+
+**Full API reference:** https://docs.turbodocx.com/docs

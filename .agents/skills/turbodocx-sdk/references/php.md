@@ -1,0 +1,1967 @@
+# PHP SDK Reference
+
+## Install
+
+```bash
+composer require turbodocx/sdk
+```
+
+Also install phpdotenv for .env loading:
+```bash
+composer require vlucas/phpdotenv
+```
+
+Load in your bootstrap/entry point:
+```php
+// createUnsafeImmutable (not createImmutable) so getenv() sees the .env values too:
+// createImmutable fills only $_ENV / $_SERVER, and the snippets below read getenv().
+$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
+$dotenv->safeLoad(); // no error when .env is absent (production uses real env vars)
+```
+
+## Imports
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\TurboPartner;
+use TurboDocx\Config\HttpClientConfig;
+use TurboDocx\Config\PartnerClientConfig;
+use TurboDocx\Exceptions\TurboDocxException;
+```
+
+## TurboSign Configuration
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\Config\HttpClientConfig;
+
+TurboSign::configure(new HttpClientConfig(
+    apiKey: getenv('TURBODOCX_API_KEY') ?: null,
+    orgId: getenv('TURBODOCX_ORG_ID') ?: null,
+    senderEmail: getenv('TURBODOCX_SENDER_EMAIL') ?: null,
+    senderName: getenv('TURBODOCX_SENDER_NAME') ?: null,
+));
+
+// Or auto-configure from environment
+TurboSign::configure(HttpClientConfig::fromEnvironment());
+```
+
+`senderEmail` is **required** — `HttpClientConfig` throws `ValidationException` without it. `senderName` is **optional**; when omitted the sender name resolves to **your API key's name**, so name your keys recognisably in the dashboard.
+
+## TurboSign Usage
+
+### sendSignature
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\Types\Recipient;
+use TurboDocx\Types\Field;
+use TurboDocx\Types\SignatureFieldType;
+use TurboDocx\Types\TemplateConfig;
+use TurboDocx\Types\FieldPlacement;
+use TurboDocx\Types\Requests\SendSignatureRequest;
+
+$result = TurboSign::sendSignature(
+    new SendSignatureRequest(
+        file: file_get_contents('contract.pdf'),
+        documentName: 'Partnership Agreement',
+        recipients: [
+            new Recipient('John Doe', 'john@example.com', 1),
+        ],
+        fields: [
+            new Field(
+                type: SignatureFieldType::SIGNATURE,
+                recipientEmail: 'john@example.com',
+                template: new TemplateConfig(
+                    anchor: '{signature1}',
+                    placement: FieldPlacement::REPLACE,
+                    size: ['width' => 100, 'height' => 30],
+                ),
+            ),
+        ],
+    )
+);
+
+echo "Document ID: {$result->documentId}\n";
+```
+
+**`fileName:`** (optional, with `file:`) sets the stored document file name: up to 255 characters, no extension needed (`'Acme NDA'` is fine). It is sent as a form field; the uploaded part itself is named `document.<ext>`, and a null or empty `fileName` stores that name. `CreateSignatureReviewLinkRequest` and `CreateEmbeddedSignatureRequest` take it too.
+
+### Choosing field placement
+
+1. **A template set up in TurboDocx, sent by signer role** (recommended for any document sent more than once). Set it up once in the TurboDocx UI: upload the PDF as a template, add each signer as a role, drag their fields onto the page, save the signature setup. Code then sends by `role` with no field positions at all (next section).
+2. **Text anchors** when your code generates or controls the document text: put a tag such as `{ClientSignature}` where the field goes (its own text, one distinct tag per signer and field) and place the field by anchor with `placement` `replace` (see the anchor example in this reference).
+3. **Coordinates** (`page` + `x`/`y`/`width`/`height`). Fully supported: if you already know the positions, use them directly. When you don't, options 1 and 2 are easier than measuring. Coordinates need re-measuring if the layout moves; a review link lets you check placement before sending.
+
+### Send a template with signer roles
+
+Use this when the same document goes out again and again with different signers (an NDA, a contract, an onboarding form). The user sets the template up **once** in TurboDocx: upload the PDF as a template, add each signer as a role on its Signatures tab (e.g. "Client", "Countersigner"), drag each role's fields onto the page, and save the signature setup. A role that is always the same person (e.g. your countersigner) can be given a saved signer there. The code then names each recipient's `role` and passes **no field coordinates or anchors**: the fields saved for that role come with it.
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\Types\Recipient;
+use TurboDocx\Types\Requests\SendSignatureRequest;
+use TurboDocx\Exceptions\ValidationException;
+
+// Role keys are shown under "Use via API" on the template's page in TurboDocx, or read them here.
+$setup = TurboSign::getTemplateSignatureSetup($templateId);
+foreach ($setup->roles as $role) { // in signing order
+    echo "{$role->key} ({$role->label}) order {$role->order}, saved signer: "
+        . ($role->hasSavedSigner ? $role->defaultEmail : 'none') . ", {$role->fieldCount} field(s)\n";
+}
+
+try {
+    $result = TurboSign::sendSignature(
+        new SendSignatureRequest(
+            templateId: $templateId,
+            documentName: 'Services Agreement - Acme',
+            recipients: [
+                // named args: signingOrder is not needed for a recipient with a role
+                new Recipient(name: 'Jane Doe', email: 'jane@client.com', role: 'client'),
+                // 'countersigner' left out: the signer saved on the template is used
+            ],
+            // no fields: each role's saved fields are used
+        )
+    );
+    echo $result->documentId;
+} catch (ValidationException $e) {
+    if ($e->errorCode === 'UnknownSignerRole') {
+        // $e->getMessage() names the bad role and lists the template's roles
+    }
+    throw $e;
+}
+```
+
+`TurboSign::getTemplateSignatureSetup($templateId)` returns a `TemplateSignatureSetup` with `templateId` and `roles` (`TemplateSignatureRole[]`: `key`, `label`, `order`, `hasSavedSigner`, `fieldCount`, `defaultName`/`defaultEmail` set only when `hasSavedSigner`). `key` is the value for `Recipient` `role`.
+
+On a template with no saved signature setup `getTemplateSignatureSetup` throws a 404 with code `SignatureSetupNotFound`:
+
+```php
+use TurboDocx\Exceptions\NotFoundException;
+
+try {
+    $setup = TurboSign::getTemplateSignatureSetup($templateId);
+} catch (NotFoundException $e) {
+    if ($e->errorCode === 'SignatureSetupNotFound') {
+        // no saved setup: set the template up in TurboDocx, or send with explicit fields
+    }
+    throw $e;
+}
+```
+
+- Roles sign in the order saved on the template, so a `Recipient` with a `role` needs no `signingOrder`; recipients without a `role` sign after them and still need a `signingOrder` (the constructor throws `ValidationException` when neither is given).
+- A role left out uses the template's saved signer. If it has none, the API returns a 400 naming the role. Pass a role that has a saved signer to send to someone else this time.
+- An unknown role throws a `ValidationException` (400, `$e->errorCode === 'UnknownSignerRole'`) whose message lists the template's roles.
+- On a send, `fields` is optional only when a recipient names a `role` (it is left out of the request when empty); any fields you pass are **added** to the template's (for example an extra witness signature). On a send (`sendSignature()`, `createEmbeddedSignature()`) where no recipient names a role, an omitted or empty `fields` is a 400 `FieldsRequired` (SDK 0.8.0 sent the empty list and created a document with nothing to sign). A review link (`createSignatureReviewLink()`) needs no fields: the SDK sends `[]` and you place them in the preview.
+- Roles only work for a PDF signature template. A Word template needs a deliverable generated first and sent with `deliverableId`.
+- `role` works the same way on `createSignatureReviewLink()` (`Recipient`) and `createEmbeddedSignature()` (`EmbeddedSignatureRecipient`). A role left out falls back to its saved signer, who also gets an embed URL in the result, so match result entries to signers by email or role rather than by position.
+
+### Optional fields
+
+```php
+$result = TurboSign::sendSignature(
+    new SendSignatureRequest(
+        file: file_get_contents('contract.pdf'),
+        documentName: 'Service Agreement',
+        recipients: [
+            new Recipient('John Doe', 'john@example.com', 1),
+        ],
+        fields: [
+            // Required (the default): signature and initial fields are always required.
+            new Field(
+                type: SignatureFieldType::SIGNATURE,
+                recipientEmail: 'john@example.com',
+                page: 1, x: 100, y: 500, width: 200, height: 50,
+            ),
+            // Optional: the signer can finish without filling this in.
+            new Field(
+                type: SignatureFieldType::TEXT,
+                recipientEmail: 'john@example.com',
+                page: 1, x: 100, y: 600, width: 200, height: 30,
+                required: false,
+            ),
+        ],
+    )
+);
+```
+
+Fields are required by default, so omit `required` to keep one required. Set `required: false` on a field the signer may leave empty. Signature and initial fields can never be optional (the API returns 400), `required` must be a boolean, and each recipient still needs at least one required field they fill in (otherwise 400). `defaultValue` is a real prefilled value that is submitted as-is, not placeholder hint text. `$required` is `?bool` and defaults to `null`, which omits the key.
+
+### Conditional (IF/THEN) fields
+
+Any field can be made to depend on a **controlling checkbox** so it only appears — or only becomes editable — once the signer ticks that box. Give the checkbox a stable `metadata` with a `fieldKey`, then reference that key from the dependent field's `metadata->conditional->controllingFieldKey`. The `metadata:` argument on `Field` is **optional**; a `Field` without it behaves exactly as before.
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\Types\Recipient;
+use TurboDocx\Types\Field;
+use TurboDocx\Types\SignatureFieldType;
+use TurboDocx\Types\FieldMetadata;
+use TurboDocx\Types\FieldConditional;
+use TurboDocx\Types\ConditionalOperator;
+use TurboDocx\Types\ConditionalAction;
+use TurboDocx\Types\Requests\SendSignatureRequest;
+
+$result = TurboSign::sendSignature(
+    new SendSignatureRequest(
+        file: file_get_contents('contract.pdf'),
+        documentName: 'Employment Agreement',
+        recipients: [
+            new Recipient('John Doe', 'john@example.com', 1),
+        ],
+        fields: [
+            // Controlling checkbox — the box the signer ticks. Its fieldKey is the stable id others reference.
+            new Field(
+                type: SignatureFieldType::CHECKBOX,
+                recipientEmail: 'john@example.com',
+                page: 1,
+                x: 100,
+                y: 400,
+                width: 20,
+                height: 20,
+                metadata: new FieldMetadata(fieldKey: 'relocation_optin'),
+            ),
+            // Dependent field — hidden until the box above is checked (action: "show").
+            new Field(
+                type: SignatureFieldType::SIGNATURE,
+                recipientEmail: 'john@example.com',
+                page: 1,
+                x: 100,
+                y: 460,
+                width: 200,
+                height: 50,
+                metadata: new FieldMetadata(
+                    conditional: new FieldConditional(
+                        controllingFieldKey: 'relocation_optin',      // = the checkbox's metadata fieldKey
+                        operator: ConditionalOperator::IS_CHECKED,    // ::IS_CHECKED | ::IS_NOT_CHECKED
+                        action: ConditionalAction::SHOW,              // ::SHOW = hidden until met; ::UNLOCK = visible but read-only until met
+                    ),
+                ),
+            ),
+            // Date field — pins a fixed date in MM/DD/YYYY; omit defaultValue to auto-fill the signing date.
+            new Field(
+                type: SignatureFieldType::DATE,
+                recipientEmail: 'john@example.com',
+                page: 1,
+                x: 100,
+                y: 530,
+                width: 150,
+                height: 30,
+                defaultValue: '12/31/2026',
+            ),
+        ],
+    )
+);
+
+echo "Document ID: {$result->documentId}\n";
+```
+
+The link is `fieldKey` → `controllingFieldKey`: the two strings must match exactly (the checkbox carries `metadata->fieldKey`, the dependent field points at it via `metadata->conditional->controllingFieldKey`). `operator` chooses which checkbox state satisfies the condition — `'is_checked'` or `'is_not_checked'`. `action` chooses what happens while the condition is unmet: `'show'` keeps the dependent field **hidden until met**, while `'unlock'` renders it **visible but read-only (locked) until met**.
+
+### getStatus
+
+```php
+$status = TurboSign::getStatus($documentId);
+echo "Status: {$status->status}\n";      // 'draft' | 'under_review' | 'completed' | 'voided' | ...
+echo "Expires: {$status->expiresAt}\n";  // ISO timestamp, or null when expiration is off
+```
+
+`DocumentStatusResponse` carries `status` plus `expiresAt` (an ISO string, or null when expiration
+is off; matching the other SDKs). For per-recipient
+progress use `TurboSign::getAuditTrail($documentId)`.
+
+### getRecipients
+
+Every recipient on the document with their signing status, email history, and who sent it. This is what answers "who has signed and who are we still waiting on".
+
+```php
+$progress = TurboSign::getRecipients($documentId);
+
+echo "{$progress->summary->completed}/{$progress->summary->total} signed, ";
+echo "waiting on {$progress->summary->waitingOn}\n";
+
+foreach ($progress->recipients as $r) {
+    // 'pending' | 'viewed' | 'completed' | 'voided' | 'expired'
+    echo "  {$r->name} <{$r->email}>: {$r->effectiveStatus}";
+    echo " (emailed {$r->delivery->totalSent}x)\n";
+}
+```
+
+Each recipient carries **two** status fields and they differ on purpose:
+
+| Field | Values | Use it for |
+|---|---|---|
+| `status` | `pending`, `viewed`, `completed` | The raw stored value |
+| `effectiveStatus` | `pending`, `viewed`, `completed`, `voided`, `expired` | Display and branching |
+
+There is no per-recipient declined/voided/expired state, so on a voided or expired document an
+unsigned signer still reads `pending` in `status` — branching on it means chasing people whose
+signing links are already dead. A completed signature is never revoked: someone who signed
+before the document was voided still reads `completed`. `effectiveStatus` also reflects a
+lapsed deadline immediately, without waiting for the background sweep to update the row.
+
+`summary` counts by `effectiveStatus` and adds `waitingOn` (pending + viewed), which is zero
+once the document is terminal. Each recipient's `delivery` block — `firstSentOn`, `lastSentOn`,
+`totalSent`, `reminderCount`, `lastRemindedAt`, `warningCount`, `lastWarningAt` — is that
+signer's email history; CC notifications are excluded, since a CC address is not a signer.
+
+`reminderCount` and `lastRemindedAt` do NOT mean what their names suggest. `reminderCount`
+counts **automatic (scheduled) reminders only** — the counter `maxReminders` caps; a manual
+"remind now" must not consume the cap budget, so it does not increment this even though its
+email does appear in `totalSent`. `lastRemindedAt` is a **cadence clock**, not a record of a
+reminder: the initial signature-request send, each scheduled reminder, each manual "remind now"
+and each expiry warning all stamp it. A freshly-sent document therefore reads a non-null
+`lastRemindedAt` equal to the invitation timestamp alongside `reminderCount: 0` — nobody has
+been reminded. Use `totalSent` to answer "have we actually chased this person".
+`warningCount` / `lastWarningAt` have no such caveat.
+
+### download
+
+```php
+$pdfBytes = TurboSign::download($documentId);
+file_put_contents('signed.pdf', $pdfBytes);
+```
+
+### createSignatureReviewLink
+
+Prepares the document with recipients and fields but **does not send signature emails** — use this to preview field placement before sending.
+
+```php
+use TurboDocx\Types\Requests\CreateSignatureReviewLinkRequest;
+
+$result = TurboSign::createSignatureReviewLink(
+    new CreateSignatureReviewLinkRequest(
+        file: file_get_contents('nda.pdf'),
+        documentName: 'NDA - Acme',
+        recipients: [
+            new Recipient('John Doe', 'john@example.com', 1),
+        ],
+        fields: [
+            new Field(
+                type: SignatureFieldType::SIGNATURE,
+                recipientEmail: 'john@example.com',
+                page: 1,
+                x: 100,
+                y: 500,
+                width: 200,
+                height: 50,
+            ),
+        ],
+    )
+);
+
+echo "Document ID: {$result->documentId}\n";
+echo "Preview URL: {$result->previewUrl}\n";  // open to review field placement
+// $result->recipients is an array of plain arrays: id / name / email / metadata.
+// There is no signUrl on them — use $result->previewUrl for the document-level preview.
+foreach ($result->recipients as $recipient) {
+    echo "  {$recipient['name']} <{$recipient['email']}> id={$recipient['id']}\n";
+}
+```
+
+### void
+
+```php
+$voided = TurboSign::void($documentId, 'Counterparty requested changes');
+echo "Status: {$voided->status}\n";    // 'voided'
+echo "Voided at: {$voided->voidedAt}\n";
+```
+
+`reason` is **required**.
+
+### resend
+
+```php
+// $recipientIds are UUIDs — fetch from sendSignature/createSignatureReviewLink response or getAuditTrail
+$result = TurboSign::resend($documentId, [$recipientId1, $recipientId2]);
+echo "Resent to {$result->recipientCount} recipients\n";
+
+// Pass an empty array to resend to all pending recipients
+$result = TurboSign::resend($documentId, []);
+```
+
+### getAuditTrail
+
+```php
+$audit = TurboSign::getAuditTrail($documentId);
+echo "Document: {$audit->document->name}\n";
+
+foreach ($audit->auditTrail as $entry) {
+    $userEmail = $entry->user?->email ?? '';
+    echo "{$entry->timestamp}  {$entry->actionType}  {$userEmail}\n";
+}
+```
+
+### TurboSign::sendReminder
+
+```php
+// Remind every signer whose turn it is — omit the ids entirely.
+$result = TurboSign::sendReminder($documentId);
+foreach ($result['results'] as $entry) {
+    echo $entry['recipientId'] . ': ' . $entry['status'] . PHP_EOL; // 'sent' | 'skipped_wrong_order'
+}
+
+// Or nudge one specific signer.
+TurboSign::sendReminder($documentId, ['recipient-uuid-1']);
+```
+
+A **standalone nudge**: it ignores the automatic reminder cadence, works even when reminders are disabled or the per-signer cap is spent, and does **not** consume that cap. Only signers at the **current signing order** are emailed — a later-order or already-signed recipient comes back as a `skipped_*` result rather than being dropped, so you can tell whether anyone was actually emailed.
+
+The recipient filter is **optional**. Omit it to remind everyone eligible; do **not** pass an empty list, since the API requires at least one id when the key is present.
+
+### Reminders & expiration on send
+
+Both send methods accept eight optional per-document schedule fields. Omit them and the document inherits your organization's E-Signature defaults — and since both features ship **off** by default, omitting them preserves today's behaviour exactly.
+
+```php
+TurboSign::sendSignature(new SendSignatureRequest(
+    recipients: $recipients,
+    fields: $fields,
+    deliverableId: 'deliverable-uuid',
+    // Reminders
+    remindersEnabled: true,
+    reminderDelay: ['value' => 2, 'unit' => 'days'],    // time to the FIRST reminder
+    reminderInterval: ['value' => 1, 'unit' => 'days'], // gap between later ones
+    maxReminders: 3,                                    // -1 unlimited, 0 none, max 50
+    // Expiration
+    expirationEnabled: true,
+    expireAfter: ['value' => 14, 'unit' => 'days'],
+    expirationWarning: ['value' => 2, 'unit' => 'days'],         // 0 = never warn
+    expirationWarningInterval: ['value' => 1, 'unit' => 'days'],
+));
+```
+
+Durations are `{ value, unit }` with `unit` of `"hours"` or `"days"`. `value` is a whole number, minimum 1 and at most 999 days (23976 hours) — except `expirationWarning`, where `0` means "never send a warning". The resolved schedule is frozen onto the document at send time, so changing your org defaults later never affects a document already out for signature.
+
+Once expiration is on, the document carries an `expiresAt` deadline; after it passes every signing link returns **HTTP 410** and the document reaches the terminal status `expired`. Read that deadline back off `getStatus` — it returns `expiresAt` alongside the status:
+
+```php
+$status = TurboSign::getStatus($documentId);
+echo $status->expiresAt;   // ISO timestamp, or null when expiration is off
+```
+
+## Embedded Signing & Identity Verification
+
+Embedded signing takes a signer from **your own app** straight to a TurboSign signing page, without sending a signing-link email. The shape is always the same: your backend asks TurboSign for a signing URL for one recipient, then opens it (a new tab, a redirect, or an iframe). A recipient with no `identityVerification` takes the **org's default channel** (`$settings->defaultChannel`), and that default applies to API/SDK sends too: `'none'` opens straight to the document, while `'email'` / `'sms'` means the org verifies every request, so the signer clears that passcode first.
+
+**Send embedded documents with `sendEmail: false`.** Your app shows the signing page, so the signing-link emails, the initial CC notice, the next signer's "your turn" email, and the scheduled reminder and expiry-warning emails are all suppressed. Passcode emails and the completed-copy email still go out, and an explicit `resendEmail()` / `sendReminder()` still sends. `createEmbeddedSignature()` already defaults to `false`; on `sendSignature()` pass it yourself.
+
+**A locked channel.** When `$settings->allowChannelOverride === false`, the org locked the verification method: an explicit channel other than `defaultChannel` makes the send fail with HTTP 403, an `AuthorizationException` whose `$e->errorCode` is `'OtpOverrideNotAllowed'` (read `errorCode`, not `getCode()`, which is PHP's integer code and is always 0 here). Omit the channel to take the default. `null` means the API did not report it (unknown, not locked). Read it before forcing a per-recipient channel even when the default is `'none'` today: an admin can change the default and lock it at any time, so checking `defaultChannel` alone is not enough.
+
+Three methods cover it: `getEmbeddedSigningSettings()` reads the org gates, `createSigningUrl()` mints a URL for an already-prepared recipient, and `createEmbeddedSignature()` does send + per-recipient mint in one call.
+
+### getEmbeddedSigningSettings
+
+Read the org-wide gates before you start. These are set once by an admin (E-Signature settings → Identity & embedding) and are **read-only** from the SDK — the per-recipient mode you pick on each signer is separate.
+
+```php
+use TurboDocx\TurboSign;
+
+$settings = TurboSign::getEmbeddedSigningSettings();
+if (!$settings->enabled) {
+    throw new RuntimeException('Embedded signing is not enabled for this organization.');
+}
+
+var_dump($settings->allowExternalIdv);        // may you assert identity with your own provider
+var_dump($settings->allowIdentityOverride);   // may a sender skip identity verification
+var_dump($settings->allowedFrameAncestors);   // string[] of origins allowed to iframe the signing page ([] = denied everywhere)
+var_dump($settings->defaultChannel);          // 'none' | 'email' | 'sms' | null: what a recipient with no identityVerification gets
+$channelLocked = $settings->allowChannelOverride === false;  // null = unknown, not locked
+```
+
+| Field | Meaning |
+|---|---|
+| `enabled` | Embedded signing (and OTP identity verification) is turned on for the org |
+| `allowExternalIdv` | You may assert a signer's identity with your own provider |
+| `allowIdentityOverride` | A sender may issue a link that skips identity verification |
+| `allowedFrameAncestors` | Origins allowed to embed the signing page in an iframe. Empty means framing is denied everywhere |
+| `defaultChannel` | `'none' \| 'email' \| 'sms' \| null`. The org's default OTP channel: while embedded signing is enabled it applies to every recipient that doesn't set one, **SDK/API sends included**. `'none'` means verify only when a request asks for it |
+| `allowChannelOverride` | `?bool`. Whether a request may give a recipient a channel other than `defaultChannel`. `false` = locked: a different explicit channel is rejected with `OtpOverrideNotAllowed`. The server reports `true` while the default is `'none'` or embedded signing is off, but an admin can change that at any time, so read this field (not just `defaultChannel`) before forcing a channel; `null` when the API did not report it |
+
+### createSigningUrl
+
+Prepare the document with an **embedded recipient** (via `sendSignature`), then mint a signing URL for that recipient the moment they're ready to sign. Give the recipient an `externalId` — your own key (a CRM id, an Airtable row) — so you can request the URL later without storing TurboDocx's recipient id.
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\Types\Recipient;
+use TurboDocx\Types\Field;
+use TurboDocx\Types\SignatureFieldType;
+use TurboDocx\Types\TemplateConfig;
+use TurboDocx\Types\FieldPlacement;
+use TurboDocx\Types\Requests\SendSignatureRequest;
+use TurboDocx\Types\Requests\CreateSigningUrlRequest;
+
+// 1) Prepare the document. No identityVerification here = the org's defaultChannel applies
+//    ('none' = no step-up).
+$sent = TurboSign::sendSignature(new SendSignatureRequest(
+    file: file_get_contents('agreement.pdf'),
+    documentName: 'Service Agreement',
+    // Embedded: your app shows the signing page, so don't email a signing link (reminder and
+    // expiry-warning emails are suppressed too). Passcode and completed-copy emails still go out.
+    sendEmail: false,
+    recipients: [
+        new Recipient(
+            name: 'Jane Doe',
+            email: 'jane@example.com',
+            signingOrder: 1,
+            externalId: 'your_customer_123',   // YOUR key for this signer
+        ),
+    ],
+    fields: [
+        new Field(
+            type: SignatureFieldType::SIGNATURE,
+            recipientEmail: 'jane@example.com',
+            template: new TemplateConfig(
+                anchor: '{signature1}',
+                placement: FieldPlacement::REPLACE,
+                size: ['width' => 100, 'height' => 30],
+            ),
+        ),
+    ],
+));
+
+// 2) When the signer clicks "Sign now" in YOUR app, mint the URL. Request it at click time and
+//    never store it. Select the recipient by exactly ONE of externalId or recipientId.
+$link = TurboSign::createSigningUrl($sent->documentId, new CreateSigningUrlRequest(
+    externalId: 'your_customer_123',
+    returnUrl: 'https://app.yourcompany.com/signed',  // optional, https only
+));
+
+echo "Open for the signer: {$link->url}\n";
+echo "Mode: " . ($link->identityVerificationMode ?? '(none)') . "\n";  // 'otp' | 'external_idv' | 'override' | null
+echo "Pending checks: " . json_encode($link->pendingChecks) . "\n";   // ['email_otp'] | ['sms_otp'] | []
+echo "Expires: " . ($link->expiresAt ?? '(none; the document does not expire)') . "\n";
+```
+
+`CreateSigningUrlResponse` carries `url`, `expiresAt`, `recipientId`, `externalId`, `identityVerificationMode`, and `pendingChecks`. Semantics that matter:
+
+- **Exactly one selector** — pass `recipientId` **or** `externalId`, never both and never neither, or the SDK throws `ValidationException` (`RecipientSelectorInvalid`) before any HTTP call. `returnUrl`, when present, must be `https://`.
+- **Request at click time, never store.** For the **bypass modes** (`external_idv`, `override`) the URL is **single-use** and expires 5 minutes after issue (a `?sut=` link the page redeems once); mint a fresh one each time. For `otp` / no-verification the `url` is the reusable `?token=` signing link, so `expiresAt` is the **document's own expiry**, or `null` when the document doesn't expire.
+- `pendingChecks` lists the passcode step the signer clears on the page (`['email_otp']` / `['sms_otp']`); it is non-empty **only for `otp`** (including an `otp` the org default applied). With no verification, external_idv, or override it is `[]`.
+- **`identityAssertion` is for external_idv only** — pass it here when the recipient's mode is `external_idv` (see below). Sending it for an OTP, override, or no-verification recipient is rejected with a 400 `IdentityModeConflict` error, not ignored.
+
+### Identity verification modes
+
+Identity verification is set **per recipient** on the `Recipient` you send. A recipient with **no** `identityVerification` takes the org's `defaultChannel` (no step-up only when that is `'none'`). To require a check, pass exactly one mode, built with a named constructor:
+
+```php
+use TurboDocx\Types\IdentityVerification;
+use TurboDocx\Types\IdentityAssertion;
+use TurboDocx\Types\Requests\CreateSigningUrlRequest;
+
+// otp — TurboSign challenges a one-time passcode before the document opens.
+// channel 'email' (default) or 'sms'; 'sms' requires the recipient to carry a `phone` (E.164).
+new Recipient(name: 'Jane Doe', email: 'jane@example.com', signingOrder: 1,
+    identityVerification: IdentityVerification::otp('email'));
+
+// external_idv — your own identity provider already verified the signer. You assert it when you
+// mint the URL. `allowExternalIdv` must be on for the org.
+new Recipient(name: 'Jane Doe', email: 'jane@example.com', signingOrder: 1, externalId: 'your_customer_123',
+    identityVerification: IdentityVerification::externalIdv('CAPA'));
+
+$link = TurboSign::createSigningUrl($documentId, new CreateSigningUrlRequest(
+    externalId: 'your_customer_123',
+    identityAssertion: new IdentityAssertion(
+        provider: 'CAPA',                    // must match the recipient's configured provider
+        verificationId: 'capa_verif_8f2a91', // your provider's unique id (replay detection)
+        verifiedAt: date('c'),               // ISO 8601
+        subjectEmail: 'jane@example.com',    // must match the recipient's email
+        // Optional context recorded on the certificate / audit trail (null values are omitted):
+        method: 'id_document_liveness',      // id_document | id_document_liveness | kba | database | sso | other
+        // methodDetail: 'Video call with a notary', // required when method is 'other'
+        assuranceLevel: 'ial2_aal2',         // e.g. ial2_aal2, eidas_substantial, eidas_high
+        verifiedName: 'Jane Doe',            // legal name as your provider verified it
+        evidenceUrl: 'https://idv.example.com/verifications/capa_verif_8f2a91', // https only
+        // overrideEmailMatching: true,      // skip the subjectEmail check; recorded on the audit trail
+    ),
+));
+// The array form takes the same camelCase keys: identityAssertion: ['provider' => 'CAPA', ..., 'method' => 'kba'].
+
+// override — skip verification (development/testing). Recorded as not identity-verified on the
+// certificate. `allowIdentityOverride` must be on for the org; `reason` is required.
+new Recipient(name: 'Jane Doe', email: 'jane@example.com', signingOrder: 1,
+    identityVerification: IdentityVerification::override('Sandbox testing'));
+```
+
+| Mode | Constructor | What the signer sees |
+|---|---|---|
+| `otp` | `IdentityVerification::otp('email' \| 'sms')` | A one-time passcode challenge (email or SMS) before the document |
+| `external_idv` | `IdentityVerification::externalIdv($provider)` | No TurboSign step — you assert their identity via `identityAssertion` at mint time |
+| `override` | `IdentityVerification::override($reason)` | No step — verification is skipped and marked not-verified on the certificate |
+| _(none)_ | omit `identityVerification` | The org's `defaultChannel`: straight to the document when it is `'none'`, otherwise that passcode |
+
+### createEmbeddedSignature
+
+Create the signature request **and** mint a per-recipient embed URL in a single call. This is a thin wrapper over `sendSignature()` + `createSigningUrl()` with an ergonomic per-recipient `auth` + `fields` shorthand. It takes a `CreateEmbeddedSignatureRequest` DTO (no array form), and defaults `sendEmail` to `false` — the host owns the UX, so recipients are not emailed.
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\Exceptions\AuthorizationException;
+use TurboDocx\Types\Requests\CreateEmbeddedSignatureRequest;
+use TurboDocx\Types\Requests\EmbeddedSignatureRecipient;
+use TurboDocx\Types\Requests\EmbeddedRecipientAuth;
+use TurboDocx\Types\Requests\EmbeddedRecipientFields;
+
+try {
+    $result = TurboSign::createEmbeddedSignature(new CreateEmbeddedSignatureRequest(
+        recipients: [
+            new EmbeddedSignatureRecipient(
+                name: 'Jane Doe',
+                email: 'jane@example.com',
+                signingOrder: 1,
+                // Per-recipient OTP: emailOtp: true, or smsPhoneNumber: '+1...'.
+                // Omit auth to take the org's defaultChannel.
+                auth: new EmbeddedRecipientAuth(emailOtp: true),
+                fields: new EmbeddedRecipientFields(signature: '{signature1}'),
+            ),
+        ],
+        file: file_get_contents('agreement.pdf'),
+        fileName: 'agreement.pdf',
+        documentName: 'Service Agreement',
+        // Already the default here: no signing-link, reminder or expiry-warning emails, because
+        // your app shows the signing page. Passcode and completed-copy emails still go out.
+        sendEmail: false,
+        returnUrl: 'https://app.yourcompany.com/signed',
+    ));
+} catch (AuthorizationException $e) {
+    if ($e->errorCode === 'OtpOverrideNotAllowed') {
+        // The org locked the verification method: drop auth (take defaultChannel) or ask an admin.
+    }
+    throw $e;
+}
+
+echo "Document {$result->documentId}\n";
+foreach ($result->recipients as $r) {   // one entry per signer, in signing order
+    // status: 'ready' (embedUrl is set) | 'pending' (earlier signer unfinished) | 'completed'
+    echo "  {$r->name} <{$r->email}>: {$r->status}";
+    if ($r->embedUrl !== null) {
+        echo " -> {$r->embedUrl}";
+    }
+    echo "\n";
+}
+```
+
+`CreateEmbeddedSignatureResponse` carries `documentId` and a `recipients` array; each `EmbeddedSignatureRecipientResult` has `recipientId`, `name`, `email`, `status`, `identityVerificationMode`, and `embedUrl`. It is **turn-aware**: with a sequential signing order the backend only mints a URL for the signer whose turn it is, so a later signer comes back `status: 'pending'` with `embedUrl: null` (re-mint with `createSigningUrl()` once earlier signers finish), and an already-signed one comes back `completed`. Any genuine error still throws. For a `ready` signer `identityVerificationMode` is the mode the backend resolved for the URL; for `pending` / `completed` no URL was minted, so it is the mode you **requested** via `auth` (`null` when you set none, even if the org's default channel will apply). `createSigningUrl()` reports the effective mode.
+
+The `auth` shorthand expresses **OTP or no verification only** (`emailOtp` / `smsPhoneNumber`). No `auth` means the org's `defaultChannel` applies; an `auth` channel that differs from a locked default fails the whole call with `OtpOverrideNotAllowed`. For `external_idv` or `override`, use the `sendSignature()` + `createSigningUrl()` path above with `IdentityVerification::externalIdv()` / `::override()` on the `Recipient`.
+
+A top-level `fields:` array on `CreateEmbeddedSignatureRequest` replaces the recipients' `fields` shorthand. An empty top-level `fields` counts as absent, so the shorthand still expands (0.8.0 sent the empty list and dropped it).
+
+### Allowed embedding domains are deny-by-default
+
+`link->url` is an embeddable signing URL (`/e-signature/embed/...`). When you frame it, the browser enforces a per-tenant `Content-Security-Policy: frame-ancestors` on the page: an origin **not** on the org's allow-list is **hard-blocked** from embedding (a blank/refused frame), not merely warned; that is the clickjacking protection working, not a bug. Ask your org admin to add your app's origin to the "Allowed embedding domains" list (E-Signature settings → Identity & embedding); read the current list from `settings->allowedFrameAncestors` (an empty list means framing is denied everywhere). Production origins must be `https://`. The non-embedded email-invite links (`/e-signature/sign/...`) deny all framing.
+
+### Reference implementations
+
+**Canonical single-file PHP example:** [`packages/php-sdk/examples/turbosign-embedded-identity.php`](https://github.com/TurboDocx/SDK/blob/main/packages/php-sdk/examples/turbosign-embedded-identity.php) walks the full flow — read settings → prepare an embedded recipient → mint the URL → each identity mode.
+
+**Browser side.** Your PHP backend returns only the `/e-signature/embed/...` URL; the browser frames it. The `@turbodocx/embed` npm package (`<TurboSignForm>` for React, `<turbosign-form>` web component) owns the iframe and origin pinning. Its `onCompleted` callback (or the `turbosign:completed` event `detail`) receives `{ documentId, status, event, scope }`: `event` is `"signing_complete"` or `"already_signed"` (a reopened, finished link, so skip one-time side effects), and `scope` is `"recipient"` (this signer's step only; read the whole document's status server-side with `getStatus()` or the completed webhook). For OTP signers the code is sent only when they click **Send Code** on the signing page, so don't tell them it was already emailed.
+
+**Full embedding web app:** [`examples/embedded-web-app`](https://github.com/TurboDocx/SDK/blob/main/examples/embedded-web-app) is a React SPA → backend-for-frontend (BFF) → SDK reference that embeds signing four ways (a hand-rolled `<iframe>` with an origin-checked `turbosign:completed` postMessage completion listener; an external IdV path where the server passes an `identityAssertion` from a simulated identity provider; a sequential kiosk that mints each signer's URL just-in-time when it's their turn; and a drop-in `<TurboSignForm>` widget). It ships as Vite + React with a Node `server.ts` BFF, but the pattern is language-agnostic (**the API key never reaches the browser; only the server talks to TurboDocx**) and applies identically with PHP holding the key and exposing `/api/*` endpoints that call these three methods.
+
+## Deliverable
+
+Document generation: render a TurboDocx template with variable substitution into a deliverable (DOCX/PPTX), then download it or hand its ID to TurboSign as the source document.
+
+### configure
+
+```php
+use TurboDocx\Deliverable;
+use TurboDocx\Config\DeliverableConfig;
+
+Deliverable::configure(new DeliverableConfig(
+    apiKey: getenv('TURBODOCX_API_KEY') ?: null,
+    orgId: getenv('TURBODOCX_ORG_ID') ?: null,
+));
+
+// Or auto-configure from environment
+Deliverable::configure(DeliverableConfig::fromEnvironment());
+```
+
+No `senderEmail` needed — Deliverable never sends email.
+
+### generateDeliverable
+
+Generate a document from a template with variable substitution. The request is a plain array; its keys (and each variable's keys) are camelCase (`templateId`, `mimeType`) — they are forwarded to the API verbatim.
+
+```php
+$result = Deliverable::generateDeliverable([
+    'templateId' => 'template-uuid',
+    'name' => 'Employee Contract - John Smith',
+    'variables' => [
+        ['placeholder' => '{EmployeeName}', 'text' => 'John Smith', 'mimeType' => 'text'],
+        ['placeholder' => '{CompanyName}', 'text' => 'TechCorp Inc.', 'mimeType' => 'text'],
+        ['placeholder' => '{StartDate}', 'text' => '2026-06-01', 'mimeType' => 'text'],
+    ],
+    'description' => 'Generated via API for HR onboarding', // optional
+    'tags' => ['hr', 'contract'],                          // optional
+]);
+
+$deliverable = $result['results']['deliverable'];
+echo "{$deliverable['id']}  {$deliverable['name']}  {$deliverable['fileType']}\n";
+```
+
+`mimeType` is one of `'text'`, `'html'`, `'image'`, or `'markdown'`. For repeating content (tables, lists), pass a `variableStack` on a variable.
+
+### listDeliverables
+
+```php
+$list = Deliverable::listDeliverables([
+    'limit' => 20,      // 1-100, default 6
+    'offset' => 0,
+    'query' => 'contract',
+    'showTags' => true,
+]);
+
+echo "{$list['totalRecords']}\n";
+foreach ($list['results'] as $d) {
+    echo "  {$d['id']}  {$d['name']}  {$d['createdOn']}\n";
+}
+```
+
+Pagination uses `offset`, not a page number.
+
+### getDeliverableDetails
+
+```php
+$d = Deliverable::getDeliverableDetails('deliverable-uuid', showTags: true);
+echo "{$d['name']}  {$d['templateName']}\n";
+```
+
+Returns the full deliverable record (unwrapped from `results`), including `variables` and (when `showTags: true`) `tags`.
+
+### updateDeliverableInfo
+
+```php
+$result = Deliverable::updateDeliverableInfo('deliverable-uuid', [
+    'name' => 'Employee Contract - John Smith (Final)',
+    'description' => 'Finalized version',
+    'tags' => ['hr', 'contract', 'finalized'], // replaces all existing tags
+]);
+echo "{$result['message']}  {$result['deliverableId']}\n";
+```
+
+Passing `tags` **replaces** the full tag set. To remove all tags, pass `'tags' => []`. To add one, fetch existing tags first and append.
+
+### deleteDeliverable
+
+```php
+$result = Deliverable::deleteDeliverable('deliverable-uuid');
+echo $result['message'] . "\n"; // soft delete — data is retained but hidden from list
+```
+
+### downloadSourceFile / downloadPDF
+
+Both return raw bytes as a string — write them straight to disk.
+
+```php
+$docxBytes = Deliverable::downloadSourceFile('deliverable-uuid');
+file_put_contents('contract.docx', $docxBytes);
+
+$pdfBytes = Deliverable::downloadPDF('deliverable-uuid');
+file_put_contents('contract.pdf', $pdfBytes);
+```
+
+`downloadSourceFile` returns the original DOCX/PPTX and requires the `hasFileDownload` entitlement.
+
+### Generate, then send for signature
+
+```php
+use TurboDocx\TurboSign;
+use TurboDocx\Types\Recipient;
+use TurboDocx\Types\Field;
+use TurboDocx\Types\SignatureFieldType;
+use TurboDocx\Types\TemplateConfig;
+use TurboDocx\Types\FieldPlacement;
+use TurboDocx\Types\Requests\SendSignatureRequest;
+
+$result = Deliverable::generateDeliverable([
+    'templateId' => 'template-uuid',
+    'name' => 'Consulting Agreement',
+    'variables' => [
+        ['placeholder' => '{ClientName}', 'text' => 'Acme Corp', 'mimeType' => 'text'],
+    ],
+]);
+
+TurboSign::sendSignature(
+    new SendSignatureRequest(
+        deliverableId: $result['results']['deliverable']['id'], // no download/re-upload
+        documentName: 'Consulting Agreement',
+        recipients: [
+            new Recipient('John Doe', 'john@example.com', 1),
+        ],
+        fields: [
+            new Field(
+                type: SignatureFieldType::SIGNATURE,
+                recipientEmail: 'john@example.com',
+                template: new TemplateConfig(
+                    anchor: '{signature1}',
+                    placement: FieldPlacement::REPLACE,
+                    size: ['width' => 100, 'height' => 30],
+                ),
+            ),
+        ],
+    )
+);
+```
+
+## TurboPartner
+
+Partner-portal operations: provision and manage customer organizations, their users, API keys, entitlements, and audit logs. Uses **separate partner credentials**. Request-body array values use **camelCase keys** (e.g. `maxUsers`, `canManageOrgs`).
+
+### Configuration
+
+```php
+use TurboDocx\TurboPartner;
+use TurboDocx\Config\PartnerClientConfig;
+
+TurboPartner::configure(new PartnerClientConfig(
+    partnerApiKey: getenv('TURBODOCX_PARTNER_API_KEY') ?: '', // starts with TDXP-; '' fails closed
+    partnerId: getenv('TURBODOCX_PARTNER_ID') ?: '',          // UUID
+));
+```
+
+### Organization management
+
+```php
+use TurboDocx\Types\Requests\Partner\CreateOrganizationRequest;
+use TurboDocx\Types\Requests\Partner\ListOrganizationsRequest;
+use TurboDocx\Types\Requests\Partner\UpdateOrganizationRequest;
+use TurboDocx\Types\Requests\Partner\UpdateEntitlementsRequest;
+
+// Create
+$org = TurboPartner::createOrganization(new CreateOrganizationRequest(
+    name: 'Acme Corp',
+    metadata: ['industry' => 'Technology'],
+    features: ['maxUsers' => 50, 'hasTDAI' => true], // optional initial entitlements; camelCase keys
+));
+echo $org->data->id;
+
+// List (uses limit/offset, not page)
+$orgs = TurboPartner::listOrganizations(new ListOrganizationsRequest(limit: 20, offset: 0, search: 'acme'));
+echo $orgs->totalRecords;
+foreach ($orgs->results as $o) {
+    echo "{$o->id} {$o->name}\n";
+}
+
+// Get details (includes features + tracking)
+$details = TurboPartner::getOrganizationDetails('org-uuid');
+
+// Update name
+TurboPartner::updateOrganizationInfo('org-uuid', new UpdateOrganizationRequest(name: 'Acme Holdings'));
+
+// Delete
+TurboPartner::deleteOrganization('org-uuid');
+
+// Update entitlements — features and tracking are separate keys
+TurboPartner::updateOrganizationEntitlements('org-uuid', new UpdateEntitlementsRequest(
+    features: ['maxUsers' => 100, 'hasTDAI' => true, 'hasSalesforce' => true],
+    tracking: ['numUsers' => 12], // optional: seed usage counters
+));
+```
+
+### Organization display preferences
+
+Read and set a tenant's TurboSign display preferences without logging into its settings UI. Four
+booleans are partner-settable; the API returns only these keys, never the org's other settings.
+
+```php
+// Read — every key comes back with its effective value (defaults applied).
+// The response flattens the envelope: preferences hang off the response directly.
+$prefs = TurboPartner::getOrganizationPreferences('org-uuid')->preferences;
+var_dump($prefs->hideSignatureOutline);       // false by default
+var_dump($prefs->hideSignatureHash);          // false by default
+var_dump($prefs->lockedFieldsBackground);     // true by default
+var_dump($prefs->allowDownloadBeforeSigning); // false by default
+
+// Update — pass only the keys you want to change, as a plain camelCase array.
+// The SDK wraps them under `preferences` for you. Values must be real bools —
+// the API validates strictly, so the STRING 'true' is a 400, not a coerced true.
+// Cast before sending if the value came from $_POST/env/JSON.
+$updated = TurboPartner::updateOrganizationPreferences('org-uuid', [
+    'lockedFieldsBackground' => false, // plain text instead of a grey box
+]);
+var_dump($updated->preferences->lockedFieldsBackground); // false
+```
+
+| Preference | Default | Effect |
+|------------|---------|--------|
+| `hideSignatureOutline` | `false` | Hide the outline/label drawn around signed fields |
+| `hideSignatureHash` | `false` | Hide the verification hash printed on signed fields |
+| `lockedFieldsBackground` | `true` | Grey box behind locked fields (`false` = plain text) |
+| `allowDownloadBeforeSigning` | `false` | When enabled, a signer can download the unsigned PDF from the signing page before they sign it (for example, to review it with their legal team). Defaults to off. |
+
+### Organization user management
+
+```php
+use TurboDocx\Types\Requests\Partner\ListOrgUsersRequest;
+use TurboDocx\Types\Requests\Partner\AddOrgUserRequest;
+use TurboDocx\Types\Requests\Partner\UpdateOrgUserRequest;
+use TurboDocx\Types\Enums\OrgUserRole;
+
+// List
+$users = TurboPartner::listOrganizationUsers('org-uuid', new ListOrgUsersRequest(limit: 25, offset: 0));
+
+// Invite — ORG role enum (OrgUserRole): ADMIN | CONTRIBUTOR | USER | VIEWER
+// There is no MEMBER here — 'member' is a PARTNER-portal role and is rejected with a 400.
+TurboPartner::addUserToOrganization('org-uuid', new AddOrgUserRequest(
+    email: 'newhire@acme.com',
+    role: OrgUserRole::CONTRIBUTOR,
+));
+
+// Update role
+TurboPartner::updateOrganizationUserRole('org-uuid', 'user-uuid', new UpdateOrgUserRequest(role: OrgUserRole::ADMIN));
+
+// Remove
+TurboPartner::removeUserFromOrganization('org-uuid', 'user-uuid');
+
+// Resend invitation email
+TurboPartner::resendOrganizationInvitationToUser('org-uuid', 'user-uuid');
+```
+
+### Organization API key management
+
+```php
+use TurboDocx\Types\Requests\Partner\ListOrgApiKeysRequest;
+use TurboDocx\Types\Requests\Partner\CreateOrgApiKeyRequest;
+use TurboDocx\Types\Requests\Partner\UpdateOrgApiKeyRequest;
+
+// List
+$keys = TurboPartner::listOrganizationApiKeys('org-uuid', new ListOrgApiKeysRequest(limit: 10));
+
+// Create — the full key value is returned ONLY on creation, store it immediately
+// Org API keys use the ORG role enum: 'admin' | 'contributor' | 'user' | 'viewer'
+$created = TurboPartner::createOrganizationApiKey('org-uuid', new CreateOrgApiKeyRequest(
+    name: 'Production Key',
+    role: 'admin',
+));
+echo $created->data->key; // capture this once, it won't be shown again
+
+// Update (rename or change role)
+TurboPartner::updateOrganizationApiKey('org-uuid', 'key-uuid', new UpdateOrgApiKeyRequest(name: 'Renamed'));
+
+// Revoke
+TurboPartner::revokeOrganizationApiKey('org-uuid', 'key-uuid');
+```
+
+### Partner API key management
+
+```php
+use TurboDocx\Types\Requests\Partner\ListPartnerApiKeysRequest;
+use TurboDocx\Types\Requests\Partner\CreatePartnerApiKeyRequest;
+use TurboDocx\Types\Requests\Partner\UpdatePartnerApiKeyRequest;
+use TurboDocx\Types\Enums\PartnerScope;
+
+// List
+$keys = TurboPartner::listPartnerApiKeys(new ListPartnerApiKeysRequest(limit: 10));
+
+// Create with scopes — full key returned only on creation
+$created = TurboPartner::createPartnerApiKey(new CreatePartnerApiKeyRequest(
+    name: 'CI/CD Key',
+    scopes: [PartnerScope::ORG_CREATE, PartnerScope::ORG_READ, PartnerScope::ENTITLEMENTS_UPDATE],
+    description: 'Used by GitHub Actions',
+));
+echo $created->data->key; // store this immediately
+
+// Update name / scopes
+TurboPartner::updatePartnerApiKey('key-uuid', new UpdatePartnerApiKeyRequest(
+    name: 'CI/CD Key (extended)',
+    scopes: [PartnerScope::ORG_CREATE, PartnerScope::ORG_READ, PartnerScope::ORG_UPDATE, PartnerScope::ENTITLEMENTS_UPDATE],
+));
+
+// Revoke
+TurboPartner::revokePartnerApiKey('key-uuid');
+```
+
+Available scopes cover `org:*`, `entitlements:update`, `org-users:*`, `partner-users:*`, `org-apikeys:*`, `partner-apikeys:*`, and `audit:read`.
+
+### Partner-portal user management
+
+```php
+use TurboDocx\Types\Requests\Partner\ListPartnerUsersRequest;
+use TurboDocx\Types\Requests\Partner\AddPartnerUserRequest;
+use TurboDocx\Types\Requests\Partner\UpdatePartnerUserRequest;
+use TurboDocx\Types\Partner\PartnerPermissions;
+
+// List
+$users = TurboPartner::listPartnerPortalUsers(new ListPartnerUsersRequest(limit: 25));
+
+// Add — PARTNER role enum: 'admin' | 'member' | 'viewer'
+// ('contributor' / 'user' are ORG roles and are rejected here with a 400.)
+// All SEVEN permission flags are required — set every one explicitly.
+TurboPartner::addUserToPartnerPortal(new AddPartnerUserRequest(
+    email: 'admin@partner.com',
+    role: 'admin',
+    permissions: new PartnerPermissions(
+        canManageOrgs: true,
+        canManageOrgUsers: true,
+        canManagePartnerUsers: false,
+        canManageOrgAPIKeys: true,
+        canManagePartnerAPIKeys: false,
+        canUpdateEntitlements: true,
+        canViewAuditLogs: true,
+    ),
+));
+
+// Update — `permissions` is optional, but there is NO partial update: if you pass it,
+// the backend requires ALL SEVEN keys. Every PartnerPermissions constructor arg defaults
+// to `false`, so naming only two of them still sends all 7 — with the other five as
+// `false`, silently REVOKING those permissions. Rebuild from the user's current
+// permissions and override only what changes.
+$users   = TurboPartner::listPartnerPortalUsers(new ListPartnerUsersRequest(limit: 100));
+$user    = current(array_filter($users->results, fn ($u) => $u->id === 'user-uuid'));
+$current = $user->permissions;   // all 7 flags, straight from the server
+
+TurboPartner::updatePartnerUserPermissions('user-uuid', new UpdatePartnerUserRequest(
+    role: 'member',
+    permissions: new PartnerPermissions(
+        canManageOrgs: true,   // the two we are changing
+        canManageOrgUsers: true,
+        canManagePartnerUsers: $current->canManagePartnerUsers,   // the rest, preserved
+        canManageOrgAPIKeys: $current->canManageOrgAPIKeys,
+        canManagePartnerAPIKeys: $current->canManagePartnerAPIKeys,
+        canUpdateEntitlements: $current->canUpdateEntitlements,
+        canViewAuditLogs: $current->canViewAuditLogs,
+    ),
+));
+
+// To change ONLY the role, omit `permissions` entirely:
+TurboPartner::updatePartnerUserPermissions('user-uuid', new UpdatePartnerUserRequest(role: 'viewer'));
+
+// Remove
+TurboPartner::removeUserFromPartnerPortal('user-uuid');
+
+// Resend invitation
+TurboPartner::resendPartnerPortalInvitationToUser('user-uuid');
+```
+
+### Audit logs
+
+```php
+use TurboDocx\Types\Requests\Partner\ListAuditLogsRequest;
+
+$logs = TurboPartner::getPartnerAuditLogs(new ListAuditLogsRequest(
+    action: 'org.created',
+    resourceType: 'organization',
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    success: true,
+    limit: 100,
+    offset: 0,
+));
+
+echo $logs->totalRecords;
+foreach ($logs->results as $entry) {
+    echo "{$entry->createdOn} {$entry->action} {$entry->resourceId}\n";
+}
+```
+
+## TurboWebhooks Configuration
+
+TurboWebhooks subscribes a single per-org HTTPS endpoint (locked to the name `signature`) to TurboSign document events. The SDK is intentionally one-webhook-per-org to mirror the dashboard's Signature Webhooks page.
+
+```php
+use TurboDocx\TurboWebhooks;
+use TurboDocx\Config\HttpClientConfig;
+
+TurboWebhooks::configure(new HttpClientConfig(
+    apiKey: getenv('TURBODOCX_API_KEY') ?: null,   // admin TDX- key
+    orgId: getenv('TURBODOCX_ORG_ID') ?: null,
+    skipSenderValidation: true,           // webhooks don't send email
+));
+```
+
+The webhook routes require the organization administrator role. A non-admin TDX- key will return `AuthorizationException` (HTTP 403).
+
+## TurboWebhooks Events
+
+TurboSign dispatches **7** events. All of them are live — subscribe to whichever your integration needs.
+
+| Event (wire string) | Fires when |
+|---|---|
+| `signature.document.sent` | The document is dispatched to recipients |
+| `signature.document.viewed` | A recipient opens the document for the first time |
+| `signature.document.recipient_signed` | An individual signer completes their signature — fires **once per signer** |
+| `signature.document.signed` | A signer signs but the document is **not yet complete** (document-level partial progress) |
+| `signature.document.completed` | All recipients have signed and the signed PDF is finalized |
+| `signature.document.finalization_failed` | The signed PDF fails to finalize (e.g. KMS signing error); the document is **not** completed |
+| `signature.document.voided` | The document is voided or cancelled |
+
+The SDK exposes these as a native PHP 8.1 backed enum, `TurboDocx\Types\Enums\WebhookEvent`. Read the wire string off a case with `->value` (`WebhookEvent::COMPLETED->value === 'signature.document.completed'`); `WebhookEvent::all()` returns all 7 **wire strings** ready to pass straight as `events:`, and `WebhookEvent::values()` is an alias of it. Use the native `WebhookEvent::cases()` if you want the enum cases themselves. The literal wire strings above are what actually travel in the top-level `event` field of the delivered payload (the envelope is `{ event, event_id, created_at, version, data }` — a receiver written against `eventType` reads `null` and silently dispatches nothing), and they are always accepted by `createWebhook()`/`updateWebhook()`. `getWebhook()` also returns an `availableEvents` array — the backend advertises the live catalog at runtime.
+
+### Lifecycle: `recipient_signed` vs `signed` vs `completed`
+
+This is the part integrations get wrong. On **every** signature, `recipient_signed` fires first. Then exactly one of `signed`, `completed`, or `finalization_failed` follows:
+
+```
+Recipient signs
+   │
+   ├─ signature.document.recipient_signed   (always — one per signer)
+   │
+   └─ more signers remaining?
+        ├─ yes → signature.document.signed                 (partial progress)
+        └─ no  → signature.document.completed              (finalized OK)
+                 or signature.document.finalization_failed (finalization failed)
+```
+
+- **`recipient_signed`** is the **per-person** event. It fires once for every signer, *including the last one*, and carries the signer's identity plus `is_final_signer` (true only on the last signature) and `remaining_signers`.
+- **`signed`** is a **document-level partial-progress** event. It fires **only when a signer signs and the document is NOT yet complete**.
+- **`signed` never fires on the final signature.** To detect "the whole document is done", use `completed` (or `recipient_signed` with `is_final_signer: true`) — **never** `signed`.
+- **A single-signer document never emits `signed` at all.** It emits `recipient_signed` (`is_final_signer: true`) and then `completed`.
+
+## TurboWebhooks Usage
+
+### createWebhook
+
+```php
+$created = TurboWebhooks::createWebhook(
+    urls: ['https://your-server.example.com/webhooks/turbodocx'],  // 1-10, HTTPS only
+    events: [                                                       // at least 1
+        'signature.document.sent',
+        'signature.document.viewed',
+        'signature.document.recipient_signed',    // once per signer; carries is_final_signer
+        'signature.document.completed',           // the ONLY reliable "document is done" signal
+        'signature.document.finalization_failed',
+        'signature.document.voided',
+        // 'signature.document.signed',           // add only if you want partial-progress pings;
+        //                                        // it never fires on the final signature
+    ],
+);
+
+// Returned secret is shown ONCE — store it server-side immediately.
+$webhookId = $created['id'];
+$secret    = $created['secret'];
+```
+
+`urls` must contain **1–10** HTTPS URLs; `events` must contain **at least 1** event. Throws `ConflictException` (409) if the signature webhook already exists for the org. Throws `ValidationException` (400) for non-HTTPS URLs, an empty/oversized `urls` array, or an empty `events` array.
+
+### getWebhook
+
+```php
+$webhook = TurboWebhooks::getWebhook();
+// $webhook['urls'], $webhook['events'], $webhook['isActive']
+// $webhook['deliveryStats']['totalDeliveries'], ['successfulDeliveries'], ...
+```
+
+### updateWebhook
+
+```php
+TurboWebhooks::updateWebhook(
+    urls: ['https://your-server.example.com/webhooks/turbodocx'],  // 1-10 HTTPS URLs
+    events: ['signature.document.completed'],                      // at least 1
+    isActive: true,
+);
+
+// To pause deliveries without touching the routing, omit urls/events entirely:
+TurboWebhooks::updateWebhook(isActive: false);
+```
+
+The arguments are optional, but **optional does not mean "may be empty"**: if you pass `urls` it still has to hold 1–10 URLs, and if you pass `events` it still has to hold at least 1. Passing `urls: []` or `events: []` throws `ValidationException` (400) — omit the argument instead.
+
+All three parameters are optional — pass only what you want to change.
+
+### deleteWebhook
+
+```php
+TurboWebhooks::deleteWebhook();  // soft-delete + delivery history wiped
+```
+
+### testWebhook
+
+```php
+$result = TurboWebhooks::testWebhook(
+    eventType: 'signature.document.completed',
+    payload: ['documentId' => '...', 'documentName' => '...'],
+);
+// $result['summary']: { total, successful, failed, errors: string[] }
+// $result['deliveries']: WebhookDelivery[]
+```
+
+Per-URL failure messages live in `summary.errors`. Use this from a CI smoke test before flipping a new receiver into production.
+
+### regenerateWebhookSecret
+
+```php
+$rotated = TurboWebhooks::regenerateWebhookSecret();
+// $rotated['secret'] — shown ONCE; old signatures fail immediately after rotation
+```
+
+### listWebhookDeliveries
+
+```php
+$page = TurboWebhooks::listWebhookDeliveries(
+    limit: 20,
+    offset: 0,
+    eventType: 'signature.document.completed',
+    isDelivered: false,
+    httpStatus: 500,
+);
+// $page['results']: WebhookDelivery[]; $page['totalRecords']
+```
+
+### replayWebhookDelivery
+
+```php
+$newDelivery = TurboWebhooks::replayWebhookDelivery($deliveryId);
+// Full WebhookDelivery row returned — id, httpStatus, attemptCount, etc.
+```
+
+### getWebhookStats
+
+```php
+$stats = TurboWebhooks::getWebhookStats(days: 30);
+// $stats['summary']['successRate'], ['avgResponseTime'], etc.
+// $stats['eventBreakdown']: per-event totals
+```
+
+### Verifying inbound webhook signatures
+
+When TurboDocx POSTs to your receiver, verify the `X-TurboDocx-Signature` header before trusting the payload. The helper enforces a 5-minute timestamp tolerance and uses constant-time comparison. Pass `toleranceSeconds: N`: `0` disables the check (not recommended in production); a negative value rejects every delivery. `toleranceSeconds` and `now` take an int or a finite float; any other value (NaN, INF, a numeric string such as `"300"` included) returns `false` rather than throwing. The `X-TurboDocx-Timestamp` header must be digits only.
+
+`verifyWebhookSignature` returns `false` (it does not throw, not even a `TypeError` for a non-string argument) on bad or missing input, so answer 401 on `false` without a try/catch.
+
+```php
+use function TurboDocx\Utils\verifyWebhookSignature;
+
+// In your webhook receiver (Laravel, Symfony, plain PHP, etc.)
+$rawBody         = file_get_contents('php://input');               // raw bytes — do NOT json_decode first
+$signatureHeader = $_SERVER['HTTP_X_TURBODOCX_SIGNATURE'] ?? '';
+$timestampHeader = $_SERVER['HTTP_X_TURBODOCX_TIMESTAMP'] ?? '';
+$secret          = getenv('TURBODOCX_WEBHOOK_SECRET') ?: '';     // saved from createWebhook; unset => '' => fails closed
+
+if (!verifyWebhookSignature($rawBody, $signatureHeader, $timestampHeader, $secret)) {
+    http_response_code(401);
+    exit;
+}
+
+$event = json_decode($rawBody, true);
+// The envelope is { event, event_id, created_at, version, data } — dispatch on
+// $event['event'], NOT $event['eventType'] (that key does not exist and reads null).
+// process $event['event'], $event['data'], ...
+```
+
+**Canonical end-to-end PHP example:** [`packages/php-sdk/examples/turbowebhooks-crud.php`](https://github.com/TurboDocx/SDK/blob/main/packages/php-sdk/examples/turbowebhooks-crud.php) walks through create → conflict → get → update → test-fire → rotate → list → replay → delete + every error branch.
+
+### TurboWebhooks error handling
+
+```php
+use TurboDocx\Exceptions\TurboDocxException;
+use TurboDocx\Exceptions\AuthenticationException;
+use TurboDocx\Exceptions\AuthorizationException;
+use TurboDocx\Exceptions\ValidationException;
+use TurboDocx\Exceptions\ConflictException;
+use TurboDocx\Exceptions\NotFoundException;
+use TurboDocx\Exceptions\RateLimitException;
+use TurboDocx\Exceptions\NetworkException;
+
+try {
+    TurboWebhooks::createWebhook(urls: $urls, events: $events);
+} catch (ConflictException $e) {
+    // 409 — signature webhook already exists for this org. Update or delete it.
+} catch (ValidationException $e) {
+    // 400 — typically a non-HTTPS URL or empty events array.
+} catch (AuthorizationException $e) {
+    // 403 — TDX- key lacks the administrator role.
+} catch (AuthenticationException $e) {
+    // 401 — bad / revoked API key.
+} catch (NotFoundException $e) {
+    // 404 — read/update/delete against a webhook that does not exist.
+} catch (RateLimitException $e) {
+    // 429 — back off and retry.
+} catch (NetworkException $e) {
+    // No status — the request never reached the server.
+} catch (TurboDocxException $e) {
+    // Any other typed SDK error (e.g. raw 5xx).
+}
+```
+
+## TurboQuote Configuration
+
+TurboQuote manages the full quoting lifecycle: companies, contacts, products, bundles, price books, and quotes — all the way through sending to a customer and downloading the PDF.
+
+```php
+use TurboDocx\TurboQuote;
+use TurboDocx\Config\QuoteClientConfig;
+
+TurboQuote::configure(new QuoteClientConfig(
+    apiKey: getenv('TURBODOCX_API_KEY') ?: null,   // admin TDX- key
+    orgId: getenv('TURBODOCX_ORG_ID') ?: null,     // strongly recommended; the API returns 401 without it
+    // baseUrl: 'https://api.turbodocx.com', // optional
+));
+
+// Or auto-configure from environment
+TurboQuote::configure(QuoteClientConfig::fromEnvironment());
+```
+
+Unlike `TurboSign`, `TurboQuote` does **NOT** take `senderEmail` or `senderName` — but sending a quote *does* create a signature request and email the recipient. The sender comes from your **organization's quote template** (Quote Settings) instead; configure a sender email there, or quote create/duplicate/send is rejected with `400 SenderEmailRequired`. `orgId` is technically optional in the config object but the backend will return 401 if it is missing, so treat it as required.
+
+## TurboQuote Usage
+
+### createQuote
+
+```php
+use TurboDocx\Types\Requests\Quote\CreateQuoteRequest;
+
+$quote = TurboQuote::createQuote(new CreateQuoteRequest(
+    name: 'Enterprise License Q3',
+    companyId: $company->id,
+    contactId: $contact->id,
+    currency: 'USD',
+    termDays: 365,   // optional; DEFAULT IS 60. Max 3650 (10 years). -1 = auto-renewal.
+));
+
+echo "Quote ID: {$quote->id}\n";
+echo "Status: {$quote->status}\n";
+```
+
+**`termDays` / `renewalPeriod`** — `termDays` defaults to **60** when omitted, and may be any integer up to **3650**, or the sentinel **`-1`** meaning auto-renewal. The two fields are coupled:
+
+- `termDays: -1` → `renewalPeriod` is **required** (`'weekly' | 'monthly' | 'quarterly' | 'annually'`).
+- any other `termDays` → `renewalPeriod` must be **absent or `null`**; sending it is a 400.
+
+```php
+// Auto-renewing quote — renewalPeriod is mandatory
+TurboQuote::createQuote(new CreateQuoteRequest(
+    name: 'Managed Services - auto-renew',
+    companyId: $company->id,
+    contactId: $contact->id,
+    termDays: -1,
+    renewalPeriod: 'monthly',
+));
+
+// Fixed-term quote — do NOT pass renewalPeriod
+TurboQuote::createQuote(new CreateQuoteRequest(
+    name: 'Fixed 90-day engagement',
+    companyId: $company->id,
+    contactId: $contact->id,
+    termDays: 90,
+));
+```
+
+### addLineItems
+
+**Four fields are required on every line item**: `productId` (the argument must be PASSED — its value may be `null` for a custom, non-catalog item), `productName`, `unitPrice`, and `billingFrequency`. Omitting any of them is a 400. `quantity` defaults to `1`. The array must hold between **1 and 50** items.
+
+```php
+use TurboDocx\Types\Requests\Quote\AddLineItemRequest;
+
+TurboQuote::addLineItems($quote->id, [
+    new AddLineItemRequest(
+        productId: $product->id,          // REQUIRED; null for a custom item
+        productName: 'Platform Subscription',  // REQUIRED
+        unitPrice: 499.00,                // REQUIRED
+        billingFrequency: 'monthly',      // REQUIRED
+        quantity: 1,                      // optional, defaults to 1
+    ),
+    new AddLineItemRequest(
+        productId: null,                  // custom, non-catalog item — still passed, as null
+        productName: 'Professional Services',
+        unitPrice: 2500.00,
+        billingFrequency: 'one-time',
+        quantity: 5,
+        discountType: 'percent',
+        discountPercent: 10,
+    ),
+]);
+// Returns LineItem[] — the resulting items array
+```
+
+### addBundleLineItems
+
+Attaching a bundle to a quote needs only `bundleId` and `bundleName` — the server expands the bundle's child products itself, so you never send them. Single object or an array of 1–50.
+
+```php
+use TurboDocx\Types\Requests\Quote\AddBundleLineItemRequest;
+
+TurboQuote::addBundleLineItems($quote->id, [
+    new AddBundleLineItemRequest(
+        bundleId: $bundle->id,        // REQUIRED
+        bundleName: 'Starter Pack',   // REQUIRED
+        quantity: 2,
+    ),
+]);
+```
+
+### sendQuote
+
+```php
+use TurboDocx\Types\Requests\Quote\SendQuoteRequest;
+
+$result = TurboQuote::sendQuote($quote->id, new SendQuoteRequest(
+    validUntil: date('Y-m-d', strtotime('+30 days')),
+));
+
+echo "Status: {$result->quote->status}\n";   // 'sent'
+echo "Message: {$result->message}\n";
+```
+
+Sending a quote **does** create a signature request and email the contact. The send is gated by a set
+of preconditions, each of which fails with `ValidationException` (400) carrying a specific
+`$e->errorCode`:
+
+| `errorCode` | Meaning |
+|---|---|
+| `QuoteNotSendable` | The quote's status does not allow sending |
+| `QuoteValidUntilRequired` | No `validUntil` on the quote and none passed in `SendQuoteRequest` |
+| `QuoteExpired` | `validUntil` is already in the past |
+| `QuoteHasNoLineItems` | The quote has no line items |
+| `QuoteContactRequired` | The quote has no contact to send to |
+| `QuoteCustomerInactive` | The customer/company is inactive |
+| `SenderEmailRequired` | The org's quote template (Quote Settings) has no sender email |
+
+**Reminders & expiration on quote send.** `sendQuote` / `sendQuoteWithDeliverable` accept the same schedule fields as signature send — reminders/expiration work the same way, **except the expiry date is pinned to the quote's `validUntil`, so `expireAfter` is ignored** (`expirationEnabled` still toggles expiration per-quote, and the reminder/warning cadence must fit inside the `validUntil` window).
+
+```php
+TurboQuote::sendQuote($quote->id, new SendQuoteRequest(
+    remindersEnabled: true,
+    reminderDelay: ['value' => 2, 'unit' => 'days'],
+    reminderInterval: ['value' => 1, 'unit' => 'days'],
+    maxReminders: 3,          // -1 unlimited, 0 none, max 50
+    expirationEnabled: true,  // deadline = validUntil; expireAfter is ignored
+));
+```
+
+### handleExpiredQuote
+
+Act on a sent quote whose `validUntil` has passed. **`action` accepts exactly two values: `'void'` and `'decline'`.** There is no `'extend'` and no `'resend'` — those are not implemented and return a 400. `reason` (max 190 chars) and `newValidUntil` (ISO date) are **both required**.
+
+The endpoint voids/declines the original quote and creates a duplicate carrying the new `validUntil` date — that duplicate is how you "extend" an expired quote.
+
+```php
+use TurboDocx\Types\Requests\Quote\HandleExpiredQuoteRequest;
+
+$result = TurboQuote::handleExpiredQuote($quote->id, new HandleExpiredQuoteRequest(
+    action: 'void',                      // 'void' | 'decline' — nothing else
+    reason: 'Pricing refreshed for Q4',  // REQUIRED, max 190 chars
+    newValidUntil: '2026-12-31',         // REQUIRED, ISO date — carried by the new duplicate
+));
+```
+
+### downloadQuotePdf
+
+```php
+$pdfBytes = TurboQuote::downloadQuotePdf($quote->id);
+file_put_contents('quote.pdf', $pdfBytes);
+```
+
+Returns raw bytes — write them directly with `file_put_contents` or stream as a response.
+
+### Quote templates (auto-provisioned — get, then update)
+
+Quote templates are **provisioned for you**. `GET /v1/quote-template` self-heals: if the org has no template it creates one from the org's branding and returns it. Consequences:
+
+- **Never call `createTemplate()` on an established org** — a template already exists, so it throws `ValidationException` (400 `TEMPLATE_ALREADY_EXISTS`). The method is effectively unreachable. Do not write get-then-create-if-missing logic.
+- **`deleteTemplate()` is really "reset to org branding defaults"** — it soft-deletes, and the very next `getTemplate()` regenerates one.
+
+The correct flow is always **`getTemplate()` → `updateTemplate()`**:
+
+```php
+use TurboDocx\Types\Requests\Quote\UpdateQuoteTemplateRequest;
+
+$template = TurboQuote::getTemplate();   // always returns one; creates it if needed
+TurboQuote::updateTemplate($template->id, new UpdateQuoteTemplateRequest(
+    primaryColor: '#0B5FFF',
+    closingMessage: 'Thanks for your business!',
+));
+```
+
+### Products and bundles (catalog)
+
+```php
+use TurboDocx\Types\Requests\Quote\CreateProductRequest;
+use TurboDocx\Types\Requests\Quote\CreateBundleRequest;
+use TurboDocx\Types\Requests\Quote\CreatePriceBookRequest;
+
+// Create a catalog product.
+// name, listPrice, billingFrequency and categoryId are all REQUIRED.
+// categoryId is a real UUID — from a createType with categoryType 'product_category'.
+$product = TurboQuote::createProduct(new CreateProductRequest(
+    name: 'Annual SaaS License',
+    listPrice: 999.00,
+    billingFrequency: 'annual',
+    categoryId: 'category-uuid',
+    showInCatalog: true,
+    // images: [...],  // optional — MAX 5 images per product, MAX 2 MB each
+));
+
+// Create a bundle. Each catalog bundle item requires productId, unitPrice and
+// billingFrequency (quantity defaults to 1). Note this is a DIFFERENT shape from a
+// quote line item — there is no productName here, and unknown keys are rejected.
+$bundle = TurboQuote::createBundle(new CreateBundleRequest(
+    name: 'Starter Pack',
+    categoryId: 'category-uuid',
+    items: [
+        [
+            'productId' => $product->id,
+            'unitPrice' => 999.00,
+            'billingFrequency' => 'annual',
+            'quantity' => 1,
+        ],
+    ],
+));
+
+// Create a price book and apply it to a quote.
+// priceBookTypeId comes from a createType with categoryType 'pricebook_type';
+// name, priceBookTypeId, validFrom, and discountPercent are all required.
+$priceBook = TurboQuote::createPriceBook(new CreatePriceBookRequest(
+    name: 'Partner Tier A',
+    priceBookTypeId: 'pricebook-type-uuid',
+    validFrom: '2026-01-01',
+    discountPercent: 15.0,
+));
+
+TurboQuote::applyPriceBook($quote->id, $priceBook->id);
+// Returns ApplyPriceBookResponse: { quote, message, updatedCount, skippedCount }
+```
+
+### getQuoteNumberConfig
+
+Admin-only. Reads the org's quote-number configuration — the format used to generate new quote numbers (prefix, year/month tokens, separator, zero-padding, suffix, starting number, reset cadence).
+
+```php
+$config = TurboQuote::getQuoteNumberConfig();
+
+echo "Prefix: {$config->format->prefix}\n";
+echo "Current floor: {$config->currentFloor}\n";   // lowest start number you can set this period
+```
+
+Response: a `QuoteNumberConfig` — `{ format, currentFloor }`. `format` is a `QuoteNumberFormat` (`prefix`, `yearToken`, `monthToken`, `separator`, `padWidth`, `suffix`, `startNumber`, `resetCadence`); `currentFloor` is the per-period issued floor (a new `startNumber` can't be set below it).
+
+### updateQuoteNumberConfig
+
+Admin-only. Updates the org's quote-number format. Pass the full format (all eight fields). Request-body keys stay camelCase verbatim.
+
+```php
+use TurboDocx\Types\Quote\QuoteNumberFormat;
+
+// e.g. INV0001000 — no year/month tokens, 4-digit zero-padding, starting at 1000, never resets
+$config = TurboQuote::updateQuoteNumberConfig(new QuoteNumberFormat(
+    prefix: 'INV',
+    yearToken: 'none',     // 'none' | 'two' | 'four'
+    monthToken: 'off',     // 'off' | 'two'
+    separator: '',
+    padWidth: 4,           // int 0-12
+    suffix: '',
+    startNumber: 1000,     // int >= 0 (must be >= currentFloor)
+    resetCadence: 'never', // 'never' | 'yearly' | 'monthly'
+));
+
+echo "New prefix: {$config->format->prefix}\n";
+echo "Current floor: {$config->currentFloor}\n";
+```
+
+Response: the updated `QuoteNumberConfig` — same `{ format, currentFloor }` shape as `getQuoteNumberConfig`.
+
+### Bulk create (CSV-style imports)
+
+Six catalog resources support bulk creation from an array of typed request rows (e.g. a parsed CSV): `bulkCreateProducts`, `bulkCreatePriceBooks`, `bulkCreateBundles`, `bulkCreateCompanies`, `bulkCreateContacts`, and `bulkCreateTypes`. Each takes an array of the same request objects the matching single `create*` call uses; the SDK wraps them in the `{ "rows": [...] }` envelope the `POST {resource}/bulk` endpoint expects. Each returns a `BulkImportResult`.
+
+Every product row requires `name`, `categoryId`, `listPrice`, and `billingFrequency`. **`categoryId` must be a real category UUID** — there is no `categoryName` convenience field on the bulk row, and because the backend rejects unknown keys a `categoryName` would 400 the row. Resolve (or create) the category first and pass its UUID:
+
+```php
+use TurboDocx\Types\Requests\Quote\CreateProductRequest;
+use TurboDocx\Types\Requests\Quote\CreateQuoteTypeRequest;
+use TurboDocx\Types\Requests\Quote\ListTypesRequest;
+
+// 1. Resolve the category UUID once — create it if it doesn't exist yet.
+$types    = TurboQuote::listTypes(new ListTypesRequest(limit: 100));
+$category = current(array_filter(
+    $types->results,
+    fn ($t) => $t->name === 'Subscriptions' && $t->categoryType === 'product_category',
+)) ?: TurboQuote::createType(new CreateQuoteTypeRequest(
+    name: 'Subscriptions',
+    categoryType: 'product_category',
+));
+
+// 2. Reference it by UUID on every row.
+$result = TurboQuote::bulkCreateProducts([
+    new CreateProductRequest(
+        name: 'Basic Plan',
+        listPrice: 10.00,
+        billingFrequency: 'monthly',
+        categoryId: $category->id,
+    ),
+    new CreateProductRequest(
+        name: 'Premium Plan',
+        listPrice: 100.00,
+        billingFrequency: 'monthly',
+        categoryId: $category->id,
+    ),
+]);
+
+echo "Imported: {$result->imported}\n";
+
+// Partial success: inspect failed rows instead of assuming all-or-nothing
+foreach ($result->failed as $issue) {
+    echo "Row {$issue->row} failed: {$issue->reason}\n";     // row is 1-indexed
+}
+foreach ($result->adjusted as $issue) {
+    echo "Row {$issue->row} adjusted: {$issue->reason}\n";   // imported with a server-side tweak
+}
+```
+
+Response: a `BulkImportResult` with `int $imported`, `BulkImportRowIssue[] $failed`, and `BulkImportRowIssue[] $adjusted`; each `BulkImportRowIssue` exposes `int $row` (1-indexed) and `string $reason`.
+
+**Company rows.** `bulkCreateCompanies` takes `CreateCompanyRequest` objects (`TurboDocx\Types\Requests\Quote\CreateCompanyRequest`), not plain arrays. Constructor fields: `string $name` and `array $contacts` (required, at least one contact), then optional `?string $phone`, `$city`, `$state`, `$country`, `$industryId`. Each contact is a plain array with `name` and `email` (required) and optional `phone` and `title`:
+
+```php
+use TurboDocx\Types\Requests\Quote\CreateCompanyRequest;
+
+$result = TurboQuote::bulkCreateCompanies(array_map(
+    fn (array $r) => new CreateCompanyRequest(
+        name: $r['name'],
+        contacts: [['name' => $r['contactName'], 'email' => $r['contactEmail']]],
+        city: $r['city'] ?? null,
+        country: $r['country'] ?? null,
+    ),
+    $rows,
+));
+```
+
+Bulk-create semantics:
+
+- **Partial success** — a failed row does **not** throw and does **not** roll back the rows before it. It is reported in `$result->failed` with a 1-indexed `row` and a `reason`. Rows the server tweaked (e.g. an unknown bundle item dropped) appear in `$result->adjusted`. Always read `$result->failed` rather than assuming every row imported.
+- **500-row cap per request** — more than 500 rows throws `ValidationException` (400). The SDK does not validate the rows or the cap client-side.
+- **Roles** — available to administrator and contributor API keys.
+
+### TurboQuote error handling
+
+```php
+use TurboDocx\Exceptions\TurboDocxException;
+use TurboDocx\Exceptions\AuthenticationException;
+use TurboDocx\Exceptions\AuthorizationException;
+use TurboDocx\Exceptions\ValidationException;
+use TurboDocx\Exceptions\NotFoundException;
+use TurboDocx\Exceptions\RateLimitException;
+use TurboDocx\Exceptions\NetworkException;
+
+try {
+    TurboQuote::sendQuote($quoteId);
+} catch (ValidationException $e) {
+    // 400 — missing required field or invalid value (e.g., unknown currency)
+} catch (AuthenticationException $e) {
+    // 401 — bad/missing API key, or missing orgId
+} catch (NotFoundException $e) {
+    // 404 — quote, product, or price book not found
+} catch (RateLimitException $e) {
+    // 429 — back off and retry
+} catch (NetworkException $e) {
+    // No status — request never reached the server
+} catch (TurboDocxException $e) {
+    // Any other typed SDK error
+}
+```
+
+## Laravel Integration Example
+
+```php
+// routes/api.php
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SignatureController;
+
+Route::prefix('signatures')->group(function () {
+    Route::post('/send', [SignatureController::class, 'send']);
+    Route::get('/{id}/status', [SignatureController::class, 'status']);
+});
+```
+
+```php
+// app/Http/Controllers/SignatureController.php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use TurboDocx\TurboSign;
+use TurboDocx\Types\Recipient;
+use TurboDocx\Types\Field;
+use TurboDocx\Types\SignatureFieldType;
+use TurboDocx\Types\TemplateConfig;
+use TurboDocx\Types\FieldPlacement;
+use TurboDocx\Types\Requests\SendSignatureRequest;
+use TurboDocx\Exceptions\TurboDocxException;
+
+class SignatureController extends Controller
+{
+    public function send(Request $request): JsonResponse
+    {
+        try {
+            $file = $request->file('file');
+            $recipients = json_decode($request->input('recipients'), true);
+            $fields = json_decode($request->input('fields'), true);
+
+            $result = TurboSign::sendSignature(
+                new SendSignatureRequest(
+                    file: $file->getContent(),
+                    documentName: $request->input('document_name'),
+                    recipients: array_map(
+                        fn($r) => new Recipient($r['name'], $r['email'], $r['signingOrder'] ?? 1),
+                        $recipients,
+                    ),
+                    fields: array_map(
+                        fn($f) => new Field(
+                            type: SignatureFieldType::from($f['type']),
+                            recipientEmail: $f['recipientEmail'],
+                            template: new TemplateConfig(
+                                anchor: $f['template']['anchor'],
+                                placement: FieldPlacement::from($f['template']['placement'] ?? 'replace'),
+                                size: $f['template']['size'] ?? null,
+                            ),
+                        ),
+                        $fields,
+                    ),
+                )
+            );
+
+            return response()->json($result);
+        } catch (TurboDocxException $e) {
+            return response()->json(
+                ['error' => $e->getMessage(), 'code' => $e->errorCode],
+                $e->statusCode ?? 500,
+            );
+        }
+    }
+
+    public function status(string $id): JsonResponse
+    {
+        try {
+            $status = TurboSign::getStatus($id);
+            return response()->json($status);
+        } catch (TurboDocxException $e) {
+            return response()->json(
+                ['error' => $e->getMessage(), 'code' => $e->errorCode],
+                $e->statusCode ?? 500,
+            );
+        }
+    }
+}
+```
+
+## Error Handling
+
+All SDK exceptions live in `TurboDocx\Exceptions` and extend `TurboDocxException`. Each carries two
+**public readonly properties** — `$e->statusCode` (`?int`) and `$e->errorCode` (`?string`) — plus the
+standard `$e->getMessage()`. Do **not** use `getStatusCode()` / `getCode()`: they do not exist / are
+always `0`.
+
+```php
+use TurboDocx\Exceptions\TurboDocxException;
+use TurboDocx\Exceptions\AuthenticationException;
+use TurboDocx\Exceptions\AuthorizationException;
+use TurboDocx\Exceptions\ValidationException;
+use TurboDocx\Exceptions\ConflictException;
+use TurboDocx\Exceptions\NotFoundException;
+use TurboDocx\Exceptions\RateLimitException;
+use TurboDocx\Exceptions\NetworkException;
+
+try {
+    TurboSign::sendSignature($request);
+} catch (ValidationException $e) {
+    // 400 — bad request (e.g., missing senderEmail)
+} catch (AuthenticationException $e) {
+    // 401 — invalid/missing API key
+} catch (AuthorizationException $e) {
+    // 403 — key lacks the required role
+} catch (NotFoundException $e) {
+    // 404 — document/org not found
+} catch (ConflictException $e) {
+    // 409 — resource already exists
+} catch (RateLimitException $e) {
+    // 429 — too many requests
+} catch (NetworkException $e) {
+    // statusCode is null — the request never reached the server
+} catch (TurboDocxException $e) {
+    // Catch-all for any other SDK error (e.g. raw 5xx)
+    echo "Error {$e->statusCode} {$e->errorCode}: {$e->getMessage()}\n";
+}
+```
+
+`errorCode` is **always populated** on the typed subclasses: the API's code when one is present,
+otherwise the class default — `VALIDATION_ERROR`, `AUTHENTICATION_ERROR`, `AUTHORIZATION_ERROR`,
+`NOT_FOUND`, `CONFLICT`, `RATE_LIMIT_EXCEEDED`, `NETWORK_ERROR`. So you can branch on
+`$e->errorCode` without a null check:
+
+```php
+} catch (ValidationException $e) {
+    if ($e->errorCode === 'SenderEmailRequired') {
+        // configure a sender email on the org's quote template
+    }
+}
+```
+
+## Method Reference
+
+| Method | Description |
+|--------|-------------|
+| `TurboSign::sendSignature($request)` | Send document for e-signature |
+| `TurboSign::createSignatureReviewLink($request)` | Preview without emails |
+| `TurboSign::getTemplateSignatureSetup($templateId)` | List a template's signer roles (`key`, `order`, `hasSavedSigner`, `fieldCount`) to send it with `Recipient` `role` |
+| `TurboSign::getStatus($documentId)` | Get document status (returns `DocumentStatusResponse` — `status` + `expiresAt`) |
+| `TurboSign::download($documentId)` | Download signed PDF as string |
+| `TurboSign::void($documentId, $reason)` | Cancel a signature request (reason required) |
+| `TurboSign::resend($documentId, $recipientIds)` | Resend signature email to recipient UUIDs |
+| `TurboSign::getAuditTrail($documentId)` | Get complete audit trail |
+| `Deliverable::configure($config)` | Configure the deliverable client (no senderEmail needed) |
+| `Deliverable::generateDeliverable($request)` | Render a template with variables into a new deliverable |
+| `Deliverable::listDeliverables($options)` | Paginated list with search and tag filters |
+| `Deliverable::getDeliverableDetails($id, $showTags)` | Get full record including variables and fonts |
+| `Deliverable::updateDeliverableInfo($id, $request)` | Update name, description, or tags (tags replace) |
+| `Deliverable::deleteDeliverable($id)` | Soft-delete (data retained, hidden from list) |
+| `Deliverable::downloadSourceFile($id)` | Download original DOCX/PPTX as a byte string |
+| `Deliverable::downloadPDF($id)` | Download rendered PDF as a byte string |
+| `TurboPartner::configure($config)` | Set partner credentials (PartnerClientConfig) |
+| `TurboPartner::createOrganization($request)` | Provision a new customer org |
+| `TurboPartner::listOrganizations($request?)` | List managed orgs (uses limit/offset, not page) |
+| `TurboPartner::getOrganizationDetails($orgId)` | Get org details including features + tracking |
+| `TurboPartner::updateOrganizationInfo($orgId, $request)` | Rename an org |
+| `TurboPartner::deleteOrganization($orgId)` | Delete an org |
+| `TurboPartner::updateOrganizationEntitlements($orgId, $request)` | Update features and/or tracking |
+| `TurboPartner::getOrganizationPreferences($orgId)` | Read the org's TurboSign display preferences |
+| `TurboPartner::updateOrganizationPreferences($orgId, $preferences)` | Set display preferences (camelCase array of only the keys you pass) |
+| `TurboPartner::listOrganizationUsers($orgId, $request?)` | Paginated org-user list |
+| `TurboPartner::addUserToOrganization($orgId, $request)` | Invite a user with an ORG role (`admin` \| `contributor` \| `user` \| `viewer`) |
+| `TurboPartner::updateOrganizationUserRole($orgId, $userId, $request)` | Change a user's role |
+| `TurboPartner::removeUserFromOrganization($orgId, $userId)` | Remove user from org |
+| `TurboPartner::resendOrganizationInvitationToUser($orgId, $userId)` | Resend invite email |
+| `TurboPartner::listOrganizationApiKeys($orgId, $request?)` | Paginated org API-key list |
+| `TurboPartner::createOrganizationApiKey($orgId, $request)` | Create org key (value returned only on creation) |
+| `TurboPartner::updateOrganizationApiKey($orgId, $keyId, $request)` | Rename or change role |
+| `TurboPartner::revokeOrganizationApiKey($orgId, $keyId)` | Revoke org key |
+| `TurboPartner::listPartnerApiKeys($request?)` | Paginated partner API-key list |
+| `TurboPartner::createPartnerApiKey($request)` | Create partner key with scopes |
+| `TurboPartner::updatePartnerApiKey($keyId, $request)` | Rename, edit scopes |
+| `TurboPartner::revokePartnerApiKey($keyId)` | Revoke partner key |
+| `TurboPartner::listPartnerPortalUsers($request?)` | Paginated partner-portal user list |
+| `TurboPartner::addUserToPartnerPortal($request)` | Invite with a PARTNER role (`admin` \| `member` \| `viewer`) + all 7 permission flags |
+| `TurboPartner::updatePartnerUserPermissions($userId, $request)` | Update role and/or permissions. `permissions` is optional, but if passed it must carry **all 7 flags** — there is no partial update |
+| `TurboPartner::removeUserFromPartnerPortal($userId)` | Remove partner-portal user |
+| `TurboPartner::resendPartnerPortalInvitationToUser($userId)` | Resend invite email |
+| `TurboPartner::getPartnerAuditLogs($request?)` | Filter audit logs by action/resource/date/success |
+| `TurboWebhooks::createWebhook($urls, $events)` | Subscribe the org to events. `urls`: 1–10 HTTPS URLs; `events`: at least 1. Requires an **administrator** API key |
+| `TurboWebhooks::getWebhook()` | Get the org's signature webhook + delivery stats |
+| `TurboWebhooks::updateWebhook(...)` | Patch URLs / events / isActive. Args are optional, but a supplied `urls`/`events` still has to be non-empty (`[]` is a 400) |
+| `TurboWebhooks::deleteWebhook()` | Soft-delete the webhook |
+| `TurboWebhooks::testWebhook($eventType, $payload)` | Fire a test delivery to all URLs |
+| `TurboWebhooks::notifyWebhook($eventType, $payload)` | Manual notify; same handler as testWebhook |
+| `TurboWebhooks::regenerateWebhookSecret()` | Rotate the HMAC secret (shown once) |
+| `TurboWebhooks::listWebhookDeliveries(...)` | Page through delivery history with filters |
+| `TurboWebhooks::replayWebhookDelivery($id)` | Manually retry a past delivery |
+| `TurboWebhooks::getWebhookStats($days)` | Aggregate stats over a sliding window |
+| `\TurboDocx\Utils\verifyWebhookSignature(...)` | Free function — verify inbound `X-TurboDocx-Signature` |
+| **TurboQuote — Quotes** | |
+| `TurboQuote::createQuote($request)` | Create a new quote |
+| `TurboQuote::listQuotes($request?)` | List quotes with pagination, filters, and stats |
+| `TurboQuote::getQuote($id)` | Get quote by ID (`statusInfo` merged in; `preparedBy` present on this call only) |
+| `TurboQuote::updateQuote($id, $request)` | Update quote fields (PATCH — null-clears nullable fields) |
+| `TurboQuote::deleteQuote($id)` | Delete a quote |
+| `TurboQuote::duplicateQuote($id)` | Duplicate a quote |
+| `TurboQuote::downloadQuotePdf($id)` | Download quote as raw PDF bytes |
+| `TurboQuote::sendQuote($id, $request?)` | Send quote to the contact |
+| `TurboQuote::sendQuoteWithDeliverable($id, $request)` | Send with a TurboDocx-generated document attached |
+| `TurboQuote::declineQuote($id, $request)` | Mark a quote as declined (reason required once sent; a draft's is not recorded) |
+| `TurboQuote::voidQuote($id, $request)` | Void a sent quote |
+| `TurboQuote::handleExpiredQuote($id, $request)` | Void or decline an expired sent quote and re-issue it as a duplicate. `action` is `'void'` \| `'decline'` only; `reason` (max 190) and `newValidUntil` (ISO date) are both required |
+| `TurboQuote::applyPriceBook($quoteId, $priceBookId)` | Apply a price book, repricing line items |
+| `TurboQuote::removePriceBook($quoteId)` | Remove the applied price book |
+| `TurboQuote::createAndSend($request)` | Create quote + add items + send in one call |
+| **TurboQuote — Line Items** | |
+| `TurboQuote::listLineItems($quoteId, $request?)` | List items on a quote |
+| `TurboQuote::addLineItems($quoteId, $items)` | Add 1–50 product line items (single or array). `productId` (may be null), `productName`, `unitPrice`, `billingFrequency` all required |
+| `TurboQuote::addBundleLineItems($quoteId, $items)` | Add 1–50 bundle line items; each needs only `bundleId` + `bundleName` (the server expands the children) |
+| `TurboQuote::updateLineItem($quoteId, $itemId, $request)` | Update a line item |
+| `TurboQuote::removeLineItem($quoteId, $itemId)` | Remove a line item |
+| **TurboQuote — Products** | |
+| `TurboQuote::listProducts($request?)` | List catalog products |
+| `TurboQuote::createProduct($request)` | Create a product (supports image upload via multipart) |
+| `TurboQuote::bulkCreateProducts($rows)` | Bulk-import products; each row needs `name`, `categoryId` (UUID), `listPrice`, `billingFrequency`. Returns a partial-success `BulkImportResult` |
+| `TurboQuote::getProduct($id)` | Get product by ID |
+| `TurboQuote::updateProduct($id, $request)` | Update a product |
+| `TurboQuote::deleteProduct($id)` | Delete a product |
+| `TurboQuote::duplicateProduct($id)` | Duplicate a product |
+| `TurboQuote::getProductPrimaryImages($productIds)` | Batch-fetch primary images for product IDs |
+| **TurboQuote — Price Books** | |
+| `TurboQuote::listPriceBooks($request?)` | List price books |
+| `TurboQuote::createPriceBook($request)` | Create a price book |
+| `TurboQuote::bulkCreatePriceBooks($rows)` | Bulk-import price books; returns a partial-success `BulkImportResult` |
+| `TurboQuote::getPriceBook($id)` | Get price book by ID |
+| `TurboQuote::updatePriceBook($id, $request)` | Update a price book |
+| `TurboQuote::deletePriceBook($id)` | Delete a price book |
+| `TurboQuote::duplicatePriceBook($id)` | Duplicate a price book |
+| `TurboQuote::listPriceBookProducts($id, $request?)` | List products with custom pricing in a price book |
+| **TurboQuote — Bundles** | |
+| `TurboQuote::listBundles($request?)` | List catalog bundles |
+| `TurboQuote::createBundle($request)` | Create a bundle |
+| `TurboQuote::bulkCreateBundles($rows)` | Bulk-import bundles; returns a partial-success `BulkImportResult` |
+| `TurboQuote::getBundle($id)` | Get bundle by ID |
+| `TurboQuote::updateBundle($id, $request)` | Update a bundle |
+| `TurboQuote::deleteBundle($id)` | Delete a bundle |
+| `TurboQuote::duplicateBundle($id)` | Duplicate a bundle |
+| **TurboQuote — Companies** | |
+| `TurboQuote::listCompanies($request?)` | List companies |
+| `TurboQuote::createCompany($request)` | Create a company (requires at least one contact in `contacts`) |
+| `TurboQuote::bulkCreateCompanies($rows)` | Bulk-import companies; returns a partial-success `BulkImportResult` |
+| `TurboQuote::getCompany($id)` | Get company by ID |
+| `TurboQuote::updateCompany($id, $request)` | Update a company |
+| `TurboQuote::deleteCompany($id)` | Delete a company |
+| `TurboQuote::listCompanyContacts($companyId, $request?)` | List contacts for a company |
+| **TurboQuote — Contacts** | |
+| `TurboQuote::listContacts($request?)` | List contacts |
+| `TurboQuote::createContact($request)` | Create a contact |
+| `TurboQuote::bulkCreateContacts($rows)` | Bulk-import contacts; returns a partial-success `BulkImportResult` |
+| `TurboQuote::updateContact($id, $request)` | Update a contact |
+| `TurboQuote::deleteContact($id)` | Delete a contact |
+| **TurboQuote — Templates** | |
+| `TurboQuote::listTemplates($request?)` | List quote templates |
+| `TurboQuote::getTemplate()` | Get the org's active quote template (singleton endpoint). Self-heals: auto-creates one from org branding if none exists, so it always returns a template |
+| `TurboQuote::getTemplateById($id)` | Get a template by ID |
+| `TurboQuote::createTemplate($request)` | Effectively unreachable — the template is auto-provisioned, so this throws 400 `TEMPLATE_ALREADY_EXISTS` on any established org. Use `getTemplate()` → `updateTemplate()` |
+| `TurboQuote::updateTemplate($id, $request)` | Update a quote template |
+| `TurboQuote::deleteTemplate($id)` | Delete a quote template |
+| **TurboQuote — Types** | |
+| `TurboQuote::listTypes($request?)` | List quote types/categories |
+| `TurboQuote::createType($request)` | Create a type/category |
+| `TurboQuote::bulkCreateTypes($rows)` | Bulk-import types/categories; returns a partial-success `BulkImportResult` |
+| `TurboQuote::updateType($id, $request)` | Update a type/category |
+| `TurboQuote::deleteType($id)` | Delete a type/category |
+| **TurboQuote — Quote Numbering** | |
+| `TurboQuote::getQuoteNumberConfig()` | Get the org's quote-number config (admin only) |
+| `TurboQuote::updateQuoteNumberConfig($format)` | Update the quote-number format (admin only) |
+
+## Gotchas
+
+- **TurboSign send 400 codes** (read with `$e->errorCode`; the message names the problem): `FieldsRequired` (a send, not a review link, with no or empty fields and no recipient `role`), `FieldPageOutOfRange` (a field's `page` is past the last page), `UnknownSignerRole`, `DuplicateSignerRole` (two recipients for one role), `SignerRoleUnfilled` (a role has no recipient and no saved signer), `TemplateHasNoSignerRoles` (`role` used on a template with no saved setup), `RoleRequiresTemplate` (`role` without `templateId`), `TemplateRolesNeedPdfTemplate` (roles on a non-PDF template). Surface the message to the user.
+- **PHP 8.1+ required** for named arguments and enum support
+- **`senderEmail` is required** for TurboSign — configure globally or pass per-call; `HttpClientConfig` throws `ValidationException` without it. **`senderName` is optional** — when omitted the sender name resolves to **the API key's name** (not the org name), so name your keys recognisably.
+- **All SDK exceptions are in `TurboDocx\Exceptions`** (`TurboDocxException` + `ValidationException`, `AuthenticationException`, `AuthorizationException`, `NotFoundException`, `ConflictException`, `RateLimitException`, `NetworkException`). Read the HTTP status off the **public readonly property** `$e->statusCode` and the code off `$e->errorCode` — there is no `getStatusCode()`, and `$e->getCode()` is always `0`.
+- **PHP SDK uses static methods** — configure once, call on the class
+- **Partner API keys are distinct** from regular API keys — using the wrong one returns `AuthenticationException`
+- **Laravel config**: add TurboSign::configure() in a service provider's `boot()` method for clean initialization
+- **No `signUrl` on send/review recipients.** `SendSignatureResponse::$recipients` and `CreateSignatureReviewLinkResponse::$recipients` are `?array` of **plain arrays** (`id`, `name`, `email`, `metadata`) — not `RecipientResponse` objects, and they carry no `signUrl`. Use `createSignatureReviewLink`'s top-level `previewUrl` for the document-level preview; the per-recipient `signUrl` property exists only on `RecipientResponse`, which these endpoints do not return.
+- **`resend` takes recipient UUIDs** (array of strings), not email addresses — fetch them from the send/review response or `getAuditTrail`. Pass an empty array to resend to all pending recipients.
+- **`download` is a two-step operation.** `GET /api/signature/:id/download` returns JSON `{"downloadUrl", "fileName"}` — not bytes — and the presigned `downloadUrl` must then be fetched **without an `Authorization` header** (S3 rejects a presigned request that also carries one). The SDK does both steps for you; hand-rolled REST calls must too.
+- **Two different role enums — do not mix them.** Organization users and organization API keys take `OrgUserRole`: `admin` / `contributor` / `user` / `viewer`. Partner-portal users take `admin` / `member` / `viewer`. `member` is not a valid org role, and `contributor` / `user` are not valid partner roles — either mistake is a 400.
+- **Partner `permissions` has no partial update.** The argument is optional on `UpdatePartnerUserRequest`, but every key inside the object is required by the backend, so a supplied `PartnerPermissions` must carry **all seven** flags: `canManageOrgs`, `canManageOrgUsers`, `canManagePartnerUsers`, `canManageOrgAPIKeys`, `canManagePartnerAPIKeys`, `canUpdateEntitlements`, `canViewAuditLogs`. Every constructor arg **defaults to `false`**, so naming only the ones you want to enable still sends all 7 and turns the rest off — **silently revoking those permissions**. Read the user's current permissions and carry them across; to update just the role, omit `permissions` entirely.
+- **`updateOrganizationEntitlements` takes `features` and `tracking` — the two key sets are not interchangeable.** `features` holds capability/limit columns (`maxUsers`, `maxStorage`, `maxAPIKeys`, `hasTDAI`, …); `tracking` holds usage counters, which use the `num*` names: `numUsers`, `numProjectspaces`, `numTemplates`, `storageUsed`, `numGeneratedDeliverables`, `numSignaturesUsed`, `numQuotesSent`, `currentAICredits`. A `maxUsers` key inside `tracking` is rejected. `currentAICredits` accepts `-1` (unlimited); every other counter floors at 0.
+- **TurboWebhooks is one-per-org** — every call hits the fixed `signature` webhook. Trying to create it twice returns `ConflictException` (409); update or delete the existing one instead.
+- **TurboWebhooks requires admin** — the routes are gated by `requireOrgRole(administrator)`. A non-admin TDX- key throws `AuthorizationException` (403).
+- **`createWebhook` URLs must be HTTPS** — non-HTTPS receivers return `ValidationException` (400). For local development, expose your receiver via an HTTPS tunnel (ngrok, cloudflared) and use the tunnel URL.
+- **`urls` is 1–10, `events` is 1+ — on create AND on update.** Both args are optional on `updateWebhook`, but optional does not relax the minimum: passing `urls: []` or `events: []` throws `ValidationException` (400). To leave routing alone, omit the argument rather than passing an empty array.
+- **Save the secret immediately** — `createWebhook` and `regenerateWebhookSecret` return the HMAC secret ONCE. There is no endpoint to retrieve it later. If you lose it, `regenerateWebhookSecret` mints a new one (and invalidates the old).
+- **Signature verification** — never `json_decode` the request body before passing it to `verifyWebhookSignature()`. The HMAC is over the raw bytes; re-encoded JSON will not match.
+
+- **TurboQuote decimal fields come back as numbers**, not strings — the response normalizer coerces `listPrice`, `unitPrice`, `discountPercent`, `subtotal`, `grandTotal`, `taxRate`, and related fields from the backend's string representation to PHP floats. Do not try to parse them yourself.
+- **`TurboQuote` takes no `senderEmail`/`senderName`, but sending a quote still emails the recipient.** `sendQuote` creates a signature request; the sender identity comes from the **org's quote template** (Quote Settings). An API-key caller whose template has no sender email gets `400 SenderEmailRequired`. Other send preconditions each have their own 400 code: `QuoteNotSendable`, `QuoteValidUntilRequired`, `QuoteExpired`, `QuoteHasNoLineItems`, `QuoteContactRequired`, `QuoteCustomerInactive`.
+- **`preparedBy` is only on the single-quote fetch.** `getQuote($id)` returns `$quote->preparedBy` (`['name' => ..., 'email' => ...]`); `listQuotes()` rows do not carry it.
+- **PATCH null-clears nullable fields** — `updateQuote` (and other PATCH methods) include explicitly-set `null` values in the request body, which clears that field on the server. Only fields you actually pass are sent; fields you omit are left unchanged.
+- **`discountType` is `'percent'` or `'amount'`** — use the string literals or `DiscountType::PERCENT->value` / `DiscountType::AMOUNT->value`; mixing them up silently falls back to the backend default.
+- **Every product line item needs four fields: `productId`, `productName`, `unitPrice`, `billingFrequency`.** `productId` must be *passed*, but its value may be `null` — that is how you add a custom, non-catalog item. `quantity` defaults to 1.
+- **Three distinct bundle shapes — don't conflate them.** `createBundle`'s `items` (catalog bundle contents) need `productId`, `unitPrice`, `billingFrequency` and nothing else — no `productName`, and unknown keys are rejected. `addBundleLineItems` (attaching a bundle to a quote) needs only `bundleId` + `bundleName`; the server expands the child products for you.
+- **Line-item array limits: `addLineItems` and `addBundleLineItems` accept 1–50 items per call; reorder accepts up to 200.** Chunk larger imports.
+- **`termDays` defaults to 60** (not 30), maxes out at 3650, and `-1` means auto-renewal. `renewalPeriod` (`'weekly' | 'monthly' | 'quarterly' | 'annually'`) is **required when `termDays` is -1** and must be absent/`null` for any other `termDays` — sending it otherwise is a 400.
+- **`handleExpiredQuote` only accepts `action: 'void'` or `'decline'`.** `'extend'` and `'resend'` do not exist in the API and return a 400. `reason` (max 190 chars) and `newValidUntil` (ISO date) are both required; the endpoint voids/declines the original and issues a duplicate carrying the new date — that duplicate *is* the "extend".
+- **Quote templates are auto-provisioned.** `getTemplate()` self-heals — it creates one from org branding when none exists — so `createTemplate()` on an established org throws 400 `TEMPLATE_ALREADY_EXISTS` and is effectively unreachable. Always do `getTemplate()` → `updateTemplate()`. `deleteTemplate()` is a reset-to-branding-defaults, not a permanent removal.
+- **Product images: max 5 per product, 2 MB each.** Exceeding either returns 400 `MAX_IMAGES_EXCEEDED`.
+- **Bulk creates are partial-success, not transactional.** `bulkCreateProducts`/`bulkCreatePriceBooks`/`bulkCreateBundles`/`bulkCreateCompanies`/`bulkCreateContacts`/`bulkCreateTypes` never throw on a bad row — read `$result->failed` (`BulkImportRowIssue[]` with 1-indexed `$row` + `$reason`) and `$result->adjusted`; earlier rows are not rolled back. Cap is 500 rows/request (over → `ValidationException` 400). Admin + contributor keys only.
+- **Bulk product rows take `categoryId`, never `categoryName`.** The row schema is strict and rejects unknown keys, so a `categoryName` field 400s the row. Resolve or create the category with `listTypes()` / `createType()` first and pass its UUID. Required per row: `name`, `categoryId`, `listPrice`, `billingFrequency`.
+
+**Full API reference:** https://docs.turbodocx.com/docs

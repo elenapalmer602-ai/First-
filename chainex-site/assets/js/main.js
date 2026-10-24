@@ -13,6 +13,24 @@
   /* Hero line pulses: SMIL ignores reduced motion, so pause it here */
   if(reduce){$$('.links-svg').forEach(function(s){if(s.pauseAnimations)s.pauseAnimations()})}
 
+  /* Hero: sit the rock edges on the horizon, and tilt the scene toward the pointer */
+  var hero=$('.hero'), art=$('.art');
+  if(hero&&art){
+    var placeHorizon=function(){var top=art.getBoundingClientRect().top-hero.getBoundingClientRect().top;hero.style.setProperty('--hz',(top+art.offsetWidth*.737)+'px');hero.classList.add('has-hz')};
+    placeHorizon();
+    if(window.ResizeObserver){new ResizeObserver(placeHorizon).observe(hero)}
+    window.addEventListener('resize',placeHorizon);
+    if(!reduce&&window.matchMedia('(pointer: fine)').matches){
+      hero.addEventListener('pointermove',function(e){
+        var r=art.getBoundingClientRect();
+        var x=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width-.5)*2));
+        var y=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-.5)*2));
+        art.style.setProperty('--mx',x.toFixed(3));art.style.setProperty('--my',y.toFixed(3));
+      });
+      hero.addEventListener('pointerleave',function(){art.style.setProperty('--mx','0');art.style.setProperty('--my','0')});
+    }
+  }
+
   /* Mobile menu */
   var menuBtn=$('#menuBtn'), menu=$('#mobileMenu');
   menuBtn.addEventListener('click',function(){var open=menu.hidden;menu.hidden=!open;menuBtn.setAttribute('aria-expanded',String(open));onScroll()});

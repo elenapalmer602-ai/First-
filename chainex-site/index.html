@@ -20,13 +20,7 @@
     <linearGradient id="gr-white" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#9DA0A8"/></linearGradient>
     <linearGradient id="gr-silver" gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="44" y2="44"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A3A6AE"/></linearGradient>
     <linearGradient id="gr-bronze" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21"><stop offset="0" stop-color="#FFFAF4"/><stop offset=".55" stop-color="#E9D6C4"/><stop offset="1" stop-color="#BFA690"/></linearGradient>
-    <linearGradient id="gr-bronze-lg" gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="44" y2="44"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#D9D6D2"/><stop offset="1" stop-color="#8F8B87"/></linearGradient>
-    <linearGradient id="gr-rim" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E9D3BF" stop-opacity=".12"/><stop offset=".7" stop-color="#F2E4D6" stop-opacity=".5"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".95"/></linearGradient>
-    <linearGradient id="gr-rock" x1="0" y1="0" x2="1" y2=".6"><stop offset="0" stop-color="#121214"/><stop offset=".65" stop-color="#0B0B0C"/><stop offset="1" stop-color="#232123"/></linearGradient>
     <linearGradient id="gr-fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    <mask id="m-fade"><rect x="0" y="168" width="440" height="72" fill="url(#gr-fade)"/></mask>
-    <radialGradient id="gr-dot"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#F3E3D3"/><stop offset="1" stop-color="#F3E3D3" stop-opacity="0"/></radialGradient>
-
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-tick" viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8.5"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/></symbol>
@@ -51,7 +45,7 @@
     <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
     <symbol id="i-message" viewBox="0 0 24 24"><path d="M4.5 4.5h10a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5H9.5L6 17.5v-3H4.5A2.5 2.5 0 0 1 2 12V7a2.5 2.5 0 0 1 2.5-2.5z"/><path d="M19.5 9A2.5 2.5 0 0 1 22 11.5v4a2.5 2.5 0 0 1-2.5 2.5H19v2.5L15.8 18H12"/></symbol>
     <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1.1 11.2a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 10.5V7a3 3 0 0 1 6 0v3.5"/></symbol>
-    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.5 3.5h8l4 4v13h-12z"/><path d="M14.5 3.5v4h4M9.5 12.5h6M9.5 16h6"/></symbol>
+    <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M3.5 9.5L12 4.5l8.5 5"/><path d="M5.5 10v7.5M9.8 10v7.5M14.2 10v7.5M18.5 10v7.5M3.5 20h17"/></symbol><symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.5 3.5h8l4 4v13h-12z"/><path d="M14.5 3.5v4h4M9.5 12.5h6M9.5 16h6"/></symbol>
   </defs>
 </svg>
 
@@ -88,63 +82,44 @@
 <main>
 <!-- HERO -->
 <header class="hero" id="top">
-  <div class="cliff l" aria-hidden="true"><svg viewBox="0 0 440 240" preserveAspectRatio="none"><path d="M0 18L28 10L52 22L80 15L104 33L140 44L168 61L210 78L250 100L300 122L350 140L400 156L440 168H0Z" fill="url(#gr-rock)"/><path d="M104 33L140 44L168 61L150 72L118 58Z M210 78L250 100L232 108L196 92Z M300 122L350 140L330 146L286 132Z" fill="#FFFFFF" opacity=".04"/><path d="M0 18L28 10L52 22L80 15L104 33L140 44L168 61L210 78L250 100L300 122L350 140L400 156L440 168" fill="none" stroke="url(#gr-rim)" stroke-width="3" opacity=".35" style="filter:blur(2px)"/><path d="M0 18L28 10L52 22L80 15L104 33L140 44L168 61L210 78L250 100L300 122L350 140L400 156L440 168" fill="none" stroke="url(#gr-rim)" stroke-width="1.2"/><g mask="url(#m-fade)" opacity=".6"><path d="M0 318L28 326L52 314L80 321L104 303L140 292L168 275L210 258L250 236L300 214L350 196L400 180L440 168V240H0Z" fill="#262426"/></g></svg></div>
-  <div class="cliff r" aria-hidden="true"><svg viewBox="0 0 440 240" preserveAspectRatio="none"><path d="M0 18L28 10L52 22L80 15L104 33L140 44L168 61L210 78L250 100L300 122L350 140L400 156L440 168H0Z" fill="url(#gr-rock)"/><path d="M104 33L140 44L168 61L150 72L118 58Z M210 78L250 100L232 108L196 92Z M300 122L350 140L330 146L286 132Z" fill="#FFFFFF" opacity=".04"/><path d="M0 18L28 10L52 22L80 15L104 33L140 44L168 61L210 78L250 100L300 122L350 140L400 156L440 168" fill="none" stroke="url(#gr-rim)" stroke-width="3" opacity=".35" style="filter:blur(2px)"/><path d="M0 18L28 10L52 22L80 15L104 33L140 44L168 61L210 78L250 100L300 122L350 140L400 156L440 168" fill="none" stroke="url(#gr-rim)" stroke-width="1.2"/><g mask="url(#m-fade)" opacity=".6"><path d="M0 318L28 326L52 314L80 321L104 303L140 292L168 275L210 258L250 236L300 214L350 196L400 180L440 168V240H0Z" fill="#262426"/></g></svg></div>
+  <div class="hero-light" aria-hidden="true"><i class="hl-warm"></i><i class="hl-cool"></i><i class="hl-beam"></i></div>
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="eyebrow">Supplier optimisation consultancy</p>
-      <h1 class="h-display">Smarter suppliers.<br>Stronger brands.</h1>
+      <p class="eyebrow hero-kicker"><span class="led" aria-hidden="true"></span>Supplier optimisation for beauty brands</p>
+      <h1 class="hero-title">Smarter suppliers.<br><em>Stronger brands.</em></h1>
       <p class="lede">Chainex helps ecommerce beauty brands optimise their supply chains, connect with verified suppliers and build more profitable, scalable businesses.</p>
       <div class="hero-ctas">
-        <a class="btn btn-ghost" href="#services">Explore our services<svg class="ico"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-primary" href="#brief" data-open-brief>Make a product brief<svg class="ico"><use href="#i-arrow"/></svg></a>
+        <button type="button" class="btn btn-ghost" data-open-book><svg class="ico"><use href="#i-calendar"/></svg>Book a call</button>
       </div>
+      <a class="hero-more" href="#about">See how we work<svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
     </div>
 
-    <div class="art">
-      <canvas class="motes" id="motes" aria-hidden="true"></canvas>
-      <div class="haze" aria-hidden="true"></div>
-      <div class="orb-top" aria-hidden="true"></div>
-      <div class="dome-clip" aria-hidden="true"><div class="dome"></div></div>
-      <div class="horizon-glow" aria-hidden="true"></div>
-      <div class="horizon" aria-hidden="true"></div>
-      <div class="floor" aria-hidden="true"></div>
-      <div class="mirror-clip" aria-hidden="true"><div class="dome"></div></div>
-      <div class="reflect" aria-hidden="true"></div>
-      <svg class="links-svg" viewBox="0 0 760 640" aria-hidden="true">
-        <g fill="none" stroke="rgba(255,244,234,.2)" stroke-width="1">
-          <ellipse cx="380" cy="290" rx="330" ry="235" stroke="rgba(255,244,234,.08)"/>
-          <path id="ln1" d="M246 128 C300 140 286 205 300 232"/>
-          <path id="ln2" d="M222 292 C254 292 274 300 298 302"/>
-          <path id="ln3" d="M536 170 C498 176 478 206 462 234"/>
-          <path id="ln4" d="M522 344 C498 342 484 326 462 318"/>
-          <path d="M120 178 C104 210 104 232 112 236"/>
-          <path d="M650 218 C664 254 656 276 644 286"/>
-        </g>
-        <g class="pulses">
-          <circle r="4" fill="url(#gr-dot)"><animateMotion dur="4.2s" repeatCount="indefinite" path="M246 128 C300 140 286 205 300 232"/></circle>
-          <circle r="4" fill="url(#gr-dot)"><animateMotion dur="3.6s" begin="-1.2s" repeatCount="indefinite" path="M222 292 C254 292 274 300 298 302"/></circle>
-          <circle r="4" fill="url(#gr-dot)"><animateMotion dur="4.6s" begin="-2.1s" repeatCount="indefinite" path="M536 170 C498 176 478 206 462 234"/></circle>
-          <circle r="4" fill="url(#gr-dot)"><animateMotion dur="3.9s" begin="-.6s" repeatCount="indefinite" path="M522 344 C498 342 484 326 462 318"/></circle>
-        </g>
-      </svg>
-      <div class="kiss t" aria-hidden="true"></div>
-      <div class="kiss b" aria-hidden="true"></div>
-      <div class="hub" aria-hidden="true">
-        <svg viewBox="0 0 48 48"><g fill="none" stroke="url(#gr-bronze-lg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M38.6 18.2A15.5 15.5 0 1 0 39.5 28"/><path d="M40.2 9.6l-1.4 8.8-8.6-2.2"/></g></svg>
+    <figure class="hero-visual" id="heroVisual">
+      <div class="hv">
+        <div class="hv-photo">
+          <img src="assets/img/hero-still.jpg" alt="Unbranded black skincare jars and tubes arranged on grey stone" width="1040" height="1300" fetchpriority="high" decoding="async">
+          <i class="hv-sheen" aria-hidden="true"></i>
+        </div>
       </div>
-      <a class="gcard c1" href="#quality"><span class="gi warm"><svg class="ico"><use href="#i-cube"/></svg></span><span>Verified<br>suppliers</span><svg class="ico ga"><use href="#i-arrow"/></svg></a>
-      <a class="gcard c2" href="#compare"><span class="gi white"><svg class="ico"><use href="#i-chart"/></svg></span><span>Cost<br>efficiency</span><svg class="ico ga"><use href="#i-arrow"/></svg></a>
-      <a class="gcard c3" href="#quality"><span class="gi warm"><svg class="ico"><use href="#i-shield"/></svg></span><span>Quality<br>assurance</span><svg class="ico ga"><use href="#i-arrow"/></svg></a>
-      <a class="gcard c4" href="#services"><span class="gi white"><svg class="ico"><use href="#i-globe"/></svg></span><span>Global<br>network</span><svg class="ico ga"><use href="#i-arrow"/></svg></a>
-    </div>
+      <i class="hv-floor" aria-hidden="true"></i>
+      <div class="hv-chip hv-a">
+          <span class="tick" aria-hidden="true"><svg class="ico"><use href="#i-tick"/></svg></span>
+          <span class="hv-t"><b>Supplier verified</b><small>Registration, certificates and bank details matched</small></span>
+        </div>
+        <div class="hv-chip hv-b">
+          <span class="ibox sm white" aria-hidden="true"><svg class="ico"><use href="#i-doc"/></svg></span>
+          <span class="hv-t"><b>Sample report ready</b><small>Tested to an agreed protocol, with photos and video</small></span>
+        </div>
+    </figure>
   </div>
 
   <div class="wrap">
-    <ul class="hero-strip">
-      <li><svg class="ico" aria-hidden="true"><use href="#i-cart"/></svg>Beauty ecommerce brands</li>
-      <li><svg class="ico" aria-hidden="true"><use href="#i-cube"/></svg>Trusted supplier network</li>
-      <li><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>Quality &amp; compliance support</li>
-      <li><svg class="ico" aria-hidden="true"><use href="#i-globe"/></svg>Scalable supply chain solutions</li>
+    <ul class="hero-proof" aria-label="How we work">
+      <li><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>Suppliers verified before you pay</li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg>Samples tested and documented</li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>Fees agreed in writing, up front</li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-landmark"/></svg>UK registered, No.&nbsp;17421524</li>
     </ul>
   </div>
 </header>
@@ -187,12 +162,15 @@
         </ul>
       </div>
     </div>
-    <div class="photo-pair">
-      <figure class="shot">
-        <div class="frame"><img src="assets/img/about-cleanroom.jpg" alt="Technician in cleanroom coveralls operating production equipment" width="1600" height="1200" loading="lazy"></div>
+    <div class="photo-trio">
+      <figure class="shot t-floor">
+        <div class="frame"><img src="assets/img/factory-floor.jpg" alt="Staff working at rows of assembly stations on a factory floor" width="1000" height="1268" loading="lazy"></div>
         <figcaption>We work at the supplier end of your supply chain, so you do not have to.</figcaption>
       </figure>
-      <figure class="shot glass">
+      <figure class="shot t-clean">
+        <div class="frame"><img src="assets/img/about-cleanroom.jpg" alt="Technician in cleanroom coveralls operating production equipment" width="1600" height="1200" loading="lazy"></div>
+      </figure>
+      <figure class="shot glass t-lab">
         <div class="frame"><img src="assets/img/lab-glassware.jpg" alt="Laboratory shelves of glass flasks and sample bottles above a bench" width="1200" height="1800" loading="lazy"></div>
         <figcaption>Samples and documents are checked before anything reaches your customers.</figcaption>
       </figure>
@@ -444,6 +422,19 @@
         <button type="button" class="svc" data-svc="ownbrand"><span class="svc-t">Own brand development</span><span class="svc-d">From a stock product to one that is genuinely yours.</span><svg class="ico"><use href="#i-arrow"/></svg></button>
       </div>
     </div>
+
+    <div class="ownbrand">
+      <figure class="ob-media"><img src="assets/img/blank-tube.jpg" alt="A blank white cosmetic tube standing in folds of white linen, ready for a brand's own label" width="960" height="1200" loading="lazy"></figure>
+      <div class="ob-copy">
+        <p class="eyebrow">Own brand development</p>
+        <h3 class="ob-title">From a stock product to one that is <em>genuinely yours.</em></h3>
+        <p class="lede">Your packaging, your label and the formulation options to match, scoped with vetted manufacturers and costed before you commit. It starts with a clear brief.</p>
+        <div class="ob-ctas">
+          <a class="btn btn-primary" href="#brief" data-open-brief>Make a product brief<svg class="ico"><use href="#i-arrow"/></svg></a>
+          <button type="button" class="btn btn-ghost" data-svc="ownbrand">See what is involved</button>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -633,10 +624,16 @@
 <!-- SETUPS -->
 <section class="section light" id="setups" aria-labelledby="setTitle">
   <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Setup modelling</p>
-      <h2 class="h-section" id="setTitle">Dropshipping, bulk or 3PL? <em>Modelled before you commit.</em></h2>
-      <p class="lede">How your product reaches customers changes your costs, delivery times and complaint rate. We cost each route on real quotes and recommend the one that fits your stage, not the biggest one.</p>
+    <div class="head-split">
+      <div class="sec-head">
+        <p class="eyebrow">Setup modelling</p>
+        <h2 class="h-section" id="setTitle">Dropshipping, bulk or 3PL? <em>Modelled before you commit.</em></h2>
+        <p class="lede">How your product reaches customers changes your costs, delivery times and complaint rate. We cost each route on real quotes and recommend the one that fits your stage, not the biggest one.</p>
+      </div>
+      <figure class="shot hs-media">
+        <div class="frame"><img src="assets/img/store-checkout.jpg" alt="A hand holding a phone showing an ecommerce payments page" width="1200" height="800" loading="lazy"></div>
+        <figcaption>Every order starts at your checkout. We model everything that happens after it.</figcaption>
+      </figure>
     </div>
 
     <div class="setup-bar">
@@ -703,16 +700,25 @@
         <div class="log-foot">Illustrative entries showing the kind of issues we catch and how they are logged.</div>
       </div>
     </div>
+    <figure class="shot banner care-banner">
+      <div class="frame"><img src="assets/img/tube-sealing.jpg" alt="Filled cosmetic tubes being capped and sealed at a production bench" width="1800" height="900" loading="lazy"></div>
+      <figcaption>After launch we keep checking, so later batches still match the sample you approved.</figcaption>
+    </figure>
   </div>
 </section>
 
 <!-- FAQ -->
 <section class="section light" id="faq" aria-labelledby="faqTitle">
   <div class="wrap faq-grid">
-    <div class="sec-head" style="margin-bottom:0">
-      <p class="eyebrow">Questions</p>
-      <h2 class="h-section" id="faqTitle">The things brands <em>ask us first.</em></h2>
-      <p class="lede">Anything else, just ask. We would rather answer it now than after you have committed.</p>
+    <div class="faq-side">
+      <div class="sec-head" style="margin-bottom:0">
+        <p class="eyebrow">Questions</p>
+        <h2 class="h-section" id="faqTitle">The things brands <em>ask us first.</em></h2>
+        <p class="lede">Anything else, just ask. We would rather answer it now than after you have committed.</p>
+      </div>
+      <figure class="shot faq-shot">
+        <div class="frame"><img src="assets/img/brand-owner.jpg" alt="A person at a laptop by a window, setting up an online store" width="900" height="1200" loading="lazy"></div>
+      </figure>
     </div>
     <div class="faq-list">
       <details open>

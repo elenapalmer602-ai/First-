@@ -10,68 +10,24 @@
   var onScroll=function(){nav.classList.toggle('scrolled',window.scrollY>24||!menu.hidden)};
   window.addEventListener('scroll',onScroll,{passive:true});
 
-  /* Hero line pulses: SMIL ignores reduced motion, so pause it here */
-  if(reduce){$$('.links-svg').forEach(function(s){if(s.pauseAnimations)s.pauseAnimations()})}
-
-  /* Hero: sit the rock edges on the horizon, and tilt the scene toward the pointer */
-  var hero=$('.hero'), art=$('.art');
-  if(hero&&art){
-    var placeHorizon=function(){var top=art.getBoundingClientRect().top-hero.getBoundingClientRect().top;hero.style.setProperty('--hz',(top+art.offsetWidth*.737)+'px');hero.classList.add('has-hz')};
-    placeHorizon();
-    if(window.ResizeObserver){new ResizeObserver(placeHorizon).observe(hero)}
-    window.addEventListener('resize',placeHorizon);
-    if(!reduce&&window.matchMedia('(pointer: fine)').matches){
-      hero.addEventListener('pointermove',function(e){
-        var r=art.getBoundingClientRect();
-        var x=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width-.5)*2));
-        var y=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-.5)*2));
-        art.style.setProperty('--mx',x.toFixed(3));art.style.setProperty('--my',y.toFixed(3));
-      });
-      hero.addEventListener('pointerleave',function(){art.style.setProperty('--mx','0');art.style.setProperty('--my','0')});
-    }
-  }
-
-  /* Hero: spotlight, magnetic button, drifting dust */
-  if(hero&&art){
-    var fine=window.matchMedia('(pointer: fine)').matches;
-    if(!reduce&&fine){
-      hero.addEventListener('pointermove',function(e){
-        var hr=hero.getBoundingClientRect();
-        hero.style.setProperty('--sx',(e.clientX-hr.left)+'px');hero.style.setProperty('--sy',(e.clientY-hr.top)+'px');
-      });
-      $$('.hero-ctas .btn').forEach(function(btn){
-        btn.addEventListener('pointermove',function(e){var r=btn.getBoundingClientRect();btn.style.translate=((e.clientX-r.left-r.width/2)*.18).toFixed(1)+'px '+((e.clientY-r.top-r.height/2)*.3).toFixed(1)+'px'});
-        btn.addEventListener('pointerleave',function(){btn.style.translate=''});
-      });
-    }
-    var cv=$('#motes'), cx=cv&&cv.getContext&&cv.getContext('2d');
-    if(cx&&!reduce){
-      var W=0,H=0,dpr=Math.min(window.devicePixelRatio||1,2),motes=[],mouse={x:-9999,y:-9999},on=true,raf=0;
-      var size=function(){var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0)};
-      var make=function(init){var a=Math.random()*6.283,rad=Math.pow(Math.random(),.6)*.34;
-        return {x:.5+Math.cos(a)*rad*.9,y:init?.42+Math.sin(a)*rad:.62+Math.random()*.1,r:.4+Math.random()*1.3,v:.00012+Math.random()*.00035,ph:Math.random()*6.283,vx:0,vy:0,warm:Math.random()<.45}};
-      for(var i=0;i<46;i++)motes.push(make(true));
-      cv.parentNode.addEventListener('pointermove',function(e){var r=cv.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top});
-      cv.parentNode.addEventListener('pointerleave',function(){mouse.x=mouse.y=-9999});
-      var tick=function(t){
-        cx.clearRect(0,0,W,H);
-        motes.forEach(function(m,k){
-          m.y-=m.v; m.ph+=.012;
-          var px=m.x*W,py=m.y*H,dx=px-mouse.x,dy=py-mouse.y,dd=dx*dx+dy*dy;
-          if(dd<9000){var f=(1-dd/9000)*.6;m.vx+=dx/Math.sqrt(dd+1)*f;m.vy+=dy/Math.sqrt(dd+1)*f}
-          m.vx*=.92;m.vy*=.92;px+=m.vx;py+=m.vy;m.x=px/W;m.y=py/H;
-          var fade=Math.min(1,(m.y-.08)/.2)*Math.min(1,(.8-m.y)/.15);
-          if(m.y<.06||fade<=0&&m.y<.5){motes[k]=make(false);return}
-          var a=Math.max(0,fade)*(.35+.35*Math.sin(m.ph));
-          cx.beginPath();cx.arc(px,py,m.r,0,6.283);
-          cx.fillStyle=m.warm?'rgba(232,214,194,'+a+')':'rgba(255,255,255,'+a+')';cx.fill();
-        });
-        raf=on&&!document.hidden?requestAnimationFrame(tick):0;
-      };
-      size();window.addEventListener('resize',size);
-      new IntersectionObserver(function(en){on=en[0].isIntersecting;if(on&&!raf)raf=requestAnimationFrame(tick)}).observe(cv);
-      document.addEventListener('visibilitychange',function(){if(on&&!document.hidden&&!raf)raf=requestAnimationFrame(tick)});
-    }
+  /* Hero: the photograph tilts toward the pointer, a soft spotlight follows it, the buttons lean in */
+  var hero=$('.hero'), hv=$('#heroVisual');
+  if(hero&&hv&&!reduce&&window.matchMedia('(pointer: fine)').matches){
+    var heroRaf=0,last=null;
+    var applyTilt=function(){
+      heroRaf=0;if(!last)return;
+      var hr=hero.getBoundingClientRect(),r=hv.getBoundingClientRect();
+      hero.style.setProperty('--sx',(last.x-hr.left)+'px');hero.style.setProperty('--sy',(last.y-hr.top)+'px');
+      var x=Math.max(-1,Math.min(1,((last.x-r.left)/r.width-.5)*2)),y=Math.max(-1,Math.min(1,((last.y-r.top)/r.height-.5)*2));
+      hv.style.setProperty('--ry',(x*6).toFixed(2)+'deg');hv.style.setProperty('--rx',(-y*4.5).toFixed(2)+'deg');
+      hv.style.setProperty('--px',x.toFixed(3));hv.style.setProperty('--py',y.toFixed(3));
+    };
+    hero.addEventListener('pointermove',function(e){last={x:e.clientX,y:e.clientY};if(!heroRaf)heroRaf=requestAnimationFrame(applyTilt)});
+    hero.addEventListener('pointerleave',function(){last=null;['--rx','--ry','--px','--py'].forEach(function(p){hv.style.removeProperty(p)})});
+    $$('.hero-ctas .btn').forEach(function(btn){
+      btn.addEventListener('pointermove',function(e){var r=btn.getBoundingClientRect();btn.style.translate=((e.clientX-r.left-r.width/2)*.16).toFixed(1)+'px '+((e.clientY-r.top-r.height/2)*.28).toFixed(1)+'px'});
+      btn.addEventListener('pointerleave',function(){btn.style.translate=''});
+    });
   }
 
   /* Savings chart: a faint line is always visible; the bright line draws over it on view.

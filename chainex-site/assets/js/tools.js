@@ -319,6 +319,10 @@
     var mf=$('#msgForm'),md=$('#msgDone');
     var toggleMsg=function(e){if(e)e.preventDefault();if(mp.hidden)openLayer(mp,'#msg-contact');else closeLayer(mp)};
     $$('[data-open-msg]').forEach(function(b){b.addEventListener('click',toggleMsg)});
+    var fab=$('.msg-fab'),heroEl=$('.hero');
+    if(fab&&heroEl&&'IntersectionObserver' in window){
+      new IntersectionObserver(function(en){fab.classList.toggle('away',en[0].intersectionRatio>.35&&mp.hidden)},{threshold:[0,.2,.35,.5,.75,1]}).observe(heroEl);
+    }
     $$('[data-close-msg]',mp).forEach(function(b){b.addEventListener('click',function(){closeLayer(mp)})});
     mf.addEventListener('submit',function(e){
       e.preventDefault();

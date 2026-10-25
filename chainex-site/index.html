@@ -449,11 +449,16 @@
       </div>
       <div class="pstack" id="pstack">
         <div class="ps-stage" role="slider" tabindex="0" aria-label="The six stages. Move across the stack to bring them together" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-valuetext="Stage 1 of 6, Discover">
-          <i class="ps-shadow" aria-hidden="true"></i>
-          <i class="ps-plate" style="--k:0"></i><i class="ps-plate" style="--k:1"></i><i class="ps-plate" style="--k:2"></i><i class="ps-plate" style="--k:3"></i><i class="ps-plate" style="--k:4"></i><i class="ps-plate top" style="--k:5"><svg class="ps-tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.6l4.1 4.1L18.6 7.4" pathLength="1"/></svg></i>
+          <canvas class="ps-layer ps-glow-w" aria-hidden="true"></canvas>
+          <canvas class="ps-layer ps-glow-g" aria-hidden="true"></canvas>
+          <canvas class="ps-layer ps-floor" aria-hidden="true"></canvas>
+          <canvas class="ps-layer ps-cv" aria-hidden="true"></canvas>
         </div>
         <div class="ps-cap" aria-hidden="true"><span class="ps-count"><b id="psN">01</b> / 06</span><span class="ps-name" id="psName">Discover</span></div>
-        <p class="ps-hint" aria-hidden="true"><svg class="ico"><use href="#i-back"/></svg>Pan across the stack<svg class="ico"><use href="#i-arrow"/></svg></p>
+        <div class="ps-foot">
+          <p class="ps-hint" aria-hidden="true"><svg class="ico"><use href="#i-back"/></svg>Pan across the stack<svg class="ico"><use href="#i-arrow"/></svg></p>
+          <button type="button" class="ps-toggle" aria-pressed="false" aria-label="Pause the stack animation"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M9 6.5v11M15 6.5v11"/><path class="i-play" d="M8.5 6.2v11.6l9.4-5.8z"/></svg></button>
+        </div>
       </div>
     </div>
     <div class="tl-wrap">

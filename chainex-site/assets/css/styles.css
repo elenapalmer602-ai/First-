@@ -1167,36 +1167,35 @@ html.lock .msg-fab{display:none}
 @keyframes bagFloat{0%,100%{translate:0 0}50%{translate:0 -6px}}
 @media (max-width:760px){.b-intro{grid-template-columns:minmax(0,1fr)}.b-hero{width:100%}.b-hero img{aspect-ratio:16/10}}
 
-/* Process: six plates, one per stage, brought together by panning across them */
+/* Process: six canvas-rendered plates. The stage carries the slider semantics; the canvases overhang it on
+   every side so glow, shadows and reflection are never cut off, and the section clips them at the page edge. */
+#process{overflow-x:clip}
 .pstack{position:relative;display:grid;justify-items:center;gap:6px;width:min(100%,380px)}
-.ps-stage{position:relative;width:100%;height:360px;perspective:1100px;transform-style:preserve-3d;cursor:ew-resize;touch-action:pan-y;border-radius:28px;outline:none;-webkit-user-select:none;user-select:none}
+.ps-stage{position:relative;width:100%;height:360px;cursor:ew-resize;touch-action:pan-y;border-radius:28px;outline:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .ps-stage:focus-visible{box-shadow:0 0 0 2px rgba(255,246,232,.55)}
-.ps-plate{--z:0px;--x:0px;--r:0deg;position:absolute;left:50%;top:50%;width:148px;height:148px;margin:-74px 0 0 -74px;border-radius:28px;
-  transform:translateX(var(--x)) rotateX(58deg) rotateZ(calc(45deg + var(--r))) translateZ(var(--z));
-  background:linear-gradient(135deg,#8E867A 0%,#5E5850 40%,#2F2C29 100%);
-  box-shadow:1px 1px 0 #47423D,2px 2px 0 #3F3B37,3px 3px 0 #393532,4px 4px 0 #34302D,5px 5px 0 #2F2C29,6px 6px 0 #2A2825,7px 7px 0 #262421,8px 8px 0 #22201E,9px 9px 0 #1E1D1B,10px 10px 0 #1B1A18,inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.05)}
-.ps-plate::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;box-shadow:0 0 0 1px rgba(255,240,220,.6),0 0 34px 6px rgba(255,226,184,.55);transition:opacity .6s}
-.ps-plate.lit::after{opacity:1;transition:opacity .12s}
-.ps-shadow{position:absolute;left:50%;top:50%;width:250px;height:80px;margin:-40px 0 0 -125px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.62),transparent);filter:blur(8px);transform:translateY(var(--sy,120px));pointer-events:none}
-.ps-shadow::after{content:"";position:absolute;inset:-30% -10%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,226,184,.5),transparent);opacity:var(--warm,0);filter:blur(10px)}
-.ps-tick{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;fill:none;stroke:url(#gr-green);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:rotate(-45deg) scale(.35);filter:drop-shadow(0 0 6px rgba(124,240,180,.85));transition:transform .75s cubic-bezier(.2,1.55,.4,1),opacity .3s}
-.ps-tick path{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .7s .12s ease-out}
-.pstack.done .ps-tick{opacity:1;transform:rotate(-45deg) scale(1)}
-.pstack.done .ps-tick path{stroke-dashoffset:0}
-.pstack.done .ps-plate.top{background:linear-gradient(135deg,#A5C2B2 0%,#56685E 42%,#25302A 100%)}
-.pstack.done .ps-plate.top::after{opacity:1;box-shadow:0 0 0 1px rgba(200,255,225,.55),0 0 40px 8px rgba(124,240,180,.42)}
-.ps-cap{display:flex;align-items:baseline;gap:12px;min-height:26px;font-size:15px;color:var(--text)}
+.ps-layer{position:absolute;left:0;top:0;pointer-events:none;display:block}
+.ps-glow-g{opacity:0}
+.ps-floor{will-change:transform,opacity}
+.ps-cap{position:relative;z-index:1;display:flex;align-items:baseline;gap:12px;min-height:26px;font-size:15px;color:var(--text)}
 .ps-count{font:500 12px var(--font);letter-spacing:.16em;color:var(--text-3);font-variant-numeric:tabular-nums}
 .ps-count b{color:var(--text);font-weight:600}
-.ps-name{font-weight:500}
+.ps-name{font-weight:500;transition:color .5s}
 .pstack.done .ps-name{color:#C9F7DE}
+.ps-foot{position:relative;z-index:1;display:flex;align-items:center;gap:14px}
 .ps-hint{display:inline-flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);transition:opacity .5s}
 .ps-hint .ico{width:14px;height:14px;animation:nudge 2.2s ease-in-out infinite}
 .ps-hint .ico:first-child{animation-direction:reverse}
 @keyframes nudge{0%,100%{translate:0 0}50%{translate:3px 0}}
 .pstack.used .ps-hint{opacity:.45}
+.ps-toggle{display:grid;place-items:center;width:30px;height:30px;padding:0;border:0;border-radius:50%;cursor:pointer;color:var(--text-2);background:linear-gradient(150deg,#323337,#232428);box-shadow:var(--raise-sm);transition:color .25s,box-shadow .25s}
+.ps-toggle:hover{color:var(--text);box-shadow:var(--raise-sm),0 0 0 1px rgba(255,255,255,.22)}
+.ps-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ps-toggle .i-play{display:none;fill:currentColor;stroke-width:1.2}
+.pstack.held .ps-toggle .i-pause{display:none}
+.pstack.held .ps-toggle .i-play{display:block}
+.pstack.static .ps-toggle{display:none}
 @media (max-width:860px){.pstack{justify-self:center;margin-top:8px}.ps-stage{height:330px}}
-@media (max-width:420px){.ps-stage{height:300px}.ps-plate{width:124px;height:124px;margin:-62px 0 0 -62px;border-radius:24px}}
+@media (max-width:420px){.ps-stage{height:300px}}
 @media (prefers-reduced-motion: reduce){.ps-hint .ico,.b-hero img{animation:none!important}}
 
 /* Boxes pop up one by one as each group scrolls into view; they stay readable before they arrive */

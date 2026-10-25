@@ -10,66 +10,43 @@
   var onScroll=function(){nav.classList.toggle('scrolled',window.scrollY>24||!menu.hidden)};
   window.addEventListener('scroll',onScroll,{passive:true});
 
-  /* Hero: the photograph tilts toward the pointer, a soft spotlight follows it, the floating labels
-     drift by depth and warm up as the pointer comes near, and the buttons lean in */
-  var hero=$('.hero'), hv=$('#heroVisual');
-  var fine=window.matchMedia&&window.matchMedia('(pointer: fine)').matches;
-  if(hero&&hv&&!reduce&&fine){
-    var labels=$$('.flabel',hv),heroRaf=0,last=null;
-    var applyTilt=function(){
-      heroRaf=0;if(!last)return;
-      var hr=hero.getBoundingClientRect(),r=hv.getBoundingClientRect();
-      var rects=labels.map(function(l){return l.getBoundingClientRect()});
-      hero.style.setProperty('--sx',(last.x-hr.left)+'px');hero.style.setProperty('--sy',(last.y-hr.top)+'px');
-      var x=Math.max(-1,Math.min(1,((last.x-r.left)/r.width-.5)*2)),y=Math.max(-1,Math.min(1,((last.y-r.top)/r.height-.5)*2));
-      hv.style.setProperty('--ry',(x*6).toFixed(2)+'deg');hv.style.setProperty('--rx',(-y*4.5).toFixed(2)+'deg');
-      hv.style.setProperty('--px',x.toFixed(3));hv.style.setProperty('--py',y.toFixed(3));
-      labels.forEach(function(l,k){
-        var b=rects[k],dx=last.x-(b.left+b.width/2),dy=last.y-(b.top+b.height/2);
-        l.style.setProperty('--near',Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/260).toFixed(3));
-      });
+  /* Hero film: plays muted on a loop while the hero is on screen. With reduced motion, or if the browser
+     blocks autoplay, the opening still shows instead (and the button offers to play it). */
+  var hero=$('.hero-film');
+  if(hero){
+    var vid=$('.hf-video',hero),hfBtn=$('.hf-toggle',hero),held=false,heroOn=true,loaded=false;
+    var FILM=[['assets/film/hero-av1.mp4','video/mp4; codecs="av01.0.08M.08"'],['assets/film/hero.mp4','video/mp4; codecs="avc1.640029"']];
+    var setStatic=function(on){hero.classList.toggle('hf-static',on);if(on)hero.classList.remove('hf-playing')};
+    var setBtn=function(paused){
+      hfBtn.hidden=false;hfBtn.setAttribute('aria-pressed',String(paused));
+      hfBtn.setAttribute('aria-label',paused?'Play the film':'Pause the film');
     };
-    hero.addEventListener('pointermove',function(e){last={x:e.clientX,y:e.clientY};if(!heroRaf)heroRaf=requestAnimationFrame(applyTilt)});
-    hero.addEventListener('pointerleave',function(){
-      last=null;['--rx','--ry','--px','--py'].forEach(function(p){hv.style.removeProperty(p)});
-      labels.forEach(function(l){l.style.removeProperty('--near')});
+    var play=function(){
+      if(reduce||held||!heroOn||document.hidden||!loaded)return;
+      var p=vid.play();
+      // only a refusal to autoplay counts; an interrupted play is not a failure
+      if(p&&p.catch)p.catch(function(e){if(e&&e.name==='NotAllowedError'&&vid.paused){setStatic(true);setBtn(true)}});
+    };
+    vid.addEventListener('playing',function(){hero.classList.add('hf-playing');setStatic(false);setBtn(false)});
+    hfBtn.addEventListener('click',function(){
+      if(vid.paused){held=false;setStatic(false);play()}
+      else{held=true;vid.pause();setBtn(true)}
     });
-    $$('.hero-ctas .btn').forEach(function(btn){
-      btn.addEventListener('pointermove',function(e){var r=btn.getBoundingClientRect();btn.style.translate=((e.clientX-r.left-r.width/2)*.16).toFixed(1)+'px '+((e.clientY-r.top-r.height/2)*.28).toFixed(1)+'px'});
-      btn.addEventListener('pointerleave',function(){btn.style.translate=''});
-    });
-  }
-
-  /* Hero: dust drifting up past the photograph, pushed aside by the pointer */
-  var cv=$('#motes'), cx=cv&&cv.getContext&&cv.getContext('2d');
-  if(cx&&!reduce){
-    var W=0,H=0,dpr=Math.min(window.devicePixelRatio||1,2),motes=[],mouse={x:-9999,y:-9999},on=true,raf=0;
-    var size=function(){var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0)};
-    var make=function(init){return {x:Math.random(),y:init?.1+Math.random()*.85:.86+Math.random()*.12,r:.4+Math.random()*1.3,v:.00016+Math.random()*.0004,ph:Math.random()*6.283,vx:0,vy:0,warm:Math.random()<.5}};
-    for(var i=0;i<54;i++)motes.push(make(true));
-    if(fine){
-      hv.addEventListener('pointermove',function(e){var r=cv.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top});
-      hv.addEventListener('pointerleave',function(){mouse.x=mouse.y=-9999});
+    if(reduce)setStatic(true);
+    else{
+      vid.innerHTML=FILM.map(function(s){return '<source src="'+s[0]+'" type=\''+s[1]+'\'>'}).join('');
+      // only when every source has failed does the still take over
+      vid.lastElementChild.addEventListener('error',function(){setStatic(true)});
+      vid.preload='auto';vid.load();loaded=true;
+      if('IntersectionObserver' in window){
+        new IntersectionObserver(function(en){
+          heroOn=en[0].isIntersecting;
+          if(heroOn)play();else if(!vid.paused)vid.pause();
+        },{threshold:.05}).observe(hero);
+      }
+      document.addEventListener('visibilitychange',function(){if(!document.hidden)play()});
+      play();
     }
-    var tick=function(){
-      cx.clearRect(0,0,W,H);
-      motes.forEach(function(m,k){
-        m.y-=m.v;m.ph+=.012;
-        var px=m.x*W,py=m.y*H,dx=px-mouse.x,dy=py-mouse.y,dd=dx*dx+dy*dy;
-        if(dd<10000){var f=(1-dd/10000)*.7;m.vx+=dx/Math.sqrt(dd+1)*f;m.vy+=dy/Math.sqrt(dd+1)*f}
-        m.vx*=.92;m.vy*=.92;px+=m.vx;py+=m.vy;m.x=px/W;m.y=py/H;
-        if(m.y<.03||m.x<-.05||m.x>1.05){motes[k]=make(false);return}
-        var fade=Math.max(0,Math.min(1,(m.y-.04)/.22)*Math.min(1,(.97-m.y)/.18));
-        var a=fade*(.32+.32*Math.sin(m.ph));
-        cx.beginPath();cx.arc(px,py,m.r,0,6.283);
-        cx.fillStyle=m.warm?'rgba(240,222,198,'+a+')':'rgba(255,255,255,'+a+')';cx.fill();
-      });
-      raf=on&&!document.hidden?requestAnimationFrame(tick):0;
-    };
-    size();window.addEventListener('resize',size);
-    if('IntersectionObserver' in window)new IntersectionObserver(function(en){on=en[0].isIntersecting;if(on){size();if(!raf)raf=requestAnimationFrame(tick)}}).observe(cv);
-    else raf=requestAnimationFrame(tick);
-    document.addEventListener('visibilitychange',function(){if(on&&!document.hidden&&!raf)raf=requestAnimationFrame(tick)});
   }
 
   /* Savings chart: a faint line is always visible; the bright line draws over it on view.

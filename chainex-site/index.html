@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
+<script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
 
@@ -81,9 +82,13 @@
 
 <main>
 <!-- HERO -->
-<header class="hero" id="top">
-  <div class="hero-light" aria-hidden="true"><i class="hl-warm"></i><i class="hl-cool"></i><i class="hl-beam"></i></div>
-  <div class="wrap hero-grid">
+<header class="hero hero-film" id="top">
+  <div class="hf-media">
+    <img class="hf-still" src="assets/film/hero-still.jpg" alt="" width="1920" height="1080" decoding="async">
+    <video class="hf-video" muted playsinline loop preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1"></video>
+    <i class="hf-scrim" aria-hidden="true"></i>
+  </div>
+  <div class="wrap hf-inner">
     <div class="hero-copy">
       <p class="eyebrow hero-kicker"><span class="led" aria-hidden="true"></span>Supplier optimisation for beauty brands</p>
       <h1 class="hero-title">Smarter suppliers.<br><em>Stronger brands.</em></h1>
@@ -92,36 +97,16 @@
         <a class="btn btn-primary" href="#brief" data-open-brief>Make a product brief<svg class="ico"><use href="#i-arrow"/></svg></a>
         <button type="button" class="btn btn-ghost" data-open-book><svg class="ico"><use href="#i-calendar"/></svg>Book a call</button>
       </div>
-      <a class="hero-more" href="#about">See how we work<svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-    </div>
-
-    <div class="hero-visual" id="heroVisual">
-      <canvas class="motes" id="motes" aria-hidden="true"></canvas>
-      <figure class="hv">
-        <div class="hv-photo">
-          <img src="assets/img/hero-still.jpg" alt="Black skincare jars and tubes arranged on grey stone" width="1040" height="1300" fetchpriority="high" decoding="async">
-          <i class="hv-sheen" aria-hidden="true"></i>
-        </div>
-        <i class="hv-floor" aria-hidden="true"></i>
-      </figure>
-      <nav class="flabels" aria-label="Explore Chainex">
-        <a class="flabel f1" href="#quality" style="--d:1.25"><span class="fl-ic green" aria-hidden="true"><svg class="ico"><use href="#i-shield"/></svg></span><span class="fl-t"><b>Verified suppliers</b><small>Checked before you pay</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="flabel f2" href="#compare" style="--d:.8"><span class="fl-ic blue" aria-hidden="true"><svg class="ico"><use href="#i-chart"/></svg></span><span class="fl-t"><b>Landed cost</b><small>Compare true unit prices</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="flabel f3" href="#testing" style="--d:1.05"><span class="fl-ic warm" aria-hidden="true"><svg class="ico"><use href="#i-doc"/></svg></span><span class="fl-t"><b>Sample testing</b><small>Photos, video and a report</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="flabel f4" href="#savings" style="--d:.9"><span class="fl-ic green" aria-hidden="true"><svg class="ico"><use href="#i-down"/></svg></span><span class="fl-t"><b>Savings</b><small>Watch the difference add up</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="flabel f5" href="#process" style="--d:.75"><span class="fl-ic white" aria-hidden="true"><svg class="ico"><use href="#i-sync"/></svg></span><span class="fl-t"><b>Six stages</b><small>How we work, start to finish</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="flabel f6" href="#setups" style="--d:1.15"><span class="fl-ic warm" aria-hidden="true"><svg class="ico"><use href="#i-cube"/></svg></span><span class="fl-t"><b>Fulfilment setups</b><small>Dropship, bulk or 3PL</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-      </nav>
     </div>
   </div>
-
-  <div class="wrap">
+  <div class="wrap hf-foot">
     <ul class="hero-proof" aria-label="How we work">
       <li><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>Suppliers verified before you pay</li>
       <li><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg>Samples tested and documented</li>
       <li><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>Fees agreed in writing, up front</li>
       <li><svg class="ico" aria-hidden="true"><use href="#i-landmark"/></svg>UK registered, No.&nbsp;17421524</li>
     </ul>
+    <button type="button" class="hf-toggle" aria-pressed="false" aria-label="Pause the film" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M9 6.5v11M15 6.5v11"/><path class="i-play" d="M8.5 6.2v11.6l9.4-5.8z"/></svg></button>
   </div>
 </header>
 

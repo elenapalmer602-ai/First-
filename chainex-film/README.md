@@ -26,3 +26,10 @@ node render.mjs --stage stage --out frames-phone --width 1080 --height 1350 --co
 
 Without a GPU (software WebGL) the desktop cut takes about 45 minutes and the phone cut about 25 on four cores.
 Copy the MP4s and stills into `chainex-site/assets/film/`.
+
+## Set aside
+
+The rendered film is not on the site at the moment: the hero uses the brand video in
+`chainex-site/assets/film/hero.mp4` instead. The finished renders are kept in `renders/`
+(desktop 2560x1440 and phone 1080x1350, AV1 and H.264, plus stills). To bring them back, copy them into
+`chainex-site/assets/film/` and point the `FILM` list in `chainex-site/assets/js/main.js` at them.

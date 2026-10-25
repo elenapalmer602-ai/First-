@@ -44,6 +44,14 @@
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.9"/><circle cx="17.1" cy="6.9" r="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><path d="M8.2 10.6v5.9M8.2 7.7v.2M11.6 16.5v-5.9M11.6 13.1c0-1.6 1-2.6 2.4-2.6s2.3 1 2.3 2.6v3.4"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5.2 3.8h2.9l1.6 4.1-2.1 1.4a11 11 0 0 0 7.1 7.1l1.4-2.1 4.1 1.6v2.9a1.6 1.6 0 0 1-1.7 1.6C10.6 19.9 4.1 13.4 3.6 5.5a1.6 1.6 0 0 1 1.6-1.7z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M4.5 4.5h10a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5H9.5L6 17.5v-3H4.5A2.5 2.5 0 0 1 2 12V7a2.5 2.5 0 0 1 2.5-2.5z"/><path d="M19.5 9A2.5 2.5 0 0 1 22 11.5v4a2.5 2.5 0 0 1-2.5 2.5H19v2.5L15.8 18H12"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1.1 11.2a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 10.5V7a3 3 0 0 1 6 0v3.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.5 3.5h8l4 4v13h-12z"/><path d="M14.5 3.5v4h4M9.5 12.5h6M9.5 16h6"/></symbol>
   </defs>
 </svg>
 
@@ -55,9 +63,10 @@
       <a href="#process">Our approach</a>
       <a href="#services">Services</a>
       <a href="#about">About</a>
+      <a href="#brief" data-open-brief>Product brief</a>
       <a href="#faq">FAQ</a>
     </div>
-    <a class="btn btn-ghost btn-sm nav-cta" href="#contact">Get in touch<svg class="ico"><use href="#i-arrow"/></svg></a>
+    <button type="button" class="btn btn-ghost btn-sm nav-cta" data-open-book><svg class="ico"><use href="#i-calendar"/></svg>Book a call</button>
     <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="mobileMenu"><svg class="ico"><use href="#i-menu"/></svg>Menu</button>
   </div>
   <div class="mobile-menu" id="mobileMenu" hidden>
@@ -67,9 +76,10 @@
         <li><a href="#services">Services</a></li>
         <li><a href="#about">About</a></li>
         <li><a href="#quality">Quality and verification</a></li>
-        <li><a href="#setups">Setups</a></li>
+        <li><a href="#brief" data-open-brief>Make a product brief</a></li>
         <li><a href="#faq">FAQ</a></li>
-        <li><a class="btn btn-primary" href="#contact">Get in touch</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><button type="button" class="btn btn-primary" data-open-book>Book a call</button></li>
       </ul>
     </div>
   </div>
@@ -157,8 +167,16 @@
           <div><dt>Registered</dt><dd>England and Wales, No.&nbsp;17421524</dd></div>
         </dl>
         <div class="people">
-          <div class="person"><span class="av" aria-hidden="true">AW</span><b>Alex Ward</b><span>Co-founder. Client relationships and supplier negotiation.</span></div>
-          <div class="person"><span class="av" aria-hidden="true">EP</span><b>Elena Palmer</b><span>Co-founder. Sourcing, product testing and compliance.</span></div>
+          <div class="person">
+            <img class="av av-photo" src="assets/img/alex-ward.jpg" alt="Alex Ward" width="56" height="56" loading="lazy">
+            <b>Alex Ward</b><span class="role">Co-founder. Client relationships and supplier negotiation.</span>
+            <div class="person-links"><a class="soc sm" href="https://www.linkedin.com/in/alexander-ward-5464181a5" target="_blank" rel="noopener" aria-label="Alex Ward on LinkedIn"><svg class="ico"><use href="#i-linkedin"/></svg></a><a class="soc sm" href="tel:+447907921405" aria-label="Call Alex on +44 7907 921405"><svg class="ico"><use href="#i-phone"/></svg></a></div>
+          </div>
+          <div class="person">
+            <span class="av" aria-hidden="true">EP</span>
+            <b>Elena Palmer</b><span class="role">Co-founder. Sourcing, product testing and compliance.</span>
+            <div class="person-links"><a class="soc sm" href="tel:+447576294457" aria-label="Call Elena on +44 7576 294457"><svg class="ico"><use href="#i-phone"/></svg></a><a class="soc sm" href="mailto:elenapalmer@chainex.supply" aria-label="Email Elena"><svg class="ico"><use href="#i-mail"/></svg></a></div>
+          </div>
         </div>
         <ul class="fit" aria-label="Who we work with">
           <li class="mono-label">Built for</li>
@@ -247,31 +265,46 @@
     <div class="sec-head" style="margin-bottom:0">
       <p class="eyebrow">Savings, shown monthly</p>
       <h2 class="h-section" id="savTitle">Watch the difference <em>add up.</em></h2>
-      <p class="lede">Every saving is calculated from your real invoices against a verified baseline, then reported to you each month. No estimates dressed up as results.</p>
+      <p class="lede">A supplier switch takes a month or two to bed in. Samples and testing cost a little up front, then savings build as your volume moves across. We report every month from your real invoices.</p>
       <ul class="kpis">
-        <li class="kpi glow-cyan"><span class="mono-label">Cumulative saving</span><b>£22.8k</b></li>
+        <li class="kpi glow-warm"><span class="mono-label">Saved in year one</span><b>£22.2k</b></li>
+        <li class="kpi glow-cyan"><span class="mono-label">Break-even</span><b>Month 3</b></li>
         <li class="kpi glow-green"><span class="mono-label">Landed cost per unit</span><b>&minus;11%</b></li>
-        <li class="kpi glow-orange"><span class="mono-label">Reporting</span><b>Monthly</b></li>
       </ul>
     </div>
-    <figure class="chart-card glow-cyan" id="chart">
+    <figure class="chart-card glow-warm" id="chart" data-points='[{"x": 60.0, "y": 202.3, "m": -0.4, "c": -0.4, "note": "Samples and testing costs"}, {"x": 107.3, "y": 200.1, "m": 0.3, "c": -0.1, "note": "First orders switch over"}, {"x": 154.5, "y": 192.1, "m": 1.1, "c": 1.0}, {"x": 201.8, "y": 180.4, "m": 1.6, "c": 2.6}, {"x": 249.1, "y": 166.5, "m": 1.9, "c": 4.5, "note": "Full volume on the new supplier"}, {"x": 296.4, "y": 151.2, "m": 2.1, "c": 6.6}, {"x": 343.6, "y": 136.5, "m": 2.0, "c": 8.6}, {"x": 390.9, "y": 119.7, "m": 2.3, "c": 10.9}, {"x": 438.2, "y": 102.2, "m": 2.4, "c": 13.3}, {"x": 485.5, "y": 81.0, "m": 2.9, "c": 16.2}, {"x": 532.7, "y": 56.2, "m": 3.4, "c": 19.6, "note": "Peak season volume"}, {"x": 580.0, "y": 37.2, "m": 2.6, "c": 22.2}]'>
       <div class="chart-top"><div class="t"><span class="mono-label">Cumulative savings</span><span class="chart-title">First 12 months after switching</span></div><span class="tag">Illustrative</span></div>
-      <svg class="chart" viewBox="0 0 600 290" role="img" aria-label="Line chart of cumulative savings rising from £0.6k in month 1 to £22.8k in month 12">
-      <defs>
-        <linearGradient id="gr-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4FE3F0"/><stop offset=".6" stop-color="#7CF0B4"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
-        <linearGradient id="gr-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FE3F0" stop-opacity=".28"/><stop offset="1" stop-color="#4FE3F0" stop-opacity="0"/></linearGradient>
-        <filter id="f-glow" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
-      </defs>
-      <g class="c-grid"><line x1="50" x2="590" y1="250.0" y2="250.0"/><text x="40" y="254.0" text-anchor="end">£0k</text><line x1="50" x2="590" y1="207.0" y2="207.0"/><text x="40" y="211.0" text-anchor="end">£5k</text><line x1="50" x2="590" y1="164.0" y2="164.0"/><text x="40" y="168.0" text-anchor="end">£10k</text><line x1="50" x2="590" y1="121.0" y2="121.0"/><text x="40" y="125.0" text-anchor="end">£15k</text><line x1="50" x2="590" y1="78.0" y2="78.0"/><text x="40" y="82.0" text-anchor="end">£20k</text><line x1="50" x2="590" y1="35.0" y2="35.0"/><text x="40" y="39.0" text-anchor="end">£25k</text></g>
-      <g class="c-x"><text x="50.0" y="274" text-anchor="middle">M1</text><text x="99.1" y="274" text-anchor="middle">M2</text><text x="148.2" y="274" text-anchor="middle">M3</text><text x="197.3" y="274" text-anchor="middle">M4</text><text x="246.4" y="274" text-anchor="middle">M5</text><text x="295.5" y="274" text-anchor="middle">M6</text><text x="344.5" y="274" text-anchor="middle">M7</text><text x="393.6" y="274" text-anchor="middle">M8</text><text x="442.7" y="274" text-anchor="middle">M9</text><text x="491.8" y="274" text-anchor="middle">M10</text><text x="540.9" y="274" text-anchor="middle">M11</text><text x="590.0" y="274" text-anchor="middle">M12</text></g>
-      <path class="c-area" d="M50.0 244.8 C58.2 243.6 82.7 240.1 99.1 237.1 C115.5 234.1 131.8 230.5 148.2 226.8 C164.5 223.1 180.9 219.2 197.3 214.7 C213.6 210.3 230.0 205.1 246.4 200.1 C262.7 195.1 279.1 190.2 295.5 184.6 C311.8 179.0 328.2 172.9 344.5 166.6 C360.9 160.3 377.3 153.5 393.6 146.8 C410.0 140.1 426.4 133.3 442.7 126.2 C459.1 119.0 475.5 111.5 491.8 103.8 C508.2 96.1 524.5 88.0 540.9 79.7 C557.3 71.4 581.8 58.2 590.0 53.9 L590.0 250 L50.0 250 Z" fill="url(#gr-area)"/>
-      <path class="c-line c-glow" d="M50.0 244.8 C58.2 243.6 82.7 240.1 99.1 237.1 C115.5 234.1 131.8 230.5 148.2 226.8 C164.5 223.1 180.9 219.2 197.3 214.7 C213.6 210.3 230.0 205.1 246.4 200.1 C262.7 195.1 279.1 190.2 295.5 184.6 C311.8 179.0 328.2 172.9 344.5 166.6 C360.9 160.3 377.3 153.5 393.6 146.8 C410.0 140.1 426.4 133.3 442.7 126.2 C459.1 119.0 475.5 111.5 491.8 103.8 C508.2 96.1 524.5 88.0 540.9 79.7 C557.3 71.4 581.8 58.2 590.0 53.9" fill="none" stroke="url(#gr-line)" stroke-width="10" stroke-linecap="round" filter="url(#f-glow)"/>
-      <path class="c-line" d="M50.0 244.8 C58.2 243.6 82.7 240.1 99.1 237.1 C115.5 234.1 131.8 230.5 148.2 226.8 C164.5 223.1 180.9 219.2 197.3 214.7 C213.6 210.3 230.0 205.1 246.4 200.1 C262.7 195.1 279.1 190.2 295.5 184.6 C311.8 179.0 328.2 172.9 344.5 166.6 C360.9 160.3 377.3 153.5 393.6 146.8 C410.0 140.1 426.4 133.3 442.7 126.2 C459.1 119.0 475.5 111.5 491.8 103.8 C508.2 96.1 524.5 88.0 540.9 79.7 C557.3 71.4 581.8 58.2 590.0 53.9" fill="none" stroke="url(#gr-line)" stroke-width="3" stroke-linecap="round"/>
-      <circle r="5" fill="#fff" class="c-runner"><animateMotion dur="5s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear" path="M50.0 244.8 C58.2 243.6 82.7 240.1 99.1 237.1 C115.5 234.1 131.8 230.5 148.2 226.8 C164.5 223.1 180.9 219.2 197.3 214.7 C213.6 210.3 230.0 205.1 246.4 200.1 C262.7 195.1 279.1 190.2 295.5 184.6 C311.8 179.0 328.2 172.9 344.5 166.6 C360.9 160.3 377.3 153.5 393.6 146.8 C410.0 140.1 426.4 133.3 442.7 126.2 C459.1 119.0 475.5 111.5 491.8 103.8 C508.2 96.1 524.5 88.0 540.9 79.7 C557.3 71.4 581.8 58.2 590.0 53.9"/></circle>
-      <circle class="c-end" cx="590.0" cy="53.9" r="6" fill="#fff"/>
-      <circle class="c-end-ring" cx="590.0" cy="53.9" r="6" fill="none" stroke="#7CF0B4" stroke-width="2"/>
-    </svg>
-      <figcaption>Illustrative figures for a brand ordering 8,000 units a month. Your report is built from your own invoices.</figcaption>
+      <svg class="chart" viewBox="0 0 600 326" tabindex="0" role="img" aria-label="Cumulative savings over 12 months. Month 1 is slightly negative because of sample and testing costs, savings pass break-even in month 3, build steadily as volume moves to the new supplier, peak in month 11 and reach £22.2k by month 12.">
+        <defs>
+          <linearGradient id="gr-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE2BC"/><stop offset=".55" stop-color="#FFF1DE"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
+          <linearGradient id="gr-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFDDB0" stop-opacity=".22"/><stop offset="1" stop-color="#FFDDB0" stop-opacity="0"/></linearGradient>
+          <linearGradient id="gr-bar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".55"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".08"/></linearGradient>
+          <filter id="f-glow" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="6"/></filter>
+        </defs>
+        <rect class="c-band" x="56" y="22" width="69.3" height="191.4" rx="10"/>
+        <text class="c-band-label" x="62" y="40">SWITCH-OVER</text>
+        <g class="c-grid"><line x1="60" x2="584" y1="199.4" y2="199.4"/><text x="50" y="203.4" text-anchor="end">£0k</text><line x1="60" x2="584" y1="162.8" y2="162.8"/><text x="50" y="166.8" text-anchor="end">£5k</text><line x1="60" x2="584" y1="126.3" y2="126.3"/><text x="50" y="130.3" text-anchor="end">£10k</text><line x1="60" x2="584" y1="89.8" y2="89.8"/><text x="50" y="93.8" text-anchor="end">£15k</text><line x1="60" x2="584" y1="53.2" y2="53.2"/><text x="50" y="57.2" text-anchor="end">£20k</text></g>
+        <line class="c-zero" x1="60" x2="584" y1="199.4" y2="199.4"/>
+        <path class="c-area" d="M60.0 202.3 C67.9 201.9 91.5 201.8 107.3 200.1 C123.0 198.4 138.8 195.4 154.5 192.1 C170.3 188.8 186.1 184.6 201.8 180.4 C217.6 176.1 233.3 171.4 249.1 166.5 C264.8 161.6 280.6 156.1 296.4 151.2 C312.1 146.2 327.9 141.8 343.6 136.5 C359.4 131.3 375.2 125.5 390.9 119.7 C406.7 114.0 422.4 108.6 438.2 102.2 C453.9 95.7 469.7 88.7 485.5 81.0 C501.2 73.3 517.0 63.5 532.7 56.2 C548.5 48.8 572.1 40.3 580.0 37.2 L580.0 199.4 L60.0 199.4 Z" fill="url(#gr-area)"/>
+        <path class="c-ghost" d="M60.0 202.3 C67.9 201.9 91.5 201.8 107.3 200.1 C123.0 198.4 138.8 195.4 154.5 192.1 C170.3 188.8 186.1 184.6 201.8 180.4 C217.6 176.1 233.3 171.4 249.1 166.5 C264.8 161.6 280.6 156.1 296.4 151.2 C312.1 146.2 327.9 141.8 343.6 136.5 C359.4 131.3 375.2 125.5 390.9 119.7 C406.7 114.0 422.4 108.6 438.2 102.2 C453.9 95.7 469.7 88.7 485.5 81.0 C501.2 73.3 517.0 63.5 532.7 56.2 C548.5 48.8 572.1 40.3 580.0 37.2" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+        <path class="c-glow" d="M60.0 202.3 C67.9 201.9 91.5 201.8 107.3 200.1 C123.0 198.4 138.8 195.4 154.5 192.1 C170.3 188.8 186.1 184.6 201.8 180.4 C217.6 176.1 233.3 171.4 249.1 166.5 C264.8 161.6 280.6 156.1 296.4 151.2 C312.1 146.2 327.9 141.8 343.6 136.5 C359.4 131.3 375.2 125.5 390.9 119.7 C406.7 114.0 422.4 108.6 438.2 102.2 C453.9 95.7 469.7 88.7 485.5 81.0 C501.2 73.3 517.0 63.5 532.7 56.2 C548.5 48.8 572.1 40.3 580.0 37.2" fill="none" stroke="#FFDDB0" stroke-width="10" stroke-linecap="round" filter="url(#f-glow)"/>
+        <path class="c-draw" d="M60.0 202.3 C67.9 201.9 91.5 201.8 107.3 200.1 C123.0 198.4 138.8 195.4 154.5 192.1 C170.3 188.8 186.1 184.6 201.8 180.4 C217.6 176.1 233.3 171.4 249.1 166.5 C264.8 161.6 280.6 156.1 296.4 151.2 C312.1 146.2 327.9 141.8 343.6 136.5 C359.4 131.3 375.2 125.5 390.9 119.7 C406.7 114.0 422.4 108.6 438.2 102.2 C453.9 95.7 469.7 88.7 485.5 81.0 C501.2 73.3 517.0 63.5 532.7 56.2 C548.5 48.8 572.1 40.3 580.0 37.2" fill="none" stroke="url(#gr-line)" stroke-width="3" stroke-linecap="round"/>
+        <g class="c-ann"><circle cx="249.1" cy="166.5" r="4.5"/><text x="237.1" y="152.5" text-anchor="end">Full volume moved</text></g>
+        <circle r="5" fill="#fff" class="c-runner"><animateMotion dur="5.5s" repeatCount="indefinite" path="M60.0 202.3 C67.9 201.9 91.5 201.8 107.3 200.1 C123.0 198.4 138.8 195.4 154.5 192.1 C170.3 188.8 186.1 184.6 201.8 180.4 C217.6 176.1 233.3 171.4 249.1 166.5 C264.8 161.6 280.6 156.1 296.4 151.2 C312.1 146.2 327.9 141.8 343.6 136.5 C359.4 131.3 375.2 125.5 390.9 119.7 C406.7 114.0 422.4 108.6 438.2 102.2 C453.9 95.7 469.7 88.7 485.5 81.0 C501.2 73.3 517.0 63.5 532.7 56.2 C548.5 48.8 572.1 40.3 580.0 37.2"/></circle>
+        <circle class="c-end" cx="580.0" cy="37.2" r="6" fill="#fff"/>
+        <circle class="c-end-ring" cx="580.0" cy="37.2" r="6" fill="none" stroke="#FFE2BC" stroke-width="2"/>
+        <text class="c-end-label" x="568.0" y="23.2" text-anchor="end">£22.2k</text>
+        <line class="c-sep" x1="60" x2="584" y1="236" y2="236"/>
+        <text class="c-strip-label" x="60" y="252">MONTHLY SAVING</text>
+        <line class="c-base" x1="60" x2="584" y1="292" y2="292"/>
+        <g class="c-bars"><rect class="c-bar neg" style="--i:0" x="49.0" y="292.0" width="22" height="4.8" rx="3"/><rect class="c-bar" style="--i:1" x="96.3" y="288.4" width="22" height="3.6" rx="4"/><rect class="c-bar" style="--i:2" x="143.5" y="278.8" width="22" height="13.2" rx="4"/><rect class="c-bar" style="--i:3" x="190.8" y="272.8" width="22" height="19.2" rx="4"/><rect class="c-bar" style="--i:4" x="238.1" y="269.2" width="22" height="22.8" rx="4"/><rect class="c-bar" style="--i:5" x="285.4" y="266.8" width="22" height="25.2" rx="4"/><rect class="c-bar" style="--i:6" x="332.6" y="268.0" width="22" height="24.0" rx="4"/><rect class="c-bar" style="--i:7" x="379.9" y="264.4" width="22" height="27.6" rx="4"/><rect class="c-bar" style="--i:8" x="427.2" y="263.2" width="22" height="28.8" rx="4"/><rect class="c-bar" style="--i:9" x="474.5" y="257.2" width="22" height="34.8" rx="4"/><rect class="c-bar peak" style="--i:10" x="521.7" y="251.2" width="22" height="40.8" rx="4"/><rect class="c-bar" style="--i:11" x="569.0" y="260.8" width="22" height="31.2" rx="4"/></g>
+        <text class="c-peak" x="532.7" y="243.2" text-anchor="middle">Peak</text>
+        <g class="c-x"><text x="60.0" y="316" text-anchor="middle">M1</text><text x="107.3" y="316" text-anchor="middle">M2</text><text x="154.5" y="316" text-anchor="middle">M3</text><text x="201.8" y="316" text-anchor="middle">M4</text><text x="249.1" y="316" text-anchor="middle">M5</text><text x="296.4" y="316" text-anchor="middle">M6</text><text x="343.6" y="316" text-anchor="middle">M7</text><text x="390.9" y="316" text-anchor="middle">M8</text><text x="438.2" y="316" text-anchor="middle">M9</text><text x="485.5" y="316" text-anchor="middle">M10</text><text x="532.7" y="316" text-anchor="middle">M11</text><text x="580.0" y="316" text-anchor="middle">M12</text></g>
+        <line class="c-guide" x1="0" x2="0" y1="22" y2="300"/>
+        <circle class="c-hover" cx="0" cy="0" r="5.5"/>
+      </svg>
+      <div class="c-tip" aria-hidden="true"></div>
+      <figcaption>Illustrative figures for a brand ordering 8,000 units a month. Hover or use the arrow keys to see each month. Your own report is built from your invoices.</figcaption>
     </figure>
   </div>
 </section>
@@ -333,7 +366,7 @@
         </div>
       </article>
 
-      <article class="flip glow-orange" data-flip>
+      <article class="flip glow-warm" data-flip>
         <div class="flip-inner">
           <div class="face front">
             <span class="ibox white"><svg class="ico"><use href="#i-chat"/></svg></span>
@@ -425,44 +458,35 @@
       </div>
       <div class="plates" aria-hidden="true"><i class="plate p3"></i><i class="plate p2"></i><i class="plate p1"></i></div>
     </div>
-    <ol class="steps">
-      <li class="step">
-        <span class="step-n">01</span>
-        <h3>Discover</h3>
-        <p>We learn your product, market, costs and pain points, and agree what you are optimising for.</p>
-        <p class="step-out"><span class="mono-label">You receive</span>Requirement brief</p>
-      </li>
-      <li class="step">
-        <span class="step-n">02</span>
-        <h3>Source and compare</h3>
-        <p>We approach and screen suppliers against your brief, then compare them like for like.</p>
-        <p class="step-out"><span class="mono-label">You receive</span>Shortlist and comparison</p>
-      </li>
-      <li class="step">
-        <span class="step-n">03</span>
-        <h3>Verify and test</h3>
-        <p>We check each company is real and safe to pay, and physically test their samples.</p>
-        <p class="step-out"><span class="mono-label">You receive</span>Verification summary and test report</p>
-      </li>
-      <li class="step">
-        <span class="step-n">04</span>
-        <h3>Model and recommend</h3>
-        <p>We cost your setup options, from dropshipping to bulk stock, and recommend one with reasons.</p>
-        <p class="step-out"><span class="mono-label">You receive</span>Costed options and recommendation</p>
-      </li>
-      <li class="step">
-        <span class="step-n">05</span>
-        <h3>Set up and transition</h3>
-        <p>We agree terms, gather compliance documents and manage the switchover so orders keep flowing.</p>
-        <p class="step-out"><span class="mono-label">You receive</span>Compliance file and transition plan</p>
-      </li>
-      <li class="step">
-        <span class="step-n">06</span>
-        <h3>Monitor and improve</h3>
-        <p>We keep checking orders, shipments and product quality, and act on what we find.</p>
-        <p class="step-out"><span class="mono-label">You receive</span>Ongoing performance reports</p>
-      </li>
-    </ol>
+    <div class="tl-wrap">
+      <span class="tl-track" aria-hidden="true"><i class="tl-fill"></i></span>
+      <ol class="tl" id="timeline">
+        <li class="tl-item">
+          <span class="tl-node" aria-hidden="true">01</span>
+          <div class="tl-card"><span class="mono-label">Stage 1</span><h3>Discover</h3><p>We learn your product, market, costs and pain points, and agree what you are optimising for.</p><p class="tl-out"><span class="mono-label">You receive</span>Requirement brief</p></div>
+        </li>
+        <li class="tl-item">
+          <span class="tl-node" aria-hidden="true">02</span>
+          <div class="tl-card"><span class="mono-label">Stage 2</span><h3>Source and compare</h3><p>We approach and screen suppliers against your brief, then compare them like for like.</p><p class="tl-out"><span class="mono-label">You receive</span>Shortlist and comparison</p></div>
+        </li>
+        <li class="tl-item">
+          <span class="tl-node" aria-hidden="true">03</span>
+          <div class="tl-card"><span class="mono-label">Stage 3</span><h3>Verify and test</h3><p>We check each company is real and safe to pay, and physically test their samples.</p><p class="tl-out"><span class="mono-label">You receive</span>Verification summary and test report</p></div>
+        </li>
+        <li class="tl-item">
+          <span class="tl-node" aria-hidden="true">04</span>
+          <div class="tl-card"><span class="mono-label">Stage 4</span><h3>Model and recommend</h3><p>We cost your setup options, from dropshipping to bulk stock, and recommend one with reasons.</p><p class="tl-out"><span class="mono-label">You receive</span>Costed options and recommendation</p></div>
+        </li>
+        <li class="tl-item">
+          <span class="tl-node" aria-hidden="true">05</span>
+          <div class="tl-card"><span class="mono-label">Stage 5</span><h3>Set up and transition</h3><p>We agree terms, gather compliance documents and manage the switchover so orders keep flowing.</p><p class="tl-out"><span class="mono-label">You receive</span>Compliance file and transition plan</p></div>
+        </li>
+        <li class="tl-item">
+          <span class="tl-node" aria-hidden="true">06</span>
+          <div class="tl-card"><span class="mono-label">Stage 6</span><h3>Monitor and improve</h3><p>We keep checking orders, shipments and product quality, and act on what we find.</p><p class="tl-out"><span class="mono-label">You receive</span>Ongoing performance reports</p></div>
+        </li>
+      </ol>
+    </div>
     <div class="process-foot">
       <p>You approve every decision. Nothing is ordered or paid for without your sign off.</p>
       <a class="btn btn-ghost btn-sm" href="#contact">Start at stage one<svg class="ico"><use href="#i-arrow"/></svg></a>
@@ -473,10 +497,10 @@
 <!-- QUALITY AND VERIFICATION -->
 <section class="section alt" id="quality" aria-labelledby="qTitle">
   <i class="streak" aria-hidden="true"></i>
-  <div class="certs" role="region" aria-label="Standards and documents we check">
+  <div class="certs" role="region" aria-label="Standards and documents we check. Hover or press a badge to see its name.">
     <div class="certs-track">
-      <ul><li class="cert"><span class="cert-tile"><img src="assets/img/badges/gmp.png" alt="" width="120" height="120"></span><span class="cert-name">GMP</span><span class="cert-sub">Good manufacturing practice</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/iso22716.png" alt="" width="120" height="120"></span><span class="cert-name">ISO 22716</span><span class="cert-sub">Cosmetics GMP standard</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/fda.png" alt="" width="120" height="120"></span><span class="cert-name">FDA</span><span class="cert-sub">US facility registration</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/halal.png" alt="" width="120" height="120"></span><span class="cert-name">Halal</span><span class="cert-sub">Halal certification</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/bsci.png" alt="" width="120" height="120"></span><span class="cert-name">BSCI</span><span class="cert-sub">Social compliance audit</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/cpsr.png" alt="" width="120" height="120"></span><span class="cert-name">CPSR</span><span class="cert-sub">Cosmetic product safety report</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/cpnp.png" alt="" width="120" height="120"></span><span class="cert-name">CPNP</span><span class="cert-sub">EU product notification</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/msds.png" alt="" width="120" height="120"></span><span class="cert-name">MSDS</span><span class="cert-sub">Safety data sheet</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/coa.png" alt="" width="120" height="120"></span><span class="cert-name">COA</span><span class="cert-sub">Certificate of analysis</span></li></ul>
-      <ul aria-hidden="true"><li class="cert"><span class="cert-tile"><img src="assets/img/badges/gmp.png" alt="" width="120" height="120"></span><span class="cert-name">GMP</span><span class="cert-sub">Good manufacturing practice</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/iso22716.png" alt="" width="120" height="120"></span><span class="cert-name">ISO 22716</span><span class="cert-sub">Cosmetics GMP standard</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/fda.png" alt="" width="120" height="120"></span><span class="cert-name">FDA</span><span class="cert-sub">US facility registration</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/halal.png" alt="" width="120" height="120"></span><span class="cert-name">Halal</span><span class="cert-sub">Halal certification</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/bsci.png" alt="" width="120" height="120"></span><span class="cert-name">BSCI</span><span class="cert-sub">Social compliance audit</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/cpsr.png" alt="" width="120" height="120"></span><span class="cert-name">CPSR</span><span class="cert-sub">Cosmetic product safety report</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/cpnp.png" alt="" width="120" height="120"></span><span class="cert-name">CPNP</span><span class="cert-sub">EU product notification</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/msds.png" alt="" width="120" height="120"></span><span class="cert-name">MSDS</span><span class="cert-sub">Safety data sheet</span></li><li class="cert"><span class="cert-tile"><img src="assets/img/badges/coa.png" alt="" width="120" height="120"></span><span class="cert-name">COA</span><span class="cert-sub">Certificate of analysis</span></li></ul>
+      <ul><li class="cert"><button type="button" class="cert-flip" aria-label="GMP: Good manufacturing practice"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/gmp.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>GMP</b><small>Good manufacturing practice</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="ISO 22716: Cosmetics GMP standard"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/iso22716.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>ISO 22716</b><small>Cosmetics GMP standard</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="FDA: US facility registration"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/fda.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>FDA</b><small>US facility registration</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="Halal: Halal certification"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/halal.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>Halal</b><small>Halal certification</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="BSCI: Social compliance audit"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/bsci.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>BSCI</b><small>Social compliance audit</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="CPSR: Cosmetic product safety report"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/cpsr.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>CPSR</b><small>Cosmetic product safety report</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="CPNP: EU product notification"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/cpnp.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>CPNP</b><small>EU product notification</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="MSDS: Safety data sheet"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/msds.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>MSDS</b><small>Safety data sheet</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="COA: Certificate of analysis"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/coa.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>COA</b><small>Certificate of analysis</small></span></span></button></li></ul>
+      <ul aria-hidden="true"><li class="cert"><button type="button" class="cert-flip" aria-label="GMP: Good manufacturing practice" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/gmp.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>GMP</b><small>Good manufacturing practice</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="ISO 22716: Cosmetics GMP standard" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/iso22716.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>ISO 22716</b><small>Cosmetics GMP standard</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="FDA: US facility registration" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/fda.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>FDA</b><small>US facility registration</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="Halal: Halal certification" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/halal.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>Halal</b><small>Halal certification</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="BSCI: Social compliance audit" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/bsci.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>BSCI</b><small>Social compliance audit</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="CPSR: Cosmetic product safety report" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/cpsr.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>CPSR</b><small>Cosmetic product safety report</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="CPNP: EU product notification" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/cpnp.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>CPNP</b><small>EU product notification</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="MSDS: Safety data sheet" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/msds.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>MSDS</b><small>Safety data sheet</small></span></span></button></li><li class="cert"><button type="button" class="cert-flip" aria-label="COA: Certificate of analysis" tabindex="-1"><span class="cert-inner"><span class="cert-face cert-front"><img src="assets/img/badges/coa.png" alt="" width="120" height="120"></span><span class="cert-face cert-back"><b>COA</b><small>Certificate of analysis</small></span></span></button></li></ul>
     </div>
   </div>
   <div class="wrap">
@@ -507,7 +531,7 @@
       <div class="proof-col">
         <h3>Documented quality testing</h3>
         <p>We test samples ourselves against a defined protocol, across several units, and record every finding.</p>
-        <div class="report glow-green" role="group" aria-label="Example quality test report">
+        <div class="report glow-warm" role="group" aria-label="Example quality test report">
           <div class="report-head">
             <div class="t"><span class="mono-label">Quality test report</span><b>Supplier B, pre production samples</b></div>
             <span class="tag">Example layout</span>
@@ -624,7 +648,7 @@
       <p>Most brands move left to right as they grow.</p>
     </div>
 
-    <div class="setup-panel glow-orange" aria-live="polite">
+    <div class="setup-panel glow-warm" aria-live="polite">
       <div class="setup-main">
         <div style="display:grid;gap:10px">
           <span class="mono-label">How it works</span>
@@ -669,7 +693,7 @@
         <li><span class="k">Reports</span><b>Performance reporting</b><p>Defect rates, delivery times and costs, reported in plain terms.</p></li>
       </ul>
 
-      <div class="log glow-orange" role="group" aria-label="Example monitoring log">
+      <div class="log glow-warm" role="group" aria-label="Example monitoring log">
         <div class="log-head"><b>Monitoring log</b><span class="tag">Example week</span></div>
         <div class="log-row"><span class="d">Mon</span><span class="ty">Tracking</span><span class="m"><b>5 parcels idle for 6+ days</b> at a carrier hub. Raised with the supplier, replacements sent.</span><span class="st ok">Resolved</span></div>
         <div class="log-row"><span class="d">Tue</span><span class="ty">Invoice</span><span class="m"><b>3 orders charged twice</b> in the weekly statement. Credit requested.</span><span class="st ok">Credited</span></div>
@@ -741,9 +765,33 @@
           <li><span>03</span>You receive a written proposal, with fees set out up front</li>
         </ol>
       </div>
-      <div class="emails">
-        <div class="email-row"><div><span class="addr" id="em1">elenapalmer@chainex.supply</span><small>Elena Palmer, sourcing, testing and compliance</small></div><button type="button" class="copy-btn" data-copy="em1">Copy</button></div>
-        <div class="email-row"><div><span class="addr" id="em2">alex.ward@chainex.supply</span><small>Alex Ward, client relationships</small></div><button type="button" class="copy-btn" data-copy="em2">Copy</button></div>
+      <div class="direct">
+        <span class="mono-label">Talk to us directly</span>
+        <div class="dcard">
+          <img class="dav" src="assets/img/alex-ward.jpg" alt="" width="52" height="52" loading="lazy">
+          <div class="dinfo"><b>Alex Ward</b><small>Co-founder, client relationships</small>
+            <span class="dline"><a class="addr" id="ph1" href="tel:+447907921405">+44 7907 921405</a><button type="button" class="copy-btn" data-copy="ph1">Copy</button></span>
+            <span class="dline"><span class="addr" id="em2">alex.ward@chainex.supply</span><button type="button" class="copy-btn" data-copy="em2">Copy</button></span>
+          </div>
+          <div class="dsoc"><a class="soc" href="tel:+447907921405" aria-label="Call Alex"><svg class="ico"><use href="#i-phone"/></svg></a><a class="soc" href="https://www.linkedin.com/in/alexander-ward-5464181a5" target="_blank" rel="noopener" aria-label="Alex Ward on LinkedIn"><svg class="ico"><use href="#i-linkedin"/></svg></a></div>
+        </div>
+        <div class="dcard">
+          <span class="dav init" aria-hidden="true">EP</span>
+          <div class="dinfo"><b>Elena Palmer</b><small>Co-founder, sourcing, testing and compliance</small>
+            <span class="dline"><a class="addr" id="ph2" href="tel:+447576294457">+44 7576 294457</a><button type="button" class="copy-btn" data-copy="ph2">Copy</button></span>
+            <span class="dline"><span class="addr" id="em1">elenapalmer@chainex.supply</span><button type="button" class="copy-btn" data-copy="em1">Copy</button></span>
+          </div>
+          <div class="dsoc"><a class="soc" href="tel:+447576294457" aria-label="Call Elena"><svg class="ico"><use href="#i-phone"/></svg></a><a class="soc" href="mailto:elenapalmer@chainex.supply" aria-label="Email Elena"><svg class="ico"><use href="#i-mail"/></svg></a></div>
+        </div>
+      </div>
+      <div class="social-row">
+        <a class="soc" href="https://www.instagram.com/chainex.supply/" target="_blank" rel="noopener" aria-label="Chainex on Instagram"><svg class="ico"><use href="#i-instagram"/></svg></a>
+        <a class="soc-handle" href="https://www.instagram.com/chainex.supply/" target="_blank" rel="noopener"><small>Instagram</small>@chainex.supply</a>
+      </div>
+      <div class="quick-actions">
+        <button type="button" class="btn btn-primary" data-open-book><svg class="ico"><use href="#i-calendar"/></svg>Book a call</button>
+        <button type="button" class="btn btn-ghost" data-open-msg><svg class="ico"><use href="#i-message"/></svg>Send a message</button>
+        <a class="btn btn-ghost" href="#brief" data-open-brief><svg class="ico"><use href="#i-doc"/></svg>Make a product brief</a>
       </div>
     </div>
 
@@ -822,10 +870,11 @@
       <div class="footer-brand">
         <span class="f-mark"><img src="assets/img/logo-mark-silver.png" alt="" width="72" height="21">CHAINEX</span>
         <p>Supplier optimisation for growing ecommerce beauty brands.</p>
+        <div class="f-soc"><a class="soc sm" href="https://www.instagram.com/chainex.supply/" target="_blank" rel="noopener" aria-label="Chainex on Instagram"><svg class="ico"><use href="#i-instagram"/></svg></a><a class="soc sm" href="https://www.linkedin.com/in/alexander-ward-5464181a5" target="_blank" rel="noopener" aria-label="Alex Ward on LinkedIn"><svg class="ico"><use href="#i-linkedin"/></svg></a><a class="soc sm" href="tel:+447576294457" aria-label="Call Chainex"><svg class="ico"><use href="#i-phone"/></svg></a><a class="soc sm" href="mailto:elenapalmer@chainex.supply" aria-label="Email Chainex"><svg class="ico"><use href="#i-mail"/></svg></a></div>
       </div>
-      <div class="fcol"><h4>Services</h4><a href="#essentials">The essentials</a><a href="#services">All services</a><a href="#process">Our approach</a></div>
+      <div class="fcol"><h4>Services</h4><a href="#essentials">The essentials</a><a href="#services">All services</a><a href="#process">Our approach</a><a href="#brief" data-open-brief>Make a product brief</a></div>
       <div class="fcol"><h4>Detail</h4><a href="#quality">Quality and verification</a><a href="#setups">Setup modelling</a><a href="#aftercare">After setup</a><a href="#faq">FAQ</a></div>
-      <div class="fcol"><h4>Contact</h4><span>elenapalmer@chainex.supply</span><span>alex.ward@chainex.supply</span><a href="#contact">Start a brief</a></div>
+      <div class="fcol"><h4>Contact</h4><span>Alex · +44 7907 921405</span><span>Elena · +44 7576 294457</span><span>elenapalmer@chainex.supply</span><span>alex.ward@chainex.supply</span><a href="https://www.instagram.com/chainex.supply/" target="_blank" rel="noopener">Instagram @chainex.supply</a></div>
     </div>
     <div class="legal">
       <span>&copy; 2026 Chainex Supply Ltd. Registered in England and Wales, company number 17421524. Registered office: Loughborough, England.</span>
@@ -833,6 +882,98 @@
     </div>
   </div>
 </footer>
+
+<!-- Product brief builder -->
+<div class="builder" id="builder" role="dialog" aria-modal="true" aria-labelledby="bTitle" hidden>
+  <div class="b-bar">
+    <div class="wrap b-top">
+      <button type="button" class="b-back" data-close-brief><svg class="ico"><use href="#i-back"/></svg>Back to site</button>
+      <span class="brand" aria-hidden="true">CHAINEX</span>
+      <button type="button" class="b-cart" id="bCart" aria-label="View your brief"><svg class="ico"><use href="#i-bag"/></svg><span><b id="bCount">0</b> in brief</span></button>
+    </div>
+  </div>
+  <div class="wrap b-grid">
+    <div class="b-shop">
+      <div class="sec-head" style="margin-bottom:0">
+        <p class="eyebrow">Product brief builder</p>
+        <h2 class="h-section" id="bTitle">Build your brief like <em>filling a basket.</em></h2>
+        <p class="lede">Add what you need from each aisle. We write it up as a supplier-ready brief as you go.</p>
+      </div>
+      <div class="b-tabs" role="tablist" aria-label="Brief sections" id="bTabs"></div>
+      <div class="b-panel" id="bPanel" role="tabpanel"></div>
+      <div class="b-nav"><button type="button" class="btn btn-ghost btn-sm" id="bPrev"><svg class="ico"><use href="#i-back"/></svg>Previous</button><button type="button" class="btn btn-primary btn-sm" id="bNext">Next<svg class="ico"><use href="#i-arrow"/></svg></button></div>
+      <button type="button" class="b-peek" id="bPeek"><span class="pk-label">BRIEF<b id="bPeekCount">0</b></span><span class="pk-line" id="bPeekLine">Nothing added yet</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg><span class="sr">View your brief</span></button>
+    </div>
+    <aside class="b-paper-wrap" aria-label="Your supplier brief">
+      <div class="b-paper" id="bPaper">
+        <div class="p-head"><div><b>SUPPLIER BRIEF</b><small>Prepared with Chainex Supply</small></div><div class="p-meta"><span id="bRef">Ref</span><span id="bDate"></span></div></div>
+        <label class="p-brand" for="bBrand">Brand <input id="bBrand" placeholder="Your brand name" autocomplete="organization"></label>
+        <ol class="p-rows" id="bRows" aria-live="polite"></ol>
+        <p class="p-empty" id="bEmpty">Your brief writes itself here as you add requirements.</p>
+        <div class="p-foot"><span>Chainex Supply · chainex.supply</span><span>Page 1 of 1</span></div>
+        <span class="p-stamp" id="bStamp" aria-hidden="true">READY FOR SUPPLIERS</span>
+      </div>
+      <div class="p-actions">
+        <a class="btn btn-primary btn-sm" id="bSend" href="mailto:elenapalmer@chainex.supply"><svg class="ico"><use href="#i-mail"/></svg>Email brief to Chainex</a>
+        <button type="button" class="btn btn-ghost btn-sm" id="bCopy">Copy brief</button>
+        <button type="button" class="link-btn" id="bClear">Clear</button>
+      </div>
+      <p class="status" id="bStatus" aria-live="polite"></p>
+    </aside>
+  </div>
+</div>
+
+<!-- Book a call -->
+<div class="modal" id="bookModal" role="dialog" aria-modal="true" aria-labelledby="bkTitle" hidden>
+  <div class="modal-card">
+    <div class="m-head">
+      <div><p class="eyebrow">Book a call</p><h3 id="bkTitle">Pick a day and time</h3><p class="m-sub">A 20 minute call with Alex or Elena. Times are UK time, Monday to Friday.</p></div>
+      <button type="button" class="icon-btn" data-close-book aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="bk-grid">
+      <div class="cal">
+        <div class="cal-head"><button type="button" class="icon-btn" id="calPrev" aria-label="Previous month"><svg class="ico"><use href="#i-back"/></svg></button><b id="calMonth"></b><button type="button" class="icon-btn" id="calNext" aria-label="Next month"><svg class="ico"><use href="#i-arrow"/></svg></button></div>
+        <div class="cal-dow" aria-hidden="true"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
+        <div class="cal-days" id="calDays"></div>
+      </div>
+      <div class="slots"><span class="mono-label" id="slotLabel">Available times</span><div class="slot-list" id="slotList"></div></div>
+    </div>
+    <form class="bk-form" id="bkForm" novalidate>
+      <div class="row2">
+        <div class="fld"><label for="bk-name">Your name</label><input id="bk-name" required autocomplete="name" placeholder="Full name"></div>
+        <div class="fld"><label for="bk-contact">Email or phone</label><input id="bk-contact" required autocomplete="email" placeholder="you@brand.com or +44 ..."></div>
+      </div>
+      <div class="fld"><label for="bk-topic">What would you like to talk about? <i>(optional)</i></label><input id="bk-topic" placeholder="e.g. switching supplier for our brow tint"></div>
+      <div class="bk-foot"><p id="bkSummary">Choose a day and time</p><button type="submit" class="btn btn-primary"><svg class="ico"><use href="#i-calendar"/></svg>Request this time</button></div>
+    </form>
+    <div class="done" id="bkDone" hidden>
+      <span class="mono-label ready">Request ready</span>
+      <h4 id="bkWhen"></h4>
+      <p>Send this request from your email app and we will confirm the time by email or phone.</p>
+      <textarea id="bkText" readonly aria-label="Your call request"></textarea>
+      <div class="actions"><a class="btn btn-primary btn-sm" id="bkMail" href="mailto:elenapalmer@chainex.supply"><svg class="ico"><use href="#i-mail"/></svg>Open in email app</a><button type="button" class="btn btn-ghost btn-sm" id="bkCopy">Copy request</button><button type="button" class="link-btn" id="bkEdit">Change details</button></div>
+      <p class="status" id="bkStatus" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Quick message -->
+<button type="button" class="msg-fab" data-open-msg aria-label="Send us a message"><svg class="ico"><use href="#i-message"/></svg><span>Message us</span></button>
+<div class="msg-panel" id="msgPanel" role="dialog" aria-labelledby="msgTitle" data-lock="no" hidden>
+  <div class="m-head"><div><b id="msgTitle">Send a quick message</b><small>Ask anything. We reply personally.</small></div><button type="button" class="icon-btn" data-close-msg aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button></div>
+  <form id="msgForm" novalidate>
+    <div class="fld"><label for="msg-contact">Your email or phone number</label><input id="msg-contact" required autocomplete="email" placeholder="you@brand.com or +44 ..."></div>
+    <div class="fld"><label for="msg-text">Your message</label><textarea id="msg-text" required placeholder="Ask a question or tell us what you need"></textarea></div>
+    <button type="submit" class="btn btn-primary btn-sm"><svg class="ico"><use href="#i-message"/></svg>Send message</button>
+  </form>
+  <div class="done" id="msgDone" hidden>
+    <span class="mono-label ready">Message ready</span>
+    <p>Your email app opens with your message filled in. Press send there to reach us.</p>
+    <textarea id="msgText" readonly aria-label="Your message"></textarea>
+    <div class="actions"><a class="btn btn-primary btn-sm" id="msgMail" href="mailto:elenapalmer@chainex.supply"><svg class="ico"><use href="#i-mail"/></svg>Open in email app</a><button type="button" class="btn btn-ghost btn-sm" id="msgCopy">Copy</button><button type="button" class="link-btn" id="msgEdit">Edit</button></div>
+    <p class="status" id="msgStatus" aria-live="polite"></p>
+  </div>
+</div>
 
 <!-- Service detail drawer -->
 <div class="scrim" id="scrim"></div>
@@ -857,5 +998,6 @@
 </aside>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/tools.js"></script>
 </body>
 </html>

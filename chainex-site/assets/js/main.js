@@ -74,18 +74,62 @@
     }
   }
 
-  /* Savings chart: the line draws itself when it comes into view */
+  /* Savings chart: a faint line is always visible; the bright line draws over it on view.
+     Hover, tap or arrow keys show each month. */
   var chartCard=$('#chart');
   if(chartCard){
-    var lines=$$('.c-line',chartCard);
-    var draw=function(){chartCard.classList.add('in');lines.forEach(function(p){p.style.strokeDashoffset='0'})};
-    if(reduce||!('IntersectionObserver' in window)){draw()}
-    else{
-      lines.forEach(function(p){var L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L});
-      new IntersectionObserver(function(en,ob){if(en[0].isIntersecting){draw();ob.disconnect()}},{threshold:.3}).observe(chartCard);
-    }
-    if(reduce){$$('svg',chartCard).forEach(function(s){if(s.pauseAnimations)s.pauseAnimations()})}
+    var drawLine=$('.c-draw',chartCard);
+    var go=function(){chartCard.classList.add('in');if(drawLine)drawLine.style.strokeDashoffset='0'};
+    if(drawLine&&!reduce&&'IntersectionObserver' in window){
+      var L=drawLine.getTotalLength();drawLine.style.strokeDasharray=L;drawLine.style.strokeDashoffset=L;
+      new IntersectionObserver(function(en,ob){if(en[0].isIntersecting){go();ob.disconnect()}},{threshold:.35}).observe(chartCard);
+    }else go();
+    if(reduce)$$('svg',chartCard).forEach(function(s){if(s.pauseAnimations)s.pauseAnimations()});
+    var svg=$('svg.chart',chartCard),tip=$('.c-tip',chartCard),guide=$('.c-guide',chartCard),hov=$('.c-hover',chartCard);
+    var DATA=[];try{DATA=JSON.parse(chartCard.getAttribute('data-points'))}catch(e){}
+    var money=function(v){return (v<0?'−':'')+'£'+Math.abs(v).toFixed(1)+'k'};
+    var showM=function(i){
+      var pt=DATA[i];if(!pt)return;
+      guide.setAttribute('x1',pt.x);guide.setAttribute('x2',pt.x);guide.style.opacity=1;
+      hov.setAttribute('cx',pt.x);hov.setAttribute('cy',pt.y);hov.style.opacity=1;
+      tip.innerHTML='<b>Month '+(i+1)+'</b><span>This month <em>'+money(pt.m)+'</em></span><span>Total saved <em>'+money(pt.c)+'</em></span>'+(pt.note?'<small>'+pt.note+'</small>':'');
+      var r=svg.getBoundingClientRect(),cr=chartCard.getBoundingClientRect(),k=r.width/600,half=tip.offsetWidth/2;
+      tip.style.left=Math.max(12+half,Math.min(cr.width-12-half,r.left-cr.left+pt.x*k))+'px';tip.style.top=(r.top-cr.top+pt.y*k)+'px';
+      tip.classList.toggle('low',pt.y<70);tip.classList.add('on');
+    };
+    var hideM=function(){tip.classList.remove('on');guide.style.opacity=0;hov.style.opacity=0};
+    var idx=function(e){var r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*600;return Math.max(0,Math.min(11,Math.round((x-60)/(520/11))))};
+    svg.addEventListener('pointermove',function(e){showM(idx(e))});
+    svg.addEventListener('pointerdown',function(e){showM(idx(e))});
+    svg.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse')hideM()});
+    var ki=-1;
+    svg.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();ki=Math.max(0,Math.min(11,(ki<0?0:ki+(e.key==='ArrowRight'?1:-1))));showM(ki)}
+      if(e.key==='Escape')hideM();
+    });
+    svg.addEventListener('blur',hideM);
   }
+
+  /* Six stages: each stage lights up as it scrolls into view, and the line fills behind them */
+  var tl=$('#timeline');
+  if(tl){
+    var tlItems=$$('.tl-item',tl),fill=$('.tl-fill'),wrapEl=tl.parentNode;
+    if(!reduce&&'IntersectionObserver' in window){
+      tl.classList.add('ready');
+      var tio=new IntersectionObserver(function(en){en.forEach(function(x){if(x.isIntersecting){x.target.classList.add('on');tio.unobserve(x.target)}})},{rootMargin:'0px 0px -30% 0px'});
+      tlItems.forEach(function(it){tio.observe(it)});
+    }else tlItems.forEach(function(it){it.classList.add('on')});
+    var tlProg=function(){
+      if(!fill)return;
+      if(reduce){fill.style.transform='scaleY(1)';return}
+      var r=wrapEl.getBoundingClientRect(),vh=window.innerHeight;
+      fill.style.transform='scaleY('+Math.min(1,Math.max(0,(vh*.7-r.top)/r.height)).toFixed(3)+')';
+    };
+    window.addEventListener('scroll',tlProg,{passive:true});window.addEventListener('resize',tlProg);tlProg();
+  }
+
+  /* Certification badges: hover flips them; a tap or click keeps them flipped */
+  $$('.cert-flip').forEach(function(b){b.addEventListener('click',function(){b.classList.toggle('flipped')})});
 
   /* Test-bench reel: buttons, drag to scroll, video plays only while visible */
   $$('.reel').forEach(function(reel){
@@ -113,7 +157,7 @@
   var menuBtn=$('#menuBtn'), menu=$('#mobileMenu');
   menuBtn.addEventListener('click',function(){var open=menu.hidden;menu.hidden=!open;menuBtn.setAttribute('aria-expanded',String(open));onScroll()});
   onScroll();
-  $$('#mobileMenu a').forEach(function(a){a.addEventListener('click',function(){menu.hidden=true;menuBtn.setAttribute('aria-expanded','false')})});
+  $$('#mobileMenu a, #mobileMenu button').forEach(function(a){a.addEventListener('click',function(){menu.hidden=true;menuBtn.setAttribute('aria-expanded','false');onScroll()})});
 
   /* Hero comparison */
   var SUP={A:{f:1.10,fr:0.95,d:0.28},B:{f:1.35,fr:0.42,d:0.34},C:{f:1.25,fr:0.78,d:0.31}};

@@ -95,23 +95,24 @@
       <a class="hero-more" href="#about">See how we work<svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
     </div>
 
-    <figure class="hero-visual" id="heroVisual">
-      <div class="hv">
+    <div class="hero-visual" id="heroVisual">
+      <canvas class="motes" id="motes" aria-hidden="true"></canvas>
+      <figure class="hv">
         <div class="hv-photo">
-          <img src="assets/img/hero-still.jpg" alt="Unbranded black skincare jars and tubes arranged on grey stone" width="1040" height="1300" fetchpriority="high" decoding="async">
+          <img src="assets/img/hero-still.jpg" alt="Black skincare jars and tubes arranged on grey stone" width="1040" height="1300" fetchpriority="high" decoding="async">
           <i class="hv-sheen" aria-hidden="true"></i>
         </div>
-      </div>
-      <i class="hv-floor" aria-hidden="true"></i>
-      <div class="hv-chip hv-a">
-          <span class="tick" aria-hidden="true"><svg class="ico"><use href="#i-tick"/></svg></span>
-          <span class="hv-t"><b>Supplier verified</b><small>Registration, certificates and bank details matched</small></span>
-        </div>
-        <div class="hv-chip hv-b">
-          <span class="ibox sm white" aria-hidden="true"><svg class="ico"><use href="#i-doc"/></svg></span>
-          <span class="hv-t"><b>Sample report ready</b><small>Tested to an agreed protocol, with photos and video</small></span>
-        </div>
-    </figure>
+        <i class="hv-floor" aria-hidden="true"></i>
+      </figure>
+      <nav class="flabels" aria-label="Explore Chainex">
+        <a class="flabel f1" href="#quality" style="--d:1.25"><span class="fl-ic green" aria-hidden="true"><svg class="ico"><use href="#i-shield"/></svg></span><span class="fl-t"><b>Verified suppliers</b><small>Checked before you pay</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="flabel f2" href="#compare" style="--d:.8"><span class="fl-ic blue" aria-hidden="true"><svg class="ico"><use href="#i-chart"/></svg></span><span class="fl-t"><b>Landed cost</b><small>Compare true unit prices</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="flabel f3" href="#testing" style="--d:1.05"><span class="fl-ic warm" aria-hidden="true"><svg class="ico"><use href="#i-doc"/></svg></span><span class="fl-t"><b>Sample testing</b><small>Photos, video and a report</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="flabel f4" href="#savings" style="--d:.9"><span class="fl-ic green" aria-hidden="true"><svg class="ico"><use href="#i-down"/></svg></span><span class="fl-t"><b>Savings</b><small>Watch the difference add up</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="flabel f5" href="#process" style="--d:.75"><span class="fl-ic white" aria-hidden="true"><svg class="ico"><use href="#i-sync"/></svg></span><span class="fl-t"><b>Six stages</b><small>How we work, start to finish</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="flabel f6" href="#setups" style="--d:1.15"><span class="fl-ic warm" aria-hidden="true"><svg class="ico"><use href="#i-cube"/></svg></span><span class="fl-t"><b>Fulfilment setups</b><small>Dropship, bulk or 3PL</small></span><svg class="ico fl-go" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </nav>
+    </div>
   </div>
 
   <div class="wrap">
@@ -179,8 +180,7 @@
 </section>
 
 <!-- COMPARISON -->
-<section class="section alt" id="compare" aria-labelledby="cmpSecTitle">
-  <i class="streak" aria-hidden="true"></i>
+<section class="section white" id="compare" aria-labelledby="cmpSecTitle">
   <div class="wrap compare-grid">
     <div class="compare-copy">
       <div class="sec-head" style="margin-bottom:0">
@@ -195,7 +195,7 @@
       </ul>
     </div>
 
-    <figure class="cmp-card glow-cyan" id="cmpCard" aria-labelledby="cmpTitle">
+    <figure class="cmp-card" id="cmpCard" aria-labelledby="cmpTitle">
       <div class="cmp-top">
         <div class="t">
           <span class="mono-label">Supplier comparison</span>
@@ -424,7 +424,7 @@
     </div>
 
     <div class="ownbrand">
-      <figure class="ob-media"><img src="assets/img/blank-tube.jpg" alt="A blank white cosmetic tube standing in folds of white linen, ready for a brand's own label" width="960" height="1200" loading="lazy"></figure>
+      <figure class="ob-media"><img src="assets/img/white-tube.jpg" alt="A white body lotion tube standing in folds of white linen" width="960" height="1200" loading="lazy"></figure>
       <div class="ob-copy">
         <p class="eyebrow">Own brand development</p>
         <h3 class="ob-title">From a stock product to one that is <em>genuinely yours.</em></h3>
@@ -553,7 +553,7 @@
         <p class="report-note">After launch, we buy from your store as a customer would and retest against the same benchmark. <a href="#aftercare">See how we stay hands on</a></p>
       </div>
     </div>
-    <div class="reel" aria-labelledby="reelTitle">
+    <div class="reel" id="testing" aria-labelledby="reelTitle">
       <div class="reel-head">
         <div><p class="eyebrow">From our test bench</p><h3 id="reelTitle">How we document, test and report on real samples.</h3></div>
         <div class="reel-nav"><button type="button" class="icon-btn reel-prev" aria-label="Previous"><svg class="ico"><use href="#i-back"/></svg></button><button type="button" class="icon-btn reel-next" aria-label="Next"><svg class="ico"><use href="#i-arrow"/></svg></button></div>

@@ -87,6 +87,28 @@
     if(reduce){$$('svg',chartCard).forEach(function(s){if(s.pauseAnimations)s.pauseAnimations()})}
   }
 
+  /* Test-bench reel: buttons, drag to scroll, video plays only while visible */
+  $$('.reel').forEach(function(reel){
+    var track=$('.reel-track',reel), prev=$('.reel-prev',reel), next=$('.reel-next',reel);
+    var step=function(){var it=$('.reel-item',track);return it?it.getBoundingClientRect().width+22:300};
+    var sync=function(){prev.disabled=track.scrollLeft<4;next.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-4};
+    prev.addEventListener('click',function(){track.scrollBy({left:-step(),behavior:reduce?'auto':'smooth'})});
+    next.addEventListener('click',function(){track.scrollBy({left:step(),behavior:reduce?'auto':'smooth'})});
+    track.addEventListener('scroll',sync,{passive:true});sync();
+    var down=false,sx=0,sl=0,moved=false;
+    track.addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse'||e.target.closest('button'))return;down=true;moved=false;sx=e.clientX;sl=track.scrollLeft});
+    window.addEventListener('pointermove',function(e){if(!down)return;var dx=e.clientX-sx;if(Math.abs(dx)>4){moved=true;track.classList.add('drag')}track.scrollLeft=sl-dx});
+    window.addEventListener('pointerup',function(){if(!down)return;down=false;track.classList.remove('drag')});
+    track.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){e.preventDefault();next.click()}if(e.key==='ArrowLeft'){e.preventDefault();prev.click()}});
+    $$('.reel-video',reel).forEach(function(v){
+      var btn=v.parentNode.querySelector('.reel-play'), userPaused=reduce;
+      var show=function(){btn.classList.toggle('paused',v.paused);btn.setAttribute('aria-label',v.paused?'Play video':'Pause video')};
+      btn.addEventListener('click',function(){if(v.paused){userPaused=false;v.play().catch(function(){})}else{userPaused=true;v.pause()}});
+      v.addEventListener('play',show);v.addEventListener('pause',show);show();
+      if('IntersectionObserver' in window){new IntersectionObserver(function(en){if(en[0].isIntersecting&&!userPaused){v.play().catch(function(){})}else{v.pause()}},{threshold:.5}).observe(v)}
+    });
+  });
+
   /* Mobile menu */
   var menuBtn=$('#menuBtn'), menu=$('#mobileMenu');
   menuBtn.addEventListener('click',function(){var open=menu.hidden;menu.hidden=!open;menuBtn.setAttribute('aria-expanded',String(open));onScroll()});

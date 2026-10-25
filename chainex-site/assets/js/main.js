@@ -74,6 +74,19 @@
     }
   }
 
+  /* Savings chart: the line draws itself when it comes into view */
+  var chartCard=$('#chart');
+  if(chartCard){
+    var lines=$$('.c-line',chartCard);
+    var draw=function(){chartCard.classList.add('in');lines.forEach(function(p){p.style.strokeDashoffset='0'})};
+    if(reduce||!('IntersectionObserver' in window)){draw()}
+    else{
+      lines.forEach(function(p){var L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L});
+      new IntersectionObserver(function(en,ob){if(en[0].isIntersecting){draw();ob.disconnect()}},{threshold:.3}).observe(chartCard);
+    }
+    if(reduce){$$('svg',chartCard).forEach(function(s){if(s.pauseAnimations)s.pauseAnimations()})}
+  }
+
   /* Mobile menu */
   var menuBtn=$('#menuBtn'), menu=$('#mobileMenu');
   menuBtn.addEventListener('click',function(){var open=menu.hidden;menu.hidden=!open;menuBtn.setAttribute('aria-expanded',String(open));onScroll()});

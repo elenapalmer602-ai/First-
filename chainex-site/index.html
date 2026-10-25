@@ -144,7 +144,7 @@
         </dl>
         <div class="people">
           <div class="person">
-            <img class="av av-photo" src="assets/img/alex-ward.jpg" alt="Alex Ward" width="56" height="56" loading="lazy">
+            <img class="av av-photo" src="assets/img/alex-ward.jpg" alt="Alex Ward" width="112" height="112" loading="lazy">
             <b>Alex Ward</b><span class="role">Co-founder. Client relationships and supplier negotiation.</span>
             <div class="person-links"><a class="soc sm" href="https://www.linkedin.com/in/alexander-ward-5464181a5" target="_blank" rel="noopener" aria-label="Alex Ward on LinkedIn"><svg class="ico"><use href="#i-linkedin"/></svg></a><a class="soc sm" href="tel:+447907921405" aria-label="Call Alex on +44 7907 921405"><svg class="ico"><use href="#i-phone"/></svg></a></div>
           </div>
@@ -245,9 +245,9 @@
       <h2 class="h-section" id="savTitle">Watch the difference <em>add up.</em></h2>
       <p class="lede">A supplier switch takes a month or two to bed in. Samples and testing cost a little up front, then savings build as your volume moves across. We report every month from your real invoices.</p>
       <ul class="kpis">
-        <li class="kpi glow-warm"><span class="mono-label">Saved in year one</span><b>£22.2k</b></li>
-        <li class="kpi glow-cyan"><span class="mono-label">Break-even</span><b>Month 3</b></li>
-        <li class="kpi glow-green"><span class="mono-label">Landed cost per unit</span><b>&minus;11%</b></li>
+        <li class="kpi glow-warm"><span class="mono-label">Saved in year one</span><b data-count="22.2" data-dec="1" data-pre="£" data-suf="k">£22.2k</b></li>
+        <li class="kpi glow-white"><span class="mono-label">Break-even</span><b data-count="3" data-from="1" data-pre="Month ">Month 3</b></li>
+        <li class="kpi glow-warm"><span class="mono-label">Landed cost per unit</span><b data-count="11" data-pre="&minus;" data-suf="%">&minus;11%</b></li>
       </ul>
     </div>
     <figure class="chart-card glow-warm" id="chart" data-points='[{"x": 60.0, "y": 202.3, "m": -0.4, "c": -0.4, "note": "Samples and testing costs"}, {"x": 107.3, "y": 200.1, "m": 0.3, "c": -0.1, "note": "First orders switch over"}, {"x": 154.5, "y": 192.1, "m": 1.1, "c": 1.0}, {"x": 201.8, "y": 180.4, "m": 1.6, "c": 2.6}, {"x": 249.1, "y": 166.5, "m": 1.9, "c": 4.5, "note": "Full volume on the new supplier"}, {"x": 296.4, "y": 151.2, "m": 2.1, "c": 6.6}, {"x": 343.6, "y": 136.5, "m": 2.0, "c": 8.6}, {"x": 390.9, "y": 119.7, "m": 2.3, "c": 10.9}, {"x": 438.2, "y": 102.2, "m": 2.4, "c": 13.3}, {"x": 485.5, "y": 81.0, "m": 2.9, "c": 16.2}, {"x": 532.7, "y": 56.2, "m": 3.4, "c": 19.6, "note": "Peak season volume"}, {"x": 580.0, "y": 37.2, "m": 2.6, "c": 22.2}]'>
@@ -256,7 +256,7 @@
         <defs>
           <linearGradient id="gr-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE2BC"/><stop offset=".55" stop-color="#FFF1DE"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
           <linearGradient id="gr-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFDDB0" stop-opacity=".22"/><stop offset="1" stop-color="#FFDDB0" stop-opacity="0"/></linearGradient>
-          <linearGradient id="gr-bar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".55"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".08"/></linearGradient>
+          <linearGradient id="gr-bar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset="1" stop-color="#FFF4E6" stop-opacity=".14"/></linearGradient>
           <filter id="f-glow" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="6"/></filter>
         </defs>
         <rect class="c-band" x="56" y="22" width="69.3" height="191.4" rx="10"/>
@@ -447,7 +447,14 @@
         <h2 class="h-section" id="procTitle">Six stages. Each one ends with <em>something you can read.</em></h2>
         <p class="lede">Every engagement is shaped around your brand, but the sequence stays the same, so you always know where things stand.</p>
       </div>
-      <div class="plates" aria-hidden="true"><i class="plate p3"></i><i class="plate p2"></i><i class="plate p1"></i></div>
+      <div class="pstack" id="pstack">
+        <div class="ps-stage" role="slider" tabindex="0" aria-label="The six stages. Move across the stack to bring them together" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-valuetext="Stage 1 of 6, Discover">
+          <i class="ps-shadow" aria-hidden="true"></i>
+          <i class="ps-plate" style="--k:0"></i><i class="ps-plate" style="--k:1"></i><i class="ps-plate" style="--k:2"></i><i class="ps-plate" style="--k:3"></i><i class="ps-plate" style="--k:4"></i><i class="ps-plate top" style="--k:5"><svg class="ps-tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.6l4.1 4.1L18.6 7.4" pathLength="1"/></svg></i>
+        </div>
+        <div class="ps-cap" aria-hidden="true"><span class="ps-count"><b id="psN">01</b> / 06</span><span class="ps-name" id="psName">Discover</span></div>
+        <p class="ps-hint" aria-hidden="true"><svg class="ico"><use href="#i-back"/></svg>Pan across the stack<svg class="ico"><use href="#i-arrow"/></svg></p>
+      </div>
     </div>
     <div class="tl-wrap">
       <span class="tl-track" aria-hidden="true"><i class="tl-fill"></i></span>
@@ -495,10 +502,16 @@
     </div>
   </div>
   <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Quality and verification</p>
-      <h2 class="h-section" id="qTitle">Proof, <em>not promises.</em></h2>
-      <p class="lede">Every supplier is checked before money moves, and every product is tested before it reaches your customers. You get the evidence in writing.</p>
+    <div class="q-head">
+      <div class="sec-head">
+        <p class="eyebrow">Quality and verification</p>
+        <h2 class="h-section" id="qTitle">Proof, <em>not promises.</em></h2>
+        <p class="lede">Every supplier is checked before money moves, and every product is tested before it reaches your customers. You get the evidence in writing.</p>
+      </div>
+      <figure class="q-photo">
+        <div class="q-frame"><img src="assets/img/tube-sealing.jpg" alt="Filled cosmetic tubes being capped and sealed at a production bench" width="1800" height="900" loading="lazy"></div>
+        <figcaption>Caps, seals and labels: the details we check before anything ships.</figcaption>
+      </figure>
     </div>
     <div class="proof-grid">
       <div class="proof-col">
@@ -700,10 +713,6 @@
         <div class="log-foot">Illustrative entries showing the kind of issues we catch and how they are logged.</div>
       </div>
     </div>
-    <figure class="shot banner care-banner">
-      <div class="frame"><img src="assets/img/tube-sealing.jpg" alt="Filled cosmetic tubes being capped and sealed at a production bench" width="1800" height="900" loading="lazy"></div>
-      <figcaption>After launch we keep checking, so later batches still match the sample you approved.</figcaption>
-    </figure>
   </div>
 </section>
 
@@ -754,7 +763,7 @@
 </section>
 
 <!-- CONTACT -->
-<section class="section contact" id="contact" aria-labelledby="ctTitle">
+<section class="section contact light" id="contact" aria-labelledby="ctTitle">
   <div class="contact-glow" aria-hidden="true"></div>
   <div class="wrap contact-grid">
     <div class="contact-copy">
@@ -801,7 +810,7 @@
       </div>
     </div>
 
-    <div class="form-card glow-cyan">
+    <div class="form-card">
       <div class="seg form-tabs" role="group" aria-label="I am a">
         <button type="button" data-form="brand" aria-pressed="true">I am a brand</button>
         <button type="button" data-form="maker" aria-pressed="false">I am a manufacturer</button>
@@ -899,12 +908,15 @@
     </div>
   </div>
   <div class="wrap b-grid">
-    <div class="b-shop">
+    <div class="b-intro">
       <div class="sec-head" style="margin-bottom:0">
         <p class="eyebrow">Product brief builder</p>
         <h2 class="h-section" id="bTitle">Build your brief like <em>filling a basket.</em></h2>
         <p class="lede">Add what you need from each aisle. We write it up as a supplier-ready brief as you go.</p>
       </div>
+      <figure class="b-hero"><img src="assets/img/chainex-bags.jpg" alt="Shopping bags printed with the Chainex logo, held up in both hands" width="960" height="720" loading="lazy"></figure>
+    </div>
+    <div class="b-shop">
       <div class="b-tabs" role="tablist" aria-label="Brief sections" id="bTabs"></div>
       <div class="b-panel" id="bPanel" role="tabpanel"></div>
       <div class="b-nav"><button type="button" class="btn btn-ghost btn-sm" id="bPrev"><svg class="ico"><use href="#i-back"/></svg>Previous</button><button type="button" class="btn btn-primary btn-sm" id="bNext">Next<svg class="ico"><use href="#i-arrow"/></svg></button></div>

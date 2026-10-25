@@ -129,6 +129,177 @@
   /* Certification badges: hover flips them; a tap or click keeps them flipped */
   $$('.cert-flip').forEach(function(b){b.addEventListener('click',function(){b.classList.toggle('flipped')})});
 
+  /* Process stack: six plates, one per stage. Panning across the stack (mouse, touch drag or arrow keys)
+     brings them together from the bottom up; once all six have landed a tick grows on top. */
+  var ps=$('#pstack');
+  if(ps){
+    var stage=$('.ps-stage',ps),plates=$$('.ps-plate',ps),psShadow=$('.ps-shadow',ps),psN=$('#psN'),psName=$('#psName');
+    var NAMES=['Discover','Source and compare','Verify and test','Model and recommend','Set up and transition','Monitor and improve'];
+    var OFF=[[-18,-7],[20,6],[-14,-4],[22,7],[-20,-6],[12,4]];
+    var GAP=50,THICK=10.5,cur=0,target=0,psVisible=false,psRaf=0,landed=[],together=0,isDone=false;
+    var smooth=function(s){return s*s*(3-2*s)};
+    var layout=function(time){
+      var z=[0],s=[1];
+      for(var k=1;k<6;k++){s[k]=Math.max(0,Math.min(1,cur*5-(k-1)));z[k]=z[k-1]+GAP+(THICK-GAP)*smooth(s[k])}
+      var mid=(z[0]+z[5])/2,count=1;
+      for(k=0;k<6;k++){
+        var own=k===0?s[1]:s[k],free=1-own;
+        var bob=reduce?0:Math.sin(time*.0011+k*1.15)*3.4*free;
+        plates[k].style.setProperty('--z',(z[k]-mid+bob).toFixed(2)+'px');
+        plates[k].style.setProperty('--x',(OFF[k][0]*free).toFixed(2)+'px');
+        plates[k].style.setProperty('--r',(OFF[k][1]*free).toFixed(2)+'deg');
+        if(k>0){
+          var on=s[k]>.92;
+          if(on){count++;if(!landed[k]&&!reduce){(function(p){p.classList.add('lit');setTimeout(function(){p.classList.remove('lit')},420)})(plates[k])}}
+          landed[k]=on;
+        }
+      }
+      var bottomY=-(z[0]-mid)*.848;
+      psShadow.style.setProperty('--sy',(bottomY+66).toFixed(1)+'px');
+      psShadow.style.setProperty('--warm',cur.toFixed(3));
+      var done=cur>.985||(isDone&&cur>.96);
+      if(done!==isDone){isDone=done;ps.classList.toggle('done',done)}
+      if(count!==together||done!==ps._wasDone){
+        together=count;ps._wasDone=done;
+        psN.textContent='0'+count;
+        psName.textContent=done?'All six stages, one clear result':NAMES[count-1];
+        stage.setAttribute('aria-valuenow',String(count));
+        stage.setAttribute('aria-valuetext',done?'All six stages together':'Stage '+count+' of 6, '+NAMES[count-1]);
+      }
+    };
+    var psTick=function(time){
+      psRaf=0;
+      cur+=(target-cur)*(reduce?1:.15);
+      if(Math.abs(target-cur)<.0015)cur=target;
+      layout(time||performance.now());
+      // keep animating while the plates move, or while any plate is still free to float
+      if(psVisible&&!reduce&&(cur!==target||cur<1))psRaf=requestAnimationFrame(psTick);
+    };
+    var kick=function(){if(!psRaf)psRaf=requestAnimationFrame(psTick)};
+    var used=function(){ps.classList.add('used')};
+    var fromX=function(x){var r=stage.getBoundingClientRect();return Math.max(0,Math.min(1,(x-r.left-r.width*.14)/(r.width*.72)))};
+    stage.addEventListener('pointermove',function(e){
+      if(e.pointerType==='mouse'){target=fromX(e.clientX);used();kick()}
+    });
+    var dragX=null,dragFrom=0;
+    stage.addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse'){dragX=e.clientX;dragFrom=target}});
+    stage.addEventListener('pointermove',function(e){
+      if(dragX===null||e.pointerType==='mouse')return;
+      var r=stage.getBoundingClientRect();
+      target=Math.max(0,Math.min(1,dragFrom+(e.clientX-dragX)/(r.width*.75)));used();kick();
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(function(t){stage.addEventListener(t,function(e){if(e.pointerType!=='mouse')dragX=null})});
+    stage.addEventListener('keydown',function(e){
+      var k=e.key,step=Math.round(target*5);
+      if(k==='ArrowRight'||k==='ArrowUp')target=Math.min(5,step+1)/5;
+      else if(k==='ArrowLeft'||k==='ArrowDown')target=Math.max(0,step-1)/5;
+      else if(k==='Home')target=0;
+      else if(k==='End')target=1;
+      else return;
+      e.preventDefault();used();kick();
+    });
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(en){psVisible=en[0].isIntersecting;if(psVisible)kick()},{rootMargin:'60px 0px'}).observe(stage);
+    }else{psVisible=true}
+    layout(0);kick();
+  }
+
+  /* Boxes pop up one by one as each group scrolls into view. Before they arrive they sit dimmed and
+     slightly lower, never hidden, so nothing is lost if motion is off or a screenshot catches them early. */
+  if(!reduce&&'IntersectionObserver' in window){
+    var RV=['.facts > div','.people .person','.fit li:not(.mono-label)','.photo-trio .shot','.points li','.cmp-card','.kpi','.chart-card','.ess-grid .flip','.svc-group','.ownbrand .ob-media','.ownbrand .ob-copy','.q-photo','.proof-col','.reel-head','.setup-panel','.models li:not(.mono-label)','.hs-media','.care-list li','.log','.faq-list details','.faq-shot','.next li','.dcard','.social-row','.quick-actions .btn','.form-card','.pstack','.shot.banner'].join(',');
+    var rvEls=$$(RV).filter(function(el){return !el.closest('.hero,#builder,.modal,.msg-panel,.drawer')});
+    var rio=new IntersectionObserver(function(en){
+      var hits=en.filter(function(x){return x.isIntersecting}).map(function(x){return x.target});
+      hits.sort(function(a,b){var ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();return (ra.top-rb.top)||(ra.left-rb.left)});
+      hits.forEach(function(el,i){
+        rio.unobserve(el);
+        var d=Math.min(i,7)*95;
+        el.style.setProperty('--rv-d',d+'ms');
+        el.classList.add('rv-in');
+        setTimeout(function(){el.classList.remove('rv','rv-in');el.style.removeProperty('--rv-d')},d+1000);
+      });
+    },{rootMargin:'0px 0px -8% 0px',threshold:.12});
+    rvEls.forEach(function(el){
+      var r=el.getBoundingClientRect();
+      if(r.bottom<0)return;            // already scrolled past: leave it alone
+      el.classList.add('rv');rio.observe(el);
+    });
+  }
+
+  /* Section titles light up word by word as you read down. Screen readers get the title as one piece. */
+  if(!reduce&&'IntersectionObserver' in window){
+    var wsets=[];
+    $$('main .h-section, main .ob-title').forEach(function(h){
+      if(h.closest('.hero'))return;
+      var words=[],sr=document.createElement('span'),vis=document.createElement('span');
+      sr.className='sr';sr.textContent=h.textContent.replace(/\s+/g,' ').trim();
+      vis.className='wl';vis.setAttribute('aria-hidden','true');
+      var walk=function(node,into){
+        Array.prototype.slice.call(node.childNodes).forEach(function(ch){
+          if(ch.nodeType===3){
+            ch.textContent.split(/(\s+)/).forEach(function(part){
+              if(!part)return;
+              if(/^\s+$/.test(part)){into.appendChild(document.createTextNode(' '));return}
+              var w=document.createElement('span');w.className='w';w.textContent=part;into.appendChild(w);words.push(w);
+            });
+          }else if(ch.nodeType===1){var c=ch.cloneNode(false);into.appendChild(c);walk(ch,c)}
+        });
+      };
+      walk(h,vis);
+      h.textContent='';h.appendChild(sr);h.appendChild(vis);
+      var set={el:h,words:words,last:-1};h._ws=set;wsets.push(set);
+    });
+    var wActive=[],wRaf=0;
+    var wPaint=function(){
+      wRaf=0;var vh=window.innerHeight;
+      wActive.forEach(function(s){
+        var r=s.el.getBoundingClientRect();
+        var p=Math.max(0,Math.min(1,(vh*.9-r.top)/(vh*.42)));
+        var lit=p*(s.words.length+1.2);
+        if(Math.abs(lit-s.last)<.015)return;
+        s.last=lit;
+        s.words.forEach(function(w,i){
+          var on=Math.max(0,Math.min(1,lit-i));
+          w.style.setProperty('--on',on.toFixed(3));
+          w.style.setProperty('--hl',(4*on*(1-on)).toFixed(3));
+        });
+      });
+    };
+    var wio=new IntersectionObserver(function(en){
+      en.forEach(function(x){
+        var s=x.target._ws,i=wActive.indexOf(s);
+        if(x.isIntersecting&&i<0)wActive.push(s);
+        else if(!x.isIntersecting&&i>-1){wActive.splice(i,1);if(x.boundingClientRect.top<0){s.words.forEach(function(w){w.style.setProperty('--on','1');w.style.setProperty('--hl','0')});s.last=-1}}
+      });
+      if(!wRaf)wRaf=requestAnimationFrame(wPaint);
+    },{rootMargin:'15% 0px 15% 0px'});
+    wsets.forEach(function(s){wio.observe(s.el)});
+    window.addEventListener('scroll',function(){if(!wRaf&&wActive.length)wRaf=requestAnimationFrame(wPaint)},{passive:true});
+    window.addEventListener('resize',function(){if(!wRaf)wRaf=requestAnimationFrame(wPaint)});
+  }
+
+  /* Headline numbers count up when they come into view; the final value is already in the page */
+  var counters=$$('[data-count]');
+  if(counters.length&&!reduce&&'IntersectionObserver' in window){
+    var cio=new IntersectionObserver(function(en){
+      en.forEach(function(x){
+        if(!x.isIntersecting)return;
+        cio.unobserve(x.target);
+        var el=x.target,to=parseFloat(el.dataset.count),from=parseFloat(el.dataset.from||'0'),dec=parseInt(el.dataset.dec||'0',10);
+        var pre=el.dataset.pre||'',suf=el.dataset.suf||'',final=el.textContent,t0=0;
+        var step=function(t){
+          if(!t0)t0=t;
+          var k=Math.min(1,(t-t0)/1500),e=1-Math.pow(1-k,3);
+          el.textContent=k<1?pre+(from+(to-from)*e).toFixed(dec)+suf:final;
+          if(k<1)requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    },{threshold:.6});
+    counters.forEach(function(el){cio.observe(el)});
+  }
+
   /* Test-bench reel: buttons, drag to scroll, video plays only while visible */
   $$('.reel').forEach(function(reel){
     var track=$('.reel-track',reel), prev=$('.reel-prev',reel), next=$('.reel-next',reel);

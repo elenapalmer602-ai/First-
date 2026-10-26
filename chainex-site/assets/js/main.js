@@ -825,7 +825,7 @@
   /* Boxes pop up one by one as each group scrolls into view. Before they arrive they sit dimmed and
      slightly lower, never hidden, so nothing is lost if motion is off or a screenshot catches them early. */
   if(!reduce&&'IntersectionObserver' in window){
-    var RV=['.facts > div','.people .person','.fit li:not(.mono-label)','.photo-trio .shot','.points li','.cmp-card','.kpi','.chart-card','.ess-grid .flip','.svc-group','.ownbrand .ob-media','.ownbrand .ob-copy','.q-photo','.proof-col','.reel-head','.setup-panel','.models li:not(.mono-label)','.hs-media','.care-list li','.log','.faq-list details','.faq-shot','.next li','.dcard','.social-row','.quick-actions .btn','.form-card','.pstack','.shot.banner'].join(',');
+    var RV=['.facts > div','.people .person','.fit li:not(.mono-label)','.photo-trio .shot','.points li','.cmp-card','.kpi','.chart-card','.ess-grid .flip','.svc-group','.ownbrand .ob-media','.ownbrand .ob-copy','.q-photo','.q-part-head','.ver-copy','.checklist li','.st-intro-copy','.route','.st-sub','.st-step','.tf','.setup-panel','.models li:not(.mono-label)','.hs-media','.care-list li','.log','.faq-list details','.faq-shot','.next li','.dcard','.social-row','.quick-actions .btn','.form-card','.pstack'].join(',');
     var rvEls=$$(RV).filter(function(el){return !el.closest('.hero,#builder,.modal,.msg-panel,.drawer')});
     var rio=new IntersectionObserver(function(en){
       var hits=en.filter(function(x){return x.isIntersecting}).map(function(x){return x.target});
@@ -918,27 +918,37 @@
     counters.forEach(function(el){cio.observe(el)});
   }
 
-  /* Test-bench reel: buttons, drag to scroll, video plays only while visible */
-  $$('.reel').forEach(function(reel){
-    var track=$('.reel-track',reel), prev=$('.reel-prev',reel), next=$('.reel-next',reel);
-    var step=function(){var it=$('.reel-item',track);return it?it.getBoundingClientRect().width+22:300};
-    var sync=function(){prev.disabled=track.scrollLeft<4;next.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-4};
-    prev.addEventListener('click',function(){track.scrollBy({left:-step(),behavior:reduce?'auto':'smooth'})});
-    next.addEventListener('click',function(){track.scrollBy({left:step(),behavior:reduce?'auto':'smooth'})});
-    track.addEventListener('scroll',sync,{passive:true});sync();
-    var down=false,sx=0,sl=0,moved=false;
-    track.addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse'||e.target.closest('button'))return;down=true;moved=false;sx=e.clientX;sl=track.scrollLeft});
-    window.addEventListener('pointermove',function(e){if(!down)return;var dx=e.clientX-sx;if(Math.abs(dx)>4){moved=true;track.classList.add('drag')}track.scrollLeft=sl-dx});
-    window.addEventListener('pointerup',function(){if(!down)return;down=false;track.classList.remove('drag')});
-    track.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){e.preventDefault();next.click()}if(e.key==='ArrowLeft'){e.preventDefault();prev.click()}});
-    $$('.reel-video',reel).forEach(function(v){
-      var btn=v.parentNode.querySelector('.reel-play'), userPaused=reduce;
-      var show=function(){btn.classList.toggle('paused',v.paused);btn.setAttribute('aria-label',v.paused?'Play video':'Pause video')};
-      btn.addEventListener('click',function(){if(v.paused){userPaused=false;v.play().catch(function(){})}else{userPaused=true;v.pause()}});
-      v.addEventListener('play',show);v.addEventListener('pause',show);show();
-      if('IntersectionObserver' in window){new IntersectionObserver(function(en){if(en[0].isIntersecting&&!userPaused){v.play().catch(function(){})}else{v.pause()}},{threshold:.5}).observe(v)}
+  /* Test file: tabs (arrow keys move between them); the score dots fill in once the file is on screen */
+  var tf=$('#testFile');
+  if(tf){
+    var tabs=$$('[role="tab"]',tf);
+    var pickTab=function(t,focus){
+      tabs.forEach(function(b){var on=b===t;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;$('#'+b.getAttribute('aria-controls')).hidden=!on});
+      if(focus)t.focus();
+    };
+    tabs.forEach(function(b,i){
+      b.addEventListener('click',function(){pickTab(b)});
+      b.addEventListener('keydown',function(e){
+        var k=e.key,n=k==='ArrowRight'?i+1:k==='ArrowLeft'?i-1:k==='Home'?0:k==='End'?tabs.length-1:null;
+        if(n===null)return;
+        e.preventDefault();pickTab(tabs[(n+tabs.length)%tabs.length],true);
+      });
     });
-  });
+    if(!reduce&&'IntersectionObserver' in window){
+      tf.classList.add('pre');
+      var tio=new IntersectionObserver(function(en){if(en[0].isIntersecting){tf.classList.remove('pre');tio.disconnect()}},{threshold:.3});
+      tio.observe(tf);
+    }
+  }
+
+  /* Sample route: the travelling parcels only run while the diagram is on screen */
+  var route=$('.route');
+  if(route){
+    var rsv=$$('.route-svg',route).filter(function(s){return s.pauseAnimations});
+    var runRoute=function(on){rsv.forEach(function(s){on?s.unpauseAnimations():s.pauseAnimations()})};
+    if(reduce)runRoute(false);
+    else if('IntersectionObserver' in window)new IntersectionObserver(function(en){runRoute(en[0].isIntersecting)}).observe(route);
+  }
 
   /* Mobile menu */
   var menuBtn=$('#menuBtn'), menu=$('#mobileMenu');

@@ -21,6 +21,7 @@
     <linearGradient id="gr-white" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#9DA0A8"/></linearGradient>
     <linearGradient id="gr-silver" gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="44" y2="44"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A3A6AE"/></linearGradient>
     <linearGradient id="gr-bronze" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21"><stop offset="0" stop-color="#FFFAF4"/><stop offset=".55" stop-color="#E9D6C4"/><stop offset="1" stop-color="#BFA690"/></linearGradient>
+    <radialGradient id="gr-halo"><stop offset="0" stop-color="#8AF2BE" stop-opacity=".5"/><stop offset=".5" stop-color="#8AF2BE" stop-opacity=".16"/><stop offset="1" stop-color="#8AF2BE" stop-opacity="0"/></radialGradient>
     <linearGradient id="gr-fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-tick" viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8.5"/></symbol>
@@ -46,7 +47,7 @@
     <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
     <symbol id="i-message" viewBox="0 0 24 24"><path d="M4.5 4.5h10a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5H9.5L6 17.5v-3H4.5A2.5 2.5 0 0 1 2 12V7a2.5 2.5 0 0 1 2.5-2.5z"/><path d="M19.5 9A2.5 2.5 0 0 1 22 11.5v4a2.5 2.5 0 0 1-2.5 2.5H19v2.5L15.8 18H12"/></symbol>
     <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1.1 11.2a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 10.5V7a3 3 0 0 1 6 0v3.5"/></symbol>
-    <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M3.5 9.5L12 4.5l8.5 5"/><path d="M5.5 10v7.5M9.8 10v7.5M14.2 10v7.5M18.5 10v7.5M3.5 20h17"/></symbol><symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.5 3.5h8l4 4v13h-12z"/><path d="M14.5 3.5v4h4M9.5 12.5h6M9.5 16h6"/></symbol>
+    <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M3.5 9.5L12 4.5l8.5 5"/><path d="M5.5 10v7.5M9.8 10v7.5M14.2 10v7.5M18.5 10v7.5M3.5 20h17"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.7"/><path d="M4.8 20.2c.9-3.7 3.7-5.9 7.2-5.9s6.3 2.2 7.2 5.9"/></symbol><symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.5 3.5h8l4 4v13h-12z"/><path d="M14.5 3.5v4h4M9.5 12.5h6M9.5 16h6"/></symbol>
   </defs>
 </svg>
 
@@ -503,10 +504,22 @@
         <figcaption>Caps, seals and labels: the details we check before anything ships.</figcaption>
       </figure>
     </div>
-    <div class="proof-grid">
-      <div class="proof-col">
-        <h3>Supplier verification</h3>
-        <p>Anyone can send a quotation. We confirm the company behind it is real, active and safe to pay.</p>
+    <!-- 01: supplier verification -->
+    <div class="q-part" aria-labelledby="verTitle">
+      <div class="q-part-head">
+        <span class="q-num" aria-hidden="true">01</span>
+        <div class="q-part-t"><p class="eyebrow">Before money moves</p><h3 id="verTitle">Supplier verification</h3></div>
+      </div>
+      <div class="ver-grid">
+        <div class="ver-copy">
+          <p class="q-lead">Anyone can send a quotation. We confirm the company behind it is real, active and safe to pay.</p>
+          <div class="std">
+            <ul aria-label="Examples of standards we check">
+              <li>ISO 22716 GMP</li><li>CPSR</li><li>UK SCPN</li><li>EU CPNP</li><li>US MoCRA</li>
+            </ul>
+            <p>Examples of the standards and registrations we check, depending on your product and market.</p>
+          </div>
+        </div>
         <ul class="checklist">
           <li><span class="tick" aria-hidden="true"><svg class="ico"><use href="#i-tick"/></svg></span><span><b>Legal entity and registration</b> checked against official records</span></li>
           <li><span class="tick" aria-hidden="true"><svg class="ico"><use href="#i-tick"/></svg></span><span><b>Certificates</b> confirmed with the issuing body where possible</span></li>
@@ -514,113 +527,214 @@
           <li><span class="tick" aria-hidden="true"><svg class="ico"><use href="#i-tick"/></svg></span><span><b>The real manufacturer</b> identified, not just the trading company</span></li>
           <li><span class="tick" aria-hidden="true"><svg class="ico"><use href="#i-tick"/></svg></span><span><b>Market compliance</b> documents collected, with any gaps listed</span></li>
         </ul>
-        <div class="std">
-          <ul aria-label="Examples of standards we check">
-            <li>ISO 22716 GMP</li><li>CPSR</li><li>UK SCPN</li><li>EU CPNP</li><li>US MoCRA</li>
-          </ul>
-          <p>Examples of the standards and registrations we check, depending on your product and market.</p>
-        </div>
+      </div>
+    </div>
+
+    <!-- 02: sample testing -->
+    <div class="q-part" id="testing" aria-labelledby="stTitle">
+      <div class="q-part-head">
+        <span class="q-num" aria-hidden="true">02</span>
+        <div class="q-part-t"><p class="eyebrow">Before it reaches your customers</p><h3 id="stTitle">Sample testing, documented</h3></div>
       </div>
 
-      <div class="proof-col">
-        <h3>Documented quality testing</h3>
-        <p>We test samples ourselves against a defined protocol, across several units, and record every finding.</p>
-        <div class="report glow-warm" role="group" aria-label="Example quality test report">
-          <div class="report-head">
-            <div class="t"><span class="mono-label">Quality test report</span><b>Supplier B, pre production samples</b></div>
-            <span class="tag">Example layout</span>
-          </div>
-          <div class="report-meta">
-            <div><span class="mono-label">Units tested</span><span>6 of 6</span></div>
-            <div><span class="mono-label">Protocol</span><span>Agreed with brand</span></div>
-            <div><span class="mono-label">Evidence</span><span>Photo and video</span></div>
-          </div>
-          <div class="tbl-scroll">
-            <table>
-              <thead><tr><th scope="col">Check</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
-              <tbody>
-                <tr><td>Packaging integrity</td><td><span class="res ok">Pass</span></td><td>Photos</td></tr>
-                <tr><td>Fill and dimensions</td><td><span class="res ok">Pass</span></td><td>Measured</td></tr>
-                <tr><td>Unit to unit consistency</td><td><span class="res flag">Flag</span></td><td>Video</td></tr>
-                <tr><td>Performance in use</td><td><span class="res ok">Pass</span></td><td>Video</td></tr>
-                <tr><td>Labelling and claims</td><td><span class="res ok">Pass</span></td><td>Checked</td></tr>
-                <tr><td>Transit condition</td><td><span class="res ok">Pass</span></td><td>Photos</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="report-verdict">
-            <span class="mono-label">Verdict</span>
-            <span>Approved, with a consistency check on the first production run. Benchmark saved for future batches.</span>
-          </div>
+      <div class="st-intro">
+        <div class="st-intro-copy">
+          <h4 class="st-h">Samples reach you and us at the same time.</h4>
+          <p>When a supplier's samples are ready, we receive one set and a matching set is sent to you at the same time. You hold the product and judge it for yourself, while we put ours through a documented test.</p>
+          <p>Then we send you the file, so you can decide with your own impression and our evidence side by side.</p>
         </div>
-        <p class="report-note">After launch, we buy from your store as a customer would and retest against the same benchmark. <a href="#aftercare">See how we stay hands on</a></p>
+        <figure class="route" role="img" aria-label="How samples travel. The supplier's samples are split into two matching sets at the same time: one is sent to you to try, one comes to us to test. We send you a test file, and you decide with your own set and our file.">
+          <svg class="route-svg route-h" viewBox="0 0 640 370" aria-hidden="true" focusable="false">
+            <path id="rh1" class="rl" d="M86 185 C 190 185, 210 74, 320 74"/>
+            <path id="rh2" class="rl" d="M86 185 C 190 185, 210 296, 320 296"/>
+            <path id="rh3" class="rl soft" d="M320 74 C 430 74, 450 185, 554 185"/>
+            <path id="rh4" class="rl hot" d="M320 296 C 430 296, 450 185, 554 185"/>
+            <circle class="halo" cx="554" cy="185" r="84" opacity="0"><animate attributeName="opacity" dur="6s" repeatCount="indefinite" values="0;0;1;0;0" keyTimes="0;.8;.86;.98;1"/></circle>
+            <g class="parcels">
+              <circle class="pc" r="5"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.34;1" calcMode="spline" keySplines=".45 0 .25 1;0 0 1 1"><mpath href="#rh1"/></animateMotion></circle>
+              <circle class="pc" r="5"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.34;1" calcMode="spline" keySplines=".45 0 .25 1;0 0 1 1"><mpath href="#rh2"/></animateMotion></circle>
+              <circle class="pc soft" r="4"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.5;.84;1" calcMode="spline" keySplines="0 0 1 1;.45 0 .25 1;0 0 1 1"><mpath href="#rh3"/></animateMotion></circle>
+              <circle class="pc file" r="5"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.5;.84;1" calcMode="spline" keySplines="0 0 1 1;.45 0 .25 1;0 0 1 1"><mpath href="#rh4"/></animateMotion></circle>
+            </g>
+          </svg>
+          <svg class="route-svg route-v" viewBox="0 0 360 580" aria-hidden="true" focusable="false">
+            <path id="rv1" class="rl" d="M180 72 C 180 181, 92 181, 92 290"/>
+            <path id="rv2" class="rl" d="M180 72 C 180 181, 268 181, 268 290"/>
+            <path id="rv3" class="rl soft" d="M92 290 C 92 399, 180 399, 180 508"/>
+            <path id="rv4" class="rl hot" d="M268 290 C 268 399, 180 399, 180 508"/>
+            <circle class="halo" cx="180" cy="508" r="78" opacity="0"><animate attributeName="opacity" dur="6s" repeatCount="indefinite" values="0;0;1;0;0" keyTimes="0;.8;.86;.98;1"/></circle>
+            <g class="parcels">
+              <circle class="pc" r="5"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.34;1" calcMode="spline" keySplines=".45 0 .25 1;0 0 1 1"><mpath href="#rv1"/></animateMotion></circle>
+              <circle class="pc" r="5"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.34;1" calcMode="spline" keySplines=".45 0 .25 1;0 0 1 1"><mpath href="#rv2"/></animateMotion></circle>
+              <circle class="pc soft" r="4"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.5;.84;1" calcMode="spline" keySplines="0 0 1 1;.45 0 .25 1;0 0 1 1"><mpath href="#rv3"/></animateMotion></circle>
+              <circle class="pc file" r="5"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.5;.84;1" calcMode="spline" keySplines="0 0 1 1;.45 0 .25 1;0 0 1 1"><mpath href="#rv4"/></animateMotion></circle>
+            </g>
+          </svg>
+          <div class="rn rn-sup"><span class="rn-ic"><svg class="ico"><use href="#i-cube"/></svg></span><b>Supplier</b><small>Samples ready</small></div>
+          <div class="rn rn-you"><span class="rn-ic"><svg class="ico"><use href="#i-user"/></svg></span><b>Your set</b><small>Sent to you to try</small></div>
+          <div class="rn rn-us"><span class="rn-ic"><svg class="ico"><use href="#i-search"/></svg></span><b>Our set</b><small>Tested and documented</small></div>
+          <div class="rn rn-dec"><span class="rn-ic"><svg class="ico"><use href="#i-tick"/></svg></span><b>You decide</b><small>With your set and our file</small></div>
+          <span class="route-tag t-same">Same time</span>
+          <span class="route-tag t-file"><svg class="ico"><use href="#i-doc"/></svg>Test file</span>
+        </figure>
       </div>
-    </div>
-    <div class="reel" id="testing" aria-labelledby="reelTitle">
-      <div class="reel-head">
-        <div><p class="eyebrow">From our test bench</p><h3 id="reelTitle">How we document, test and report on real samples.</h3></div>
-        <div class="reel-nav"><button type="button" class="icon-btn reel-prev" aria-label="Previous"><svg class="ico"><use href="#i-back"/></svg></button><button type="button" class="icon-btn reel-next" aria-label="Next"><svg class="ico"><use href="#i-arrow"/></svg></button></div>
+
+      <div class="st-sub">
+        <h4 class="st-h">What goes into your test file</h4>
+        <p>The same checks for every sample, so the comparison is fair.</p>
       </div>
-      <ol class="reel-track" tabindex="0" aria-label="Sample testing examples, scroll sideways">
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><video class="reel-video" src="assets/video/sample-testing.mp4" poster="assets/img/sample-testing-poster.jpg" muted loop playsinline preload="metadata" aria-label="Footage of a brow tint applicator being unboxed and tested by hand"></video><button type="button" class="reel-play" aria-label="Pause video"><span></span></button></div>
-          <div class="reel-cap"><span class="mono-label">01 · Filmed in use</span><b>Applicator test on camera</b><p>Every sample is filmed in use, so you see the pigment, the brush and the finish for yourself.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><video class="reel-video" src="assets/video/swatch-arm.mp4" poster="assets/img/swatch-arm-poster.jpg" muted loop playsinline preload="metadata" aria-label="Brow tint swatched in strokes on a forearm"></video><button type="button" class="reel-play" aria-label="Pause video"><span></span></button></div>
-          <div class="reel-cap"><span class="mono-label">02 · Swatched</span><b>Dry time, application and true shade</b><p>Swatched on skin to check how quickly it dries, how it applies and whether the shade matches the label.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><video class="reel-video" src="assets/video/water-test.mp4" poster="assets/img/water-test-poster.jpg" muted loop playsinline preload="metadata" aria-label="Water poured over brow tint swatches on a forearm"></video><button type="button" class="reel-play" aria-label="Pause video"><span></span></button></div>
-          <div class="reel-cap"><span class="mono-label">03 · Water tested</span><b>Water resistance, proved on camera</b><p>Water is poured straight over the swatches, so you can see what stays put and what washes off.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><video class="reel-video" src="assets/video/apply-arm.mp4" poster="assets/img/apply-arm-poster.jpg" muted loop playsinline preload="metadata" aria-label="Brow tint applicator opened and applied to a forearm, with labelled shades behind"></video><button type="button" class="reel-play" aria-label="Pause video"><span></span></button></div>
-          <div class="reel-cap"><span class="mono-label">04 · Applied</span><b>Real application, start to finish</b><p>The product is opened and applied the way your customer would use it, with each shade labelled.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><img src="assets/img/doc-measure.jpg" alt="Brow tint brush held against a tape measure to check its size" loading="lazy" style="object-position:50% 62%"></div>
-          <div class="reel-cap"><span class="mono-label">05 · Measured</span><b>Brush size checked against reviews</b><p>Reviews said the brush was too big, so we measured it against a tape before recommending a supplier.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><img src="assets/img/doc-shades.jpg" alt="Three brow tint bottles in shades 102, 103 and 104 lined up on their boxes" loading="lazy" style="object-position:50% 50%"></div>
-          <div class="reel-cap"><span class="mono-label">06 · Logged</span><b>Every shade recorded</b><p>Each shade is photographed and labelled against the brief before testing starts.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><img src="assets/img/doc-applicator.jpg" alt="Close-up of a tint applicator brush loaded with pigment" loading="lazy" style="object-position:35% 50%"></div>
-          <div class="reel-cap"><span class="mono-label">07 · Inspected</span><b>Close-up on the applicator</b><p>Brush density, pigment load and leaks are checked unit by unit, across several units.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><img src="assets/img/doc-compare.jpg" alt="A competing brow tint applicator held up in front of a row of its bottles" loading="lazy" style="object-position:55% 50%"></div>
-          <div class="reel-cap"><span class="mono-label">08 · Benchmarked</span><b>Side by side with a competitor</b><p>Samples are compared with a leading competitor product under the same light and protocol.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><img src="assets/img/doc-studio.jpg" alt="Camera and studio lights set up to photograph six pink brow tint bottles on a white sweep" loading="lazy" style="object-position:50% 70%"></div>
-          <div class="reel-cap"><span class="mono-label">09 · Photographed</span><b>Studio shots under controlled light</b><p>Every batch is shot on a consistent set, so colour and finish can be compared fairly over time.</p></div>
-        </li>
-        <li class="reel-item glow-warm">
-          <div class="reel-media"><img src="assets/img/doc-batches.jpg" alt="Six brow tint shades on their boxes showing lot numbers, manufacture and expiry dates" loading="lazy" style="object-position:50% 85%"></div>
-          <div class="reel-cap"><span class="mono-label">10 · Traced</span><b>Lot, manufacture and expiry recorded</b><p>Batch numbers and dates are logged for every unit tested, so any issue traces back to its source.</p></div>
-        </li>
-        <li class="reel-item glow-warm reel-result">
-          <div class="reel-media result-card">
-            <span class="mono-label">Results sent to you</span>
-            <ul>
-              <li><span class="res ok">Pass</span>Pigment payoff</li>
-              <li><span class="res ok">Pass</span>Applicator build</li>
-              <li><span class="res flag">Flag</span>Shade 104 consistency</li>
-              <li><span class="res ok">Pass</span>Packaging and labels</li>
-            </ul>
-            <p>Written report with photos, video and a clear recommendation.</p>
+      <ol class="st-steps">
+        <li class="st-step">
+          <figure class="st-ph"><img src="assets/img/doc-batches.jpg" alt="Six brow tint shades on their boxes, showing lot numbers, manufacture and expiry dates" width="1400" height="1085" loading="lazy" style="object-position:50% 62%"></figure>
+          <div class="st-body">
+            <span class="st-n">01</span>
+            <h5>Logged on arrival</h5>
+            <p>Every sample is photographed as it arrives. Lot numbers, manufacture and expiry dates are recorded, and any transit damage is noted.</p>
+            <p class="st-out"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span><span class="mono-label">In your file</span>Arrival photos and batch log</span></p>
           </div>
-          <div class="reel-cap"><span class="mono-label">11 · Reported</span><b>Plain answers, with the evidence</b><p>You receive the findings in writing, with every photo and clip behind them.</p></div>
+        </li>
+        <li class="st-step">
+          <figure class="st-ph"><img src="assets/img/doc-applicator.jpg" alt="Close-up of a tint applicator brush loaded with pigment" width="1400" height="836" loading="lazy" style="object-position:40% 50%"></figure>
+          <div class="st-body">
+            <span class="st-n">02</span>
+            <h5>Packaging and components</h5>
+            <p>Outer carton, unit box, label print, seals, closures, applicator and fill level, inspected and measured across several units.</p>
+            <p class="st-out"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span><span class="mono-label">In your file</span>Component checklist with measurements</span></p>
+          </div>
+        </li>
+        <li class="st-step">
+          <figure class="st-ph"><img src="assets/img/doc-compare.jpg" alt="A brow tint applicator held up in front of a row of bottles" width="1290" height="726" loading="lazy" style="object-position:58% 50%"></figure>
+          <div class="st-body">
+            <span class="st-n">03</span>
+            <h5>Against your current product</h5>
+            <p>We order your existing product as a customer would, then test the new sample next to it. Same light, same checks, same scoring, so you can see which is better.</p>
+            <p class="st-out"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span><span class="mono-label">In your file</span>Side by side scores</span></p>
+          </div>
+        </li>
+        <li class="st-step">
+          <figure class="st-ph"><img src="assets/img/doc-shades.jpg" alt="Three gold brow tint bottles in shades 102, 103 and 104 on their boxes" width="1400" height="1050" loading="lazy" style="object-position:50% 50%"></figure>
+          <div class="st-body">
+            <span class="st-n">04</span>
+            <h5>Against the other suppliers</h5>
+            <p>Samples of the same product from each shortlisted supplier go on the same bench and the same score sheet, compared side by side.</p>
+            <p class="st-out"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span><span class="mono-label">In your file</span>Supplier ranking</span></p>
+          </div>
+        </li>
+        <li class="st-step">
+          <figure class="st-ph"><img src="assets/img/doc-measure.jpg" alt="A brow tint brush held against a tape measure" width="1200" height="1600" loading="lazy" style="object-position:50% 60%"></figure>
+          <div class="st-body">
+            <span class="st-n">05</span>
+            <h5>Against your customer complaints</h5>
+            <p>We take the recurring complaints from your reviews, turn each one into a test, and show whether the new sample fixes it.</p>
+            <p class="st-out"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span><span class="mono-label">In your file</span>Complaint by complaint results</span></p>
+          </div>
+        </li>
+        <li class="st-step">
+          <figure class="st-ph"><img src="assets/img/doc-studio.jpg" alt="Camera and studio lights set up to photograph six brow tint samples" width="1220" height="1400" loading="lazy" style="object-position:50% 70%"></figure>
+          <div class="st-body">
+            <span class="st-n">06</span>
+            <h5>Documented on camera</h5>
+            <p>Every check is photographed and filmed under the same controlled light, so you see what we saw, not just our opinion.</p>
+            <p class="st-out"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span><span class="mono-label">In your file</span>Photos and video for every check</span></p>
+          </div>
         </li>
       </ol>
+
+      <div class="st-sub">
+        <h4 class="st-h">The file you receive</h4>
+        <p>Scores, photos and a plain recommendation. This example compares a brand's current brow tint with samples from two suppliers.</p>
+      </div>
+      <div class="tf glow-warm" id="testFile">
+        <div class="tf-head">
+          <div class="tf-t"><span class="mono-label">Sample test file</span><b>Brow tint, three samples compared</b></div>
+          <span class="tf-tag">Example</span>
+        </div>
+        <dl class="tf-meta">
+          <div><dt>Units tested</dt><dd>6 of each</dd></div>
+          <div><dt>Reviews analysed</dt><dd>412</dd></div>
+          <div><dt>Evidence</dt><dd>64 photos, 12 videos</dd></div>
+        </dl>
+        <div class="tf-tabs" role="tablist" aria-label="Test file sections">
+          <button type="button" role="tab" id="tft-side" aria-controls="tf-side" aria-selected="true">Side by side</button>
+          <button type="button" role="tab" id="tft-comp" aria-controls="tf-comp" aria-selected="false" tabindex="-1">Your complaints</button>
+          <button type="button" role="tab" id="tft-verdict" aria-controls="tf-verdict" aria-selected="false" tabindex="-1">Verdict</button>
+        </div>
+
+        <div class="tf-panel" id="tf-side" role="tabpanel" aria-labelledby="tft-side" tabindex="0">
+          <div class="tbl-scroll">
+            <table class="tf-matrix">
+              <caption class="sr">Scores out of 5 for your current product and two supplier samples</caption>
+              <thead><tr><th scope="col">Scored out of 5</th><th scope="col">Your current<small>Bought from your store</small></th><th scope="col">Supplier A<small>Sample</small></th><th scope="col" class="rec">Supplier B<small class="pick">Recommended</small></th></tr></thead>
+              <tbody>
+                  <tr><th scope="row">Packaging and seal</th><td><span class="sc" data-s="3" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="sr">3 out of 5</span></td><td><span class="sc" data-s="4" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="sr">4 out of 5</span></td><td class="rec"><span class="sc" data-s="5" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="sr">5 out of 5</span></td></tr>
+                  <tr><th scope="row">Applicator and brush</th><td><span class="sc" data-s="2" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="sr">2 out of 5</span></td><td><span class="sc" data-s="3" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="sr">3 out of 5</span></td><td class="rec"><span class="sc" data-s="5" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="sr">5 out of 5</span></td></tr>
+                  <tr><th scope="row">Shade match</th><td><span class="sc" data-s="3" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="sr">3 out of 5</span></td><td><span class="sc" data-s="4" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="sr">4 out of 5</span></td><td class="rec"><span class="sc" data-s="4" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="sr">4 out of 5</span></td></tr>
+                  <tr><th scope="row">Dry time</th><td><span class="sc" data-s="3" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="sr">3 out of 5</span></td><td><span class="sc" data-s="3" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="sr">3 out of 5</span></td><td class="rec"><span class="sc" data-s="4" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="sr">4 out of 5</span></td></tr>
+                  <tr><th scope="row">Water resistance</th><td><span class="sc" data-s="2" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="sr">2 out of 5</span></td><td><span class="sc" data-s="4" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="sr">4 out of 5</span></td><td class="rec"><span class="sc" data-s="5" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="sr">5 out of 5</span></td></tr>
+                  <tr><th scope="row">Labelling and claims</th><td><span class="sc" data-s="4" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="sr">4 out of 5</span></td><td><span class="sc" data-s="3" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="sr">3 out of 5</span></td><td class="rec"><span class="sc" data-s="5" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="sr">5 out of 5</span></td></tr>
+              </tbody>
+              <tfoot><tr><th scope="row">Total</th><td><b>17</b>/30</td><td><b>21</b>/30</td><td class="rec"><b>28</b>/30</td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="tf-panel" id="tf-comp" role="tabpanel" aria-labelledby="tft-comp" tabindex="0" hidden>
+          <p class="tf-intro">Your five most common complaints, taken from your reviews, each turned into a test.</p>
+          <ol class="cc-list">
+              <li class="cc">
+                <div class="cc-q"><q>The brush is too wide for my brows</q><span class="cc-share"><span class="cc-bar" aria-hidden="true"><i style="--w:31%"></i></span><span><b>31%</b> of complaints</span></span></div>
+                <div class="cc-test"><span class="mono-label">How we tested</span><span>Brush width measured</span></div>
+                <div class="cc-res"><span class="was"><small>Your current</small>11 mm wide</span><span class="now"><small>Supplier B</small>7 mm wide</span><span class="vd fixed">Fixed</span></div>
+              </li>
+              <li class="cc">
+                <div class="cc-q"><q>It smudges as soon as it gets wet</q><span class="cc-share"><span class="cc-bar" aria-hidden="true"><i style="--w:22%"></i></span><span><b>22%</b> of complaints</span></span></div>
+                <div class="cc-test"><span class="mono-label">How we tested</span><span>Water poured over a two minute swatch</span></div>
+                <div class="cc-res"><span class="was"><small>Your current</small>Smudged</span><span class="now"><small>Supplier B</small>Held</span><span class="vd fixed">Fixed</span></div>
+              </li>
+              <li class="cc">
+                <div class="cc-q"><q>Darker than the shade in the photos</q><span class="cc-share"><span class="cc-bar" aria-hidden="true"><i style="--w:16%"></i></span><span><b>16%</b> of complaints</span></span></div>
+                <div class="cc-test"><span class="mono-label">How we tested</span><span>Swatched in daylight next to your listing photo</span></div>
+                <div class="cc-res"><span class="was"><small>Your current</small>Two shades darker</span><span class="now"><small>Supplier B</small>True to photo</span><span class="vd fixed">Fixed</span></div>
+              </li>
+              <li class="cc">
+                <div class="cc-q"><q>It leaked in the post</q><span class="cc-share"><span class="cc-bar" aria-hidden="true"><i style="--w:11%"></i></span><span><b>11%</b> of complaints</span></span></div>
+                <div class="cc-test"><span class="mono-label">How we tested</span><span>Seal and drop test on six units</span></div>
+                <div class="cc-res"><span class="was"><small>Your current</small>2 of 6 leaked</span><span class="now"><small>Supplier B</small>None leaked</span><span class="vd fixed">Fixed</span></div>
+              </li>
+              <li class="cc">
+                <div class="cc-q"><q>It dried out within weeks</q><span class="cc-share"><span class="cc-bar" aria-hidden="true"><i style="--w:8%"></i></span><span><b>8%</b> of complaints</span></span></div>
+                <div class="cc-test"><span class="mono-label">How we tested</span><span>Cap left loose for 14 days</span></div>
+                <div class="cc-res"><span class="was"><small>Your current</small>Dried out</span><span class="now"><small>Supplier B</small>Slightly thicker</span><span class="vd better">Improved</span></div>
+              </li>
+          </ol>
+        </div>
+
+        <div class="tf-panel" id="tf-verdict" role="tabpanel" aria-labelledby="tft-verdict" tabindex="0" hidden>
+          <div class="tv">
+            <div class="tv-main">
+              <span class="mono-label">Our recommendation</span>
+              <b class="tv-pick">Supplier B</b>
+              <p>Fixes four of your five most common complaints, improves the fifth, and outscores your current product on every check.</p>
+              <ul class="tv-rank" aria-label="Total scores out of 30">
+                <li class="top"><span>Supplier B</span><span class="tv-bar" aria-hidden="true"><i style="--w:93.3%"></i></span><b>28</b></li>
+                <li><span>Supplier A</span><span class="tv-bar" aria-hidden="true"><i style="--w:70%"></i></span><b>21</b></li>
+                <li><span>Your current</span><span class="tv-bar" aria-hidden="true"><i style="--w:56.7%"></i></span><b>17</b></li>
+              </ul>
+            </div>
+            <div class="tv-side">
+              <span class="mono-label">What happens next</span>
+              <ol class="tv-next">
+                <li><span class="tv-n">1</span>We talk it through with you, with your own set in your hands</li>
+                <li><span class="tv-n">2</span>The pre-production sample is approved against this file</li>
+                <li><span class="tv-n">3</span>The file becomes the benchmark for checking production batches</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <p class="tf-foot">Illustrative example. Your file covers your product, your complaints and your shortlist.</p>
+      </div>
+      <p class="report-note">After launch, we buy from your store as a customer would and retest against the same benchmark. <a href="#aftercare">See how we stay hands on</a></p>
     </div>
-    <figure class="shot banner">
-      <div class="frame"><img src="assets/img/studio-sample.jpg" alt="Amber serum bottle on driftwood with yellow flowers, lit on a studio sweep" width="1600" height="2400" loading="lazy"></div>
-      <figcaption>Samples are photographed under controlled light, so every finding has a picture behind it.</figcaption>
-    </figure>
   </div>
 </section>
 

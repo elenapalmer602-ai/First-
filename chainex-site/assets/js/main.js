@@ -825,7 +825,7 @@
   /* Boxes pop up one by one as each group scrolls into view. Before they arrive they sit dimmed and
      slightly lower, never hidden, so nothing is lost if motion is off or a screenshot catches them early. */
   if(!reduce&&'IntersectionObserver' in window){
-    var RV=['.facts > div','.people .person','.fit li:not(.mono-label)','.photo-trio .shot','.points li','.cmp-card','.kpi','.chart-card','.ess-grid .flip','.svc-group','.ownbrand .ob-media','.ownbrand .ob-copy','.q-photo','.q-part-head','.ver-copy','.checklist li','.st-intro-copy','.route','.st-sub','.st-step','.tf','.setup-panel','.models li:not(.mono-label)','.hs-media','.care-list li','.log','.faq-list details','.faq-shot','.next li','.dcard','.social-row','.quick-actions .btn','.form-card','.pstack'].join(',');
+    var RV=['.facts > div','.people .person','.fit li:not(.mono-label)','.photo-trio .shot','.points li','.cmp-card','.kpi','.chart-card','.ess-grid .flip','.svc-group','.ownbrand .ob-media','.ownbrand .ob-copy','.q-photo','.paid-points li','.pay-card','.pay-quote','.q-part-head','.ver-copy','.checklist li','.st-intro-copy','.route','.st-sub','.st-step','.tf','.setup-panel','.models li:not(.mono-label)','.hs-media','.care-list li','.log','.faq-list details','.faq-shot','.next li','.dcard','.social-row','.quick-actions .btn','.form-card','.pstack'].join(',');
     var rvEls=$$(RV).filter(function(el){return !el.closest('.hero,#builder,.modal,.msg-panel,.drawer')});
     var rio=new IntersectionObserver(function(en){
       var hits=en.filter(function(x){return x.isIntersecting}).map(function(x){return x.target});
@@ -948,6 +948,53 @@
     var runRoute=function(on){rsv.forEach(function(s){on?s.unpauseAnimations():s.pauseAnimations()})};
     if(reduce)runRoute(false);
     else if('IntersectionObserver' in window)new IntersectionObserver(function(en){runRoute(en[0].isIntersecting)}).observe(route);
+  }
+
+  /* How we get paid: the saving on a $50 product splits 80/20. Pick a price with the slider or a column. */
+  var pay=$('#payCard');
+  if(pay){
+    var NOW=50,RATE=.2,STEP=2.5;
+    var pcs=$$('.pc-col',pay),pxl=$$('.pc-xl li',pay),prange=$('#payRange'),ptip=$('.pay-tip',pay),parea=$('.pc-area',pay);
+    var money=function(v){return '$'+v.toFixed(2)};
+    var split=function(i){var s=i*STEP,fee=s*RATE;return {s:s,fee:fee,keep:s-fee,price:NOW-s}};
+    var pickPrice=function(i){
+      var v=split(i);
+      pcs.forEach(function(c,k){c.classList.toggle('on',k===i)});
+      pxl.forEach(function(c,k){c.classList.toggle('on',k===i)});
+      prange.value=i;prange.style.setProperty('--p',(i/(pcs.length-1)*100)+'%');
+      prange.setAttribute('aria-valuetext',money(v.price)+' per unit. '+(v.s?'Saving '+money(v.s)+', our fee '+money(v.fee)+', you keep '+money(v.keep)+'.':'No saving, so no fee.'));
+      $('#payPrice').textContent=money(v.price);
+      $('#paySave').textContent=money(v.s);$('#payFee').textContent=money(v.fee);$('#payKeep').textContent=money(v.keep);
+      $('#payPct').textContent=v.s?Math.round(v.s/NOW*100)+'% less than today':'Same as today';
+      $('#payNote').textContent=v.s?'You keep '+money(v.keep)+' of every '+money(v.s)+' we save you, on every unit.':'No saving means no fee. You never pay us for a price we cannot beat.';
+    };
+    prange.addEventListener('input',function(){pickPrice(+prange.value)});
+    var tipRow=function(cls,val,label){
+      var r=document.createElement('span');
+      if(cls){var k=document.createElement('i');k.className=cls;r.appendChild(k)}
+      var e=document.createElement('em');e.textContent=val;r.appendChild(e);r.appendChild(document.createTextNode(label));return r;
+    };
+    pcs.forEach(function(c,i){
+      c.addEventListener('click',function(){pickPrice(i)});
+      c.addEventListener('pointerenter',function(e){
+        if(e.pointerType!=='mouse')return;
+        var v=split(i),mark=$('.pc-bar',c)||$('.pc-zero',c),ar=parea.getBoundingClientRect(),br=mark.getBoundingClientRect(),cr=c.getBoundingClientRect();
+        ptip.textContent='';
+        var head=document.createElement('b');head.textContent=v.s?money(v.s)+' saved per unit':'No saving, no fee';ptip.appendChild(head);
+        if(v.s){ptip.appendChild(tipRow('k-keep',money(v.keep),'you keep'));ptip.appendChild(tipRow('k-fee',money(v.fee),'our fee'))}
+        var foot=document.createElement('small');foot.textContent=v.s?'$50.00 today, '+money(v.price)+' with us':'Price stays at $50.00';ptip.appendChild(foot);
+        ptip.style.left=(cr.left+cr.width/2-ar.left)+'px';
+        ptip.style.top=(br.top-ar.top-(v.s?34:4))+'px';
+        ptip.classList.add('on');
+      });
+      c.addEventListener('pointerleave',function(){ptip.classList.remove('on')});
+    });
+    pickPrice(+prange.value);
+    if(!reduce&&'IntersectionObserver' in window){
+      pay.classList.add('pre');
+      var pio=new IntersectionObserver(function(en){if(en[0].isIntersecting){pay.classList.remove('pre');pio.disconnect()}},{threshold:.35});
+      pio.observe($('.pc',pay));
+    }
   }
 
   /* Mobile menu */

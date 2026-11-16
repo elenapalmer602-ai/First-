@@ -244,71 +244,33 @@
      ===================================================================== */
   var bk=$('#bookModal');
   if(bk){
-    var calDays=$('#calDays'),calMonth=$('#calMonth'),slotList=$('#slotList'),slotLabel=$('#slotLabel'),sum=$('#bkSummary'),bkForm=$('#bkForm'),bkDone=$('#bkDone'),bkGrid=$('.bk-grid',bk);
-    var now=new Date(),today0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-    var maxDay=new Date(now.getFullYear(),now.getMonth(),now.getDate()+42);
-    var view=new Date(now.getFullYear(),now.getMonth(),1),selDay=null,selSlot=null;
-    var SLOTS=['09:30','10:00','10:30','11:00','11:30','12:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
-    var same=function(a,b){return !!a&&!!b&&a.toDateString()===b.toDateString()};
-    var slotTime=function(day,s){var p=s.split(':');return new Date(day.getFullYear(),day.getMonth(),day.getDate(),+p[0],+p[1])};
-    var soonest=function(){return new Date(Date.now()+2*3600e3)};
-    var dayOpen=function(d){
-      var wd=d.getDay();
-      if(d<today0||d>maxDay||wd===0||wd===6)return false;
-      return SLOTS.some(function(s){return slotTime(d,s)>soonest()});
-    };
-    function renderCal(){
-      calMonth.textContent=view.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-      var first=(view.getDay()+6)%7,days=new Date(view.getFullYear(),view.getMonth()+1,0).getDate(),h='';
-      for(var i=0;i<first;i++)h+='<span aria-hidden="true"></span>';
-      for(var d=1;d<=days;d++){
-        var dt=new Date(view.getFullYear(),view.getMonth(),d),open=dayOpen(dt);
-        h+='<button type="button" class="cal-day'+(same(dt,now)?' today':'')+'" data-d="'+d+'"'+(open?'':' disabled')+' aria-pressed="'+same(dt,selDay)+'" aria-label="'+dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+(open?'':', unavailable')+'">'+d+'</button>';
-      }
-      calDays.innerHTML=h;
-      $('#calPrev').disabled=view<=new Date(now.getFullYear(),now.getMonth(),1);
-      $('#calNext').disabled=new Date(view.getFullYear(),view.getMonth()+1,1)>maxDay;
+    var CAL_URL='https://calendly.com/elenapalmer602/30min';
+    var embed=$('#bkEmbed'),fb=$('#bkFallback'),fbMsg=$('#bkFbMsg'),bkStatus=$('#bkStatus'),calStarted=false,calReady=false,calTimer=null;
+    var showFallback=function(msg){if(calReady)return;fbMsg.textContent=msg;fb.hidden=false};
+    /* Calendly's documented inline embed (widget div + script), added on first open so the page stays fast */
+    function startCalendly(){
+      if(calStarted)return;calStarted=true;
+      var w=document.createElement('div');
+      w.className='calendly-inline-widget';
+      w.setAttribute('data-url',CAL_URL+'?background_color=1c1d20&text_color=f4f4f5&primary_color=ffffff');
+      w.setAttribute('data-resize','true');
+      embed.appendChild(w);
+      var s=document.createElement('script');
+      s.src='https://assets.calendly.com/assets/external/widget.js';s.async=true;
+      s.onerror=function(){clearTimeout(calTimer);embed.classList.add('failed');showFallback("The calendar couldn't load here. An ad or privacy blocker can stop it.")};
+      document.head.appendChild(s);
+      calTimer=setTimeout(function(){showFallback('The calendar is taking a while to load.')},10000);
     }
-    function renderSlots(){
-      if(!selDay){slotLabel.textContent='Available times';slotList.innerHTML='<p class="slot-empty">Pick a weekday to see the times we are free.</p>';return}
-      slotLabel.textContent=selDay.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-      slotList.innerHTML=SLOTS.map(function(s){
-        var off=slotTime(selDay,s)<=soonest();
-        return '<button type="button" class="slot" data-s="'+s+'"'+(off?' disabled':'')+' aria-pressed="'+(s===selSlot)+'">'+s+'</button>';
-      }).join('');
-    }
-    function renderSum(){
-      sum.innerHTML=selDay&&selSlot?'<b>'+esc(selDay.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}))+', '+selSlot+'</b> UK time · 20 minutes':'Choose a day and time';
-    }
-    calDays.addEventListener('click',function(e){
-      var b=e.target.closest('.cal-day');if(!b||b.disabled)return;
-      selDay=new Date(view.getFullYear(),view.getMonth(),+b.dataset.d);selSlot=null;
-      renderCal();renderSlots();renderSum();
-      var first=$('.slot:not([disabled])',slotList);if(first&&window.innerWidth<720)first.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+    window.addEventListener('message',function(e){
+      if(!/^https:\/\/([a-z0-9-]+\.)?calendly\.com$/.test(e.origin)||!e.data||typeof e.data.event!=='string'||e.data.event.indexOf('calendly.')!==0)return;
+      if(!calReady){calReady=true;clearTimeout(calTimer);embed.classList.add('ready');embed.setAttribute('aria-busy','false');fb.hidden=true}
+      if(e.data.event==='calendly.event_scheduled')bkStatus.textContent='Your call is booked. A confirmation email and calendar invite are on their way.';
     });
-    slotList.addEventListener('click',function(e){var b=e.target.closest('.slot');if(!b||b.disabled)return;selSlot=b.dataset.s;renderSlots();renderSum()});
-    $('#calPrev').addEventListener('click',function(){view=new Date(view.getFullYear(),view.getMonth()-1,1);renderCal()});
-    $('#calNext').addEventListener('click',function(){view=new Date(view.getFullYear(),view.getMonth()+1,1);renderCal()});
-    bkForm.addEventListener('submit',function(e){
-      e.preventDefault();
-      if(!selDay||!selSlot){sum.innerHTML='<b>Choose a day and time first.</b>';return}
-      if(!bkForm.checkValidity()){bkForm.reportValidity();return}
-      var when=selDay.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+', '+selSlot+' UK time';
-      var topic=$('#bk-topic').value.trim();
-      var text='Call request for Chainex\n\nTime: '+when+' (20 minutes)\nName: '+$('#bk-name').value.trim()+'\nEmail or phone: '+$('#bk-contact').value.trim()+(topic?'\nTopic: '+topic:'');
-      $('#bkText').value=text;$('#bkWhen').textContent=when;
-      $('#bkMail').setAttribute('href',mailto('Call request: '+when,text));
-      bkForm.hidden=true;bkGrid.hidden=true;bkDone.hidden=false;$('#bkStatus').textContent='';
-      $('#bkMail').focus({preventScroll:true});
-    });
-    $('#bkEdit').addEventListener('click',function(){bkDone.hidden=true;bkForm.hidden=false;bkGrid.hidden=false;$('#bk-name').focus()});
-    $('#bkCopy').addEventListener('click',function(){copyText($('#bkText').value,$('#bkStatus'),$('#bkText'))});
-    renderCal();renderSlots();renderSum();
-
-    $$('[data-open-book]').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();openLayer(bk,'#calNext')})});
+    var openBook=function(e){if(e)e.preventDefault();openLayer(bk,'[data-close-book]');startCalendly()};
+    $$('[data-open-book]').forEach(function(b){b.addEventListener('click',openBook)});
     $$('[data-close-book]',bk).forEach(function(b){b.addEventListener('click',function(){closeLayer(bk)})});
     bk.addEventListener('click',function(e){if(e.target===bk)closeLayer(bk)});
-    if(location.hash==='#book')openLayer(bk,'#calNext');
+    if(location.hash==='#book')openBook();
   }
 
   /* =====================================================================

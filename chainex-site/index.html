@@ -1127,37 +1127,22 @@
   </div>
 </div>
 
-<!-- Book a call -->
+<!-- Book a call: Calendly's scheduler, loaded when the window first opens -->
 <div class="modal" id="bookModal" role="dialog" aria-modal="true" aria-labelledby="bkTitle" hidden>
-  <div class="modal-card">
+  <div class="modal-card bk-card">
     <div class="m-head">
-      <div><p class="eyebrow">Book a call</p><h3 id="bkTitle">Pick a day and time</h3><p class="m-sub">A 20 minute call with Alex or Elena. Times are UK time, Monday to Friday.</p></div>
+      <div><p class="eyebrow">Book a call</p><h3 id="bkTitle">Pick a day and time</h3><p class="m-sub">A 30 minute call with Alex or Elena. Times show in your own time zone, and you get a confirmation email and calendar invite as soon as you book.</p></div>
       <button type="button" class="icon-btn" data-close-book aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
     </div>
-    <div class="bk-grid">
-      <div class="cal">
-        <div class="cal-head"><button type="button" class="icon-btn" id="calPrev" aria-label="Previous month"><svg class="ico"><use href="#i-back"/></svg></button><b id="calMonth"></b><button type="button" class="icon-btn" id="calNext" aria-label="Next month"><svg class="ico"><use href="#i-arrow"/></svg></button></div>
-        <div class="cal-dow" aria-hidden="true"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
-        <div class="cal-days" id="calDays"></div>
-      </div>
-      <div class="slots"><span class="mono-label" id="slotLabel">Available times</span><div class="slot-list" id="slotList"></div></div>
+    <div class="bk-embed" id="bkEmbed" aria-busy="true">
+      <div class="bk-loading" aria-hidden="true"><span class="bk-spin"></span><p>Loading the calendar…</p></div>
     </div>
-    <form class="bk-form" id="bkForm" novalidate>
-      <div class="row2">
-        <div class="fld"><label for="bk-name">Your name</label><input id="bk-name" required autocomplete="name" placeholder="Full name"></div>
-        <div class="fld"><label for="bk-contact">Email or phone</label><input id="bk-contact" required autocomplete="email" placeholder="you@brand.com or +44 ..."></div>
-      </div>
-      <div class="fld"><label for="bk-topic">What would you like to talk about? <i>(optional)</i></label><input id="bk-topic" placeholder="e.g. switching supplier for our brow tint"></div>
-      <div class="bk-foot"><p id="bkSummary">Choose a day and time</p><button type="submit" class="btn btn-primary"><svg class="ico"><use href="#i-calendar"/></svg>Request this time</button></div>
-    </form>
-    <div class="done" id="bkDone" hidden>
-      <span class="mono-label ready">Request ready</span>
-      <h4 id="bkWhen"></h4>
-      <p>Send this request from your email app and we will confirm the time by email or phone.</p>
-      <textarea id="bkText" readonly aria-label="Your call request"></textarea>
-      <div class="actions"><a class="btn btn-primary btn-sm" id="bkMail" href="mailto:elenapalmer@chainex.supply"><svg class="ico"><use href="#i-mail"/></svg>Open in email app</a><button type="button" class="btn btn-ghost btn-sm" id="bkCopy">Copy request</button><button type="button" class="link-btn" id="bkEdit">Change details</button></div>
-      <p class="status" id="bkStatus" aria-live="polite"></p>
+    <div class="bk-fallback" id="bkFallback" hidden>
+      <p><b id="bkFbMsg">The calendar is taking a while to load.</b> You can book on our booking page instead, or email us.</p>
+      <div class="actions"><a class="btn btn-primary btn-sm" href="https://calendly.com/elenapalmer602/30min" target="_blank" rel="noopener"><svg class="ico"><use href="#i-calendar"/></svg>Open the booking page</a><a class="btn btn-ghost btn-sm" href="mailto:elenapalmer@chainex.supply?cc=alex.ward@chainex.supply&amp;subject=Call%20request"><svg class="ico"><use href="#i-mail"/></svg>Email us instead</a></div>
     </div>
+    <p class="bk-alt">Prefer email? Write to <a href="mailto:elenapalmer@chainex.supply?cc=alex.ward@chainex.supply&amp;subject=Call%20request">elenapalmer@chainex.supply</a> and we'll find a time.</p>
+    <p class="sr" id="bkStatus" aria-live="polite"></p>
   </div>
 </div>
 

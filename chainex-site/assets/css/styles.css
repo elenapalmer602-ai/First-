@@ -794,31 +794,23 @@ html.lock .msg-fab{display:none}
   box-shadow:var(--raise),inset 0 -1.5px 0 rgba(255,222,168,.85),0 24px 70px -24px rgba(255,222,168,.45)}
 .m-head h3{font-weight:300;font-size:clamp(24px,2.4vw,32px);line-height:1.15;color:var(--text);margin-top:8px}
 .m-sub{font-size:14px;color:var(--text-2);margin-top:6px}
-.bk-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px}
-.bk-grid[hidden],.bk-form[hidden]{display:none}
-@media (max-width:720px){.bk-grid{grid-template-columns:minmax(0,1fr)}}
-.cal{padding:18px;border-radius:22px;background:var(--well);box-shadow:var(--press)}
-.cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.cal-head b{font-weight:500;font-size:15px;color:var(--text)}
-.cal-head .icon-btn{width:36px;height:36px}
-.cal-dow,.cal-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center}
-.cal-dow span{padding-bottom:4px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text-3)}
-.cal-day{aspect-ratio:1;border:0;border-radius:12px;background:transparent;color:var(--text);font:500 14px var(--font);cursor:pointer;font-variant-numeric:tabular-nums;transition:background .2s,box-shadow .2s,color .2s}
-.cal-day:hover:not(:disabled):not([aria-pressed="true"]){background:rgba(255,255,255,.07)}
-.cal-day:disabled{color:#55575E;cursor:default}
-.cal-day.today{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
-.cal-day[aria-pressed="true"]{color:#1A1B1E;background:linear-gradient(145deg,#FFF7EC,#E8D7C1);box-shadow:0 0 18px rgba(255,222,168,.55)}
-.slots{display:grid;gap:12px;align-content:start}
-.slot-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.slot{padding:11px 6px;border:0;border-radius:12px;cursor:pointer;color:var(--text);font:500 13.5px var(--font);font-variant-numeric:tabular-nums;background:linear-gradient(150deg,#2F3034,#232428);box-shadow:var(--raise-sm);transition:background .2s,box-shadow .2s,color .2s}
-.slot:disabled{opacity:.28;cursor:default}
-.slot[aria-pressed="true"]{color:#1A1B1E;background:linear-gradient(145deg,#FFF7EC,#E8D7C1);box-shadow:0 0 16px rgba(255,222,168,.5)}
-.slot-empty{grid-column:1/-1;font-size:14px;color:var(--text-3)}
-.bk-form{display:grid;gap:14px}
-.bk-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px}
-.bk-foot p{font-size:14px;color:var(--text-2)}
-.bk-foot p b{color:var(--text);font-weight:600}
-
+.bk-card{width:min(1040px,100%)}
+.bk-embed{position:relative;min-height:660px;border-radius:22px;overflow:hidden;background:var(--well);box-shadow:var(--press)}
+.bk-embed .calendly-inline-widget{position:relative;z-index:1;min-width:0!important;height:700px}
+.bk-loading{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;font-size:14px;color:var(--text-2)}
+.bk-spin{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.12);border-top-color:#FFFFFF;animation:bkspin 1s linear infinite}
+@keyframes bkspin{to{transform:rotate(360deg)}}
+.bk-embed.ready .bk-loading,.bk-embed.failed .bk-loading{display:none}
+.bk-embed.failed{display:none}
+.bk-fallback{display:grid;gap:14px;padding:18px 20px;border-radius:20px;background:var(--well);box-shadow:var(--press);font-size:14.5px;color:var(--text-2)}
+.bk-fallback[hidden]{display:none}
+.bk-fallback b{color:var(--text);font-weight:600}
+.bk-fallback .actions{display:flex;flex-wrap:wrap;gap:10px}
+.bk-alt{font-size:13.5px;color:var(--text-3)}
+.bk-alt a{color:var(--text);text-underline-offset:3px}
+@media (max-width:720px){.bk-card{padding:18px 12px}.bk-card .m-head{padding:0 6px}.bk-embed{min-height:600px}}
+@media (prefers-reduced-motion:reduce){.bk-spin{animation:none}}
+@media (max-width:720px){
 /* ===== Product brief builder ===== */
 .builder{position:fixed;inset:0;z-index:95;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;padding-bottom:max(48px,env(safe-area-inset-bottom,0px));
   background:radial-gradient(60% 45% at 85% 0%,rgba(255,222,168,.07),transparent 70%),linear-gradient(180deg,#1E1F22,#18191B)}
